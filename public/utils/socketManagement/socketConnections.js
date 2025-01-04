@@ -4,6 +4,7 @@ export const createSocketConnections = (props) => {
   const {
     activeCanvas,
     cards,
+    selectedCardIds,
     connections,
     canvasRef,
     zoomLevel,
@@ -377,6 +378,7 @@ export const createSocketConnections = (props) => {
     console.log("handleConnectionClick",     selectedConnectionId.value )
     event.preventDefault();
     event.stopPropagation();
+    selectedCardIds.value.clear();
     return connectionId;
   };
 

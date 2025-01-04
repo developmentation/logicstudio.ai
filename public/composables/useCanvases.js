@@ -141,6 +141,7 @@ const calculateConnectionPoints = (connectionData) => {
     cards: activeCards,
     connections: activeConnections,
     canvasRef,
+    selectedCardIds,
     zoomLevel,
     selectedConnectionId,
     activeConnection,

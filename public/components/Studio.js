@@ -125,39 +125,59 @@ export default {
 
                       
 
-<svg 
-    class="absolute"
-    :style="{
-        width: '8000px',
-        height: '8000px',
-        top: '-4000px',
-        left: '-4000px',
-    }"
->
+            <svg 
+                class="absolute"
+                :style="{
+                    width: '8000px',
+                    height: '8000px',
+                    top: '-4000px',
+                    left: '-4000px',
+                }"
+            >
 
-  <path 
-        v-for="conn in activeConnections" 
-        :key="conn.id"
-        :d="drawSpline(conn.sourcePoint, conn.targetPoint)"
-         :stroke="getConnectionStyle(conn).stroke"
-        :stroke-width="getConnectionStyle(conn).strokeWidth"
-        fill="transparent"
-        style="pointer-events: all; cursor: pointer;"
-        @mousedown.stop
-        @click.stop="(e) => handleConnectionClick(e, conn.id)"
-    />
+              <defs>
+                    <marker
+                    id="arrowhead"
+                    viewBox="0 -3 6 6"
+                    refX="4"
+                    refY="-.3"
+                    markerWidth="6" 
+                    markerHeight="6"
+                    orient="auto"
+                >
+                    <path
+                        d="M0,-2.0L5,0L0,2.0"
+                        stroke="#64748b"
+                        stroke-width=".5"
+                        fill="#64748b"
+                    />
+                </marker>
+                </defs>
 
-    
-    
-  <path
-        v-if="activeConnection"
-        :d="drawSpline(activeConnection.startPoint, activeConnection.currentPoint)"
-        stroke="#64748b"
-        stroke-dasharray="5,5"
-        stroke-width="2"
-        fill="transparent"
-    />
-                        </svg>
+                <path 
+                    v-for="conn in activeConnections" 
+                    :key="conn.id"
+                    :d="drawSpline(conn.sourcePoint, conn.targetPoint)"
+                    :stroke="getConnectionStyle(conn).stroke"
+                    :stroke-width="getConnectionStyle(conn).strokeWidth"
+                    fill="none"
+                    style="pointer-events: all; cursor: pointer;"
+                    marker-end="url(#arrowhead)"
+                    @mousedown.stop
+                    @click.stop="(e) => handleConnectionClick(e, conn.id)"
+                />
+                  
+                
+                <path
+                  v-if="activeConnection"
+                  :d="drawSpline(activeConnection.startPoint, activeConnection.currentPoint)"
+                  stroke="#64748b"
+                  stroke-dasharray="5,5"
+                  stroke-width="2"
+                  fill="transparent"
+                    marker-end="url(#arrowhead)"
+                  /> 
+                </svg>
 
                         <!-- Cards Layer -->
                         <div class="relative" style="pointer-events: none;">

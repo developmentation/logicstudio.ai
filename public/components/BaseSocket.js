@@ -42,7 +42,7 @@ export default {
     <!-- Input Label -->
     <span 
       v-if="type === 'input'"
-      class="absolute right-full mr-2 text-xs text-gray-400 whitespace-nowrap"
+      class="absolute right-full mr-2 text-xs text-white whitespace-nowrap"
     >
       {{ name }}
     </span>
@@ -91,7 +91,7 @@ export default {
     <!-- Output Label -->
     <span 
       v-if="type === 'output'"
-      class="absolute left-full ml-2 text-xs text-gray-400 whitespace-nowrap"
+      class="absolute left-full ml-2 text-xs text-white whitespace-nowrap"
     >
       {{ name }}
     </span>
