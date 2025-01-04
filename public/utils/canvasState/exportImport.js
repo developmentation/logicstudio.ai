@@ -3,6 +3,8 @@
 export const createExportImport = (props) => {
     const {
         // Core canvas operations
+        canvases,
+        setActiveCanvas,
         exportCanvas,
         importCanvas,
         
@@ -130,42 +132,65 @@ export const createExportImport = (props) => {
             return null;
         }
     };
+// In exportImport.js, update the importFromJSON function
 
-    // JSON Import
-    const importFromJSON = () => {
-        return new Promise((resolve, reject) => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) {
-                    reject(new Error('No file selected'));
-                    return;
-                }
+const importFromJSON = () => {
+    return new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.multiple = true;  // Enable multiple file selection
+        
+        input.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            if (!files.length) {
+                reject(new Error('No files selected'));
+                return;
+            }
 
-                try {
+            try {
+                const importedCanvasIds = [];
+                
+                // Process each file sequentially
+                for (const file of files) {
                     const text = await file.text();
                     const data = JSON.parse(text);
 
                     if (!validateImportData(data)) {
-                        reject(new Error('Invalid canvas data structure'));
-                        return;
+                        console.error(`Invalid canvas data structure in file: ${file.name}`);
+                        continue; // Skip invalid files but continue processing others
                     }
 
                     const canvasId = importCanvas(data);
-                    resolve(canvasId);
-                } catch (error) {
-                    console.error('Error importing JSON:', error);
-                    reject(error);
+                    importedCanvasIds.push(canvasId);
                 }
-            };
 
-            input.click();
-        });
-    };
+                if (importedCanvasIds.length === 0) {
+                    reject(new Error('No valid canvas files were imported'));
+                    return;
+                }
 
+                // Select the last imported canvas
+                const lastCanvasId = importedCanvasIds[importedCanvasIds.length - 1];
+                const lastCanvas = canvases.value.find(c => c.id === lastCanvasId);
+                if (lastCanvas) {
+                    setActiveCanvas(lastCanvas);
+                }
+
+                resolve({
+                    totalImported: importedCanvasIds.length,
+                    canvasIds: importedCanvasIds,
+                    activeCanvasId: lastCanvasId
+                });
+            } catch (error) {
+                console.error('Error importing JSON:', error);
+                reject(error);
+            }
+        };
+
+        input.click();
+    });
+};
     // API Import/Export with enhanced error handling
     const exportToAPI = async (endpoint, options = {}) => {
         try {

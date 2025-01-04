@@ -79,27 +79,34 @@ export const createCanvasRegistry = (props) => {
     };
   };
 
+
   const importCanvas = (canvasData) => {
     console.log("Import Data", canvasData)
     const canvas = {
-      id: canvasData.id || uuidv4(),
-      name: canvasData.name || "Imported Canvas",
-      cards: canvasData.cards || [],
-      connections: canvasData.connections || [],
-      viewport: canvasData.viewport || {
-        zoomLevel: 1,
-        centerX: 0,
-        centerY: 0,
-      },
-      created: canvasData.created || Date.now(),
-      lastModified: Date.now(),
+        id: canvasData.id || uuidv4(),
+        name: canvasData.name || "Imported Canvas",
+        cards: canvasData.cards || [],
+        connections: canvasData.connections || [],
+        viewport: canvasData.viewport || {
+            zoomLevel: 1,
+            centerX: 0,
+            centerY: 0,
+        },
+        created: canvasData.created || Date.now(),
+        lastModified: Date.now(),
     };
 
+    // Add the new canvas to the array
     canvases.value = [...canvases.value, canvas];
-    setActiveCanvas(canvas);
+    
+    // IMPORTANT: Set this as the active canvas
+    activeCanvasId.value = canvas.id;
+    Vue.nextTick(() => {
+        setActiveCanvas(canvas);
+    });
     
     return canvas.id;
-  };
+};
 
   const setActiveCanvas = (canvas) => {
     activeCanvas.value = canvas;

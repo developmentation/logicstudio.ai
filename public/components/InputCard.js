@@ -29,7 +29,7 @@ export default {
       @select-card="$emit('select-card', $event)"
     >
       <!-- Output Sockets -->
-      <div class="absolute -right-[12px] flex flex-col gap-4 py-4">
+      <div class="absolute -right-[12px] flex flex-col gap-4 py-4"  style="top: 16px;">
         <div 
           v-for="(socket, index) in localCardData.sockets.outputs"
           :key="socket.id"
@@ -97,7 +97,7 @@ export default {
                 class="border-t border-gray-700"
               >
                 <td class="px-4 py-2">{{ index + 1 }}</td>
-                <td class="px-4 py-2 text-xs">{{ fileData.name }}</td>
+                <td class="px-4 py-2 text-xs overflow-auto">{{ fileData.name }}</td>
                 <td class="px-4 py-2">
                   <button 
                     class="text-gray-400 hover:text-white"
@@ -151,7 +151,7 @@ export default {
         }
       };
     };
-    
+
     const localCardData = Vue.ref(initializeCardData(props.cardData));
 
     const getSocketConnections = (socketId) => connections.value.has(socketId);

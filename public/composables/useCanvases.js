@@ -23,9 +23,15 @@ const activeCanvasId = Vue.ref(null); //Track the activeCanvas by ID
 // const activeConnections = Vue.ref(null);
 
 // Cache the active canvas index
-const activeCanvasIndex = Vue.computed(() =>
-  canvases.value.findIndex((c) => c.id === activeCanvasId.value)
-);
+const activeCanvasIndex = Vue.computed({
+  get: () => {
+    if (!activeCanvasId.value || !canvases.value.length) return 0;
+    return canvases.value.findIndex((c) => c.id === activeCanvasId.value);
+    },
+  set: (id) => {
+    activeCanvasIndex.value = id;
+  },
+});
 
 const activeCanvas = Vue.computed({
   get: () => {
@@ -59,6 +65,8 @@ const activeConnections = Vue.computed({
     }
   },
 });
+
+
 
 // UI Refs
 const canvasRef = Vue.ref(null);
@@ -336,6 +344,8 @@ export const useCanvases = () => {
   });
 
   const exportImport = createExportImport({
+    canvases,
+    setActiveCanvas:canvasRegistry.setActiveCanvas,
     exportCanvas: canvasRegistry.exportCanvas,
     importCanvas: canvasRegistry.importCanvas,
     canvasRef,
@@ -343,6 +353,25 @@ export const useCanvases = () => {
     cards: activeCards,
     connections: activeConnections,
   });
+
+
+  
+const moveCanvasLeft = () => {
+  if (!activeCanvasId.value || activeCanvasIndex.value <= 0) return;
+  const newIndex = activeCanvasIndex.value - 1;
+  if (newIndex >= 0 && newIndex < canvases.value.length) {
+    activeCanvasId.value = canvases.value[newIndex].id;
+  }
+};
+
+const moveCanvasRight = () => {
+  if (!activeCanvasId.value || activeCanvasIndex.value >= canvases.value.length - 1) return;
+  const newIndex = activeCanvasIndex.value + 1;
+  if (newIndex >= 0 && newIndex < canvases.value.length) {
+    activeCanvasId.value = canvases.value[newIndex].id;
+  }
+};
+
 
   // Lifecycle hooks
   Vue.onMounted(() => {
@@ -368,6 +397,9 @@ export const useCanvases = () => {
     activeCanvas,
     activeCards,
     activeConnections,
+    activeCanvasIndex,
+    moveCanvasLeft,
+    moveCanvasRight,
 
     // UI State
     canvasRef,

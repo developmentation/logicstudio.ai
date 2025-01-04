@@ -20,16 +20,41 @@ export default {
     <div class="absolute inset-0 flex flex-col overflow-hidden">
         <!-- Top Toolbar -->
         <div class="flex items-center space-x-2 p-4 bg-gray-800 select-none z-40">
-            <InputText v-if="activeCanvas"
-                v-model="activeCanvas.name"
-                placeholder="Canvas Name"
-                
-                class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md"
-                :class="[
-                    'hover:border-gray-600',
-                    'focus:!ring-2 focus:!ring-green-500 focus:!border-transparent !outline-none'
-                ]"
-            />
+
+                  
+
+        <div class="flex items-center gap-2">
+          <InputText v-if="activeCanvas"
+              v-model="activeCanvas.name"
+              placeholder="Canvas Name"
+              class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md"
+              :class="[
+                  'hover:border-gray-600',
+                  'focus:!ring-2 focus:!ring-green-500 focus:!border-transparent !outline-none'
+              ]"
+          />
+          <div v-if="canvases.length > 0" class="flex items-center gap-2">
+              <button
+                  @click="moveCanvasLeft"
+                  
+                  class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                  <i class="pi pi-chevron-left"></i>
+              </button>
+              <span class="text-sm text-gray-300">
+                  {{ (activeCanvasIndex || 0) + 1 }} of {{ canvases.length }}
+              </span>
+              <button
+                  @click="moveCanvasRight"
+                 
+                  class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                  <i class="pi pi-chevron-right"></i>
+              </button>
+          </div>
+      </div>    
+
+
             <div class="flex-1"></div>
             <button 
                 class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -226,6 +251,10 @@ export default {
       nearestSocket,
       activeConnections,
       activateConnection,
+
+      activeCanvasIndex,
+      moveCanvasLeft,
+      moveCanvasRight,
 
       // Canvas management
       createCanvas,
@@ -628,6 +657,7 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
 
     return {
       // State
+      canvases,
       activeCanvas,
       activeCards,
       activeConnections,
@@ -643,6 +673,10 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       toolbarExpanded,
       toolbarShowText,
       selectedConnectionId,
+
+      activeCanvasIndex,
+      moveCanvasLeft,
+      moveCanvasRight,
 
       // Functions
       getCardComponent,
