@@ -1,0 +1,2 @@
+Files are uploaded here through multer for processing, and then deletion at the end of the session. 
+If all goes well, nothing should be kept here other than this readme, to manage memory overruns.

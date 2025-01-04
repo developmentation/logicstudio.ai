@@ -1,0 +1,60 @@
+Here are the key features and pages of the app. I want to start off by creating an attractive landing page for MinisterGPT. Use PrimeVue and Tailwind css for styling. I have already imported the PrimeVue components into main.js so no further imports are required. Assume Tailwind is already installed and needs no further definition. Here is the app breakdown
+
+**User Groups**
+* **Minister’s Office Staff (Communications Leads, Speechwriters)**: Create and refine speeches, review past performances, adjust style.
+* **Policy Advisors/Analysts**: Provide source materials, verify policy accuracy.
+* **Senior Approval Authorities (Chiefs of Staff, Minister)**: Approve final messages, ensure alignment with strategic objectives.
+**Core Features (Bullet Overview)**
+**Content Management & Analysis**
+* Central repository of past speeches, briefing notes, and Q&A transcripts.
+* NLP-based tagging for themes, policies, and rhetorical styles.
+* Search and filter tools to quickly find relevant excerpts.
+**Draft Creation & Editing**
+* Automated first drafts aligned with Minister’s style and tone.
+* Customizable templates for recurring event types (e.g., announcements, policy updates).
+* Editing tools with suggestions for clarity, tone adjustment, and brevity.
+**Comparison & Improvement**
+* Speech-to-text alignment of delivered speech vs. original notes.
+* Side-by-side comparison to highlight changes, adlibs, and omissions.
+* Tools to evaluate changes and mark improved lines for future re-use.
+**Flow & Structural Analysis**
+* Visual timelines showing speech segments and pacing.
+* Indicators for where audience engagement (applause, laughter) occurred.
+**Q&A Capture & Integration**
+* Automatic segmentation and transcription of Q&A sessions.
+* Tagging Q&A responses by topic and sentiment.
+* Converting successful improvised answers into future key messages.
+**Approval & Governance**
+* Role-based access controls.
+* Approval workflows for final speech versions and key messages.
+* Audit trails for compliance and reference.
+**Multi-Format Output & Social Integration**
+* Export speeches in multiple formats (PDF, Word, Teleprompter-compatible).
+* Adapt key messages for social media posts and press releases.
+**Feature-to-Page Mapping**
+Page / SectionFeatures**Home Dashboard**Recent speeches, upcoming events, quick search bar**Speech Repository**Browse & filter past speeches, transcripts, Q&A sets**Minister Profile**Minister’s style preferences, templates, tone guides**Draft Editor**Automated draft generation, inline editing suggestions**Comparison View**Side-by-side transcript vs. prepared notes, markup of changes**Flow Analysis**Timeline visualization of speech structure & pacing**Q&A Analysis**Tagged Q&A transcripts, ability to import Q&A responses into message inventory**Key Message Library**Bank of vetted key messages & sound bites, version history**Approvals & Workflows**Pending speech drafts, review comments, and approvals**Export & Sharing**Format selection (PDF, Word), social media output settings
+**Simple User Flow Sequence**
+1. **Login** (Appropriate Role & Permissions)
+2. **Home Dashboard**:
+   * See upcoming speaking events
+   * Access previous speeches and Q&A sets
+3. **Search Speech Repository**:
+   * Find similar past speeches on chosen policy theme
+4. **Minister Profile**:
+   * Confirm Minister’s stylistic preferences
+5. **Draft Editor**:
+   * Generate a first draft using selected themes & Minister’s style
+   * Refine content, add key messages from the message library
+6. **Comparison View (Post-Event)**:
+   * Import delivered speech audio for transcription
+   * Compare delivered speech to original notes
+   * Identify beneficial adlibs and mark improvements
+7. **Q&A Analysis**:
+   * Review Q&A responses
+   * Tag standout answers for future key message use
+8. **Approvals & Workflows**:
+   * Submit final draft or updated key messages for approval
+   * Receive feedback and finalize content
+9. **Export & Sharing**:
+   * Export final speech to teleprompter format
+   * Create social media posts or briefing notes from the final approved content

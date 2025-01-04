@@ -1,0 +1,11 @@
+{
+    "watch": ["."], 
+    "ignore": [
+      "uploads/",
+      "uploads/*",
+      "uploads/**",
+      "uploads/*.deepgram.json",
+      "uploads/**/*.deepgram.json"
+    ]
+  }
+  

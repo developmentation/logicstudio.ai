@@ -1,0 +1,20 @@
+Using PrimeVue, I want to add a menu on the left hand side of the AgentCanvas.js. The menu should be a vertical menu with icons which also can be expanded to show the text of a menu, and contain a scroll bar if there are too many menu items vertically, like the Photoshop tool menu, except better formatted for web and using primevue icons.
+
+The menu should be able to collapse back to a hamburger icon, just below the zoom in and zoom out buttons, or expand down to a vertical icon menu, and then expand sideways into a menu with icons and text, as per below. This menu should be suitable for adding dozens or hundreds of different card types in the future. 
+
+At the top bar, now that the buttons can be removed for Add Agent, Add Input, I'd like to put a larger input box for a Canvas Name and then move the Zoom In and Zoom Out to the right hand side. I'd also like zoom speed to be activated in the component, as it currently doesn't work, and the zoom is about 1/2 the speed I'd like it to be.
+
+the following features should be there.
+
+Add 
+-File Input
+-File Output
+-Agent
+-Text (new card, just add placeholder)
+-Display (new card, just add placeholder)
+-Tool (new card, just add placeholder)
+
+Export
+- PNG
+- Export JSON
+- Import JSON

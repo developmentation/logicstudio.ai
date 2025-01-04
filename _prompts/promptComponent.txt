@@ -1,0 +1,5 @@
+Build me a ___ compnent for this Minister GPT application. Here, I should be able to see 
+- 
+- include 4-6 additional features or fields you can think of.
+
+Follow the vue style guide and reference the TemplateComponent as required. The Landing.js shows how this component will integrate to the application.

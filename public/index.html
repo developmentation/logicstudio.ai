@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>LogicStudio.ai</title>
+
+    <link rel="icon" type="image/png" href="./assets/fav.png" />
+    <!-- Vue and Vue Router from CDN -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-router@4.2.3/dist/vue-router.global.js"></script> -->
+    <script src="./plugins/vue.global.js"></script>
+    <script src="./plugins/vue-router.global.js"></script>
+
+
+    <!-- Other Plugins -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+    <script src="./plugins/axios.min.js"></script>
+
+    <!-- Primevue -->
+    <!-- <script src="https://unpkg.com/primevue/umd/primevue.min.js"></script> 
+    <script src="https://unpkg.com/@primevue/themes/umd/aura.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/primeicons@4.0.0/primeicons.css" /> -->
+    <script src="./plugins/primevue.min.js"></script>
+    <script src="./plugins/aura.min.js"></script>
+    <link rel="stylesheet" href="./plugins/primeicons.css" />
+
+    <!-- Tailwind CSS CDN -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <script src="./plugins/tailwind.js"></script>
+
+    <!-- UUID-->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.2.0/uuidv4.min.js"></script> -->
+    <script src="./plugins/uuidv4.min.js"></script>
+
+    <!-- ChartJS - Quick and Simple Data Visualization - Not presently needed -->
+    <!-- <script type="module" src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script> -->
+    <!-- <script type="module" src="./plugins/chart.umd.min.js"></script> -->
+
+    <!--JSON5 - For processing complex JSON objects -->
+    <!-- <script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/json5/2.2.3/index.min.js"></script> -->
+    <script src="./plugins/json5.min.js"></script>
+    <script src="./plugins/html2canvas.min.js"></script>
+
+    <!--Socket.io Client-->
+    <!-- <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script> -->
+    <script src="./plugins/socket.io.min.js"></script>
+
+    <!-- Include Main Script -->
+    <script type="module" src="/main.js"></script>
+
+    <style>
+        html,
+        body {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: none;
+        }
+
+
+        #app {
+            /* or your root element */
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+
+        /* Add html.landing-page as well */
+        html.landing-page,
+        body.landing-page,
+        #app.landing-page {
+            position: relative !important;
+            height: auto !important;
+            overflow: visible !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+
+
+        .flex.box {
+            display: flex;
+            justify-content: center;
+            /* Centers horizontally */
+            align-items: center;
+            /* Centers vertically if the outer div has a specific height */
+            height: 100vh;
+            /* Optional: Change according to your needs, maybe 100% or a specific height */
+        }
+
+        .container {
+            overflow-x: hidden;
+            /* Prevent horizontal scrolling */
+        }
+
+
+
+        .upload-media-container {
+            max-width: 960px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .header h2 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .close-button,
+        .transcribe-button {
+            border-radius: 8px;
+        }
+
+        .drop-area {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .choose-files {
+            color: blue;
+            cursor: pointer;
+        }
+
+        .file-upload {
+            width: 100%;
+        }
+
+        .placeholder-text {
+            color: #aaa;
+        }
+
+
+
+        .connection-point {
+            transition: transform 0.2s;
+        }
+
+        .connection-point:hover {
+            transform: scale(1.2);
+        }
+
+
+
+
+
+        .socket {
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            background-color: #1f2937;
+            cursor: crosshair;
+            transition: border-color 0.2s background-color 0.15s ease;
+        }
+
+        .socket:hover {
+            border-color: #60a5fa;
+        }
+
+        .socket-input {
+            border-radius: 2px 0 0 2px;
+            margin-left: -6px;
+        }
+
+        .socket-output {
+            border-radius: 0 2px 2px 0;
+            margin-right: -6px;
+        }
+
+        .socket.socket-highlight {
+            background-color: #60A5FA;
+            box-shadow: 0 0 0 2px #3B82F6;
+        }
+
+        .node-card {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            touch-action: none;
+            /* Prevents default touch actions on cards */
+        }
+
+        .node-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Add these styles to your component's <style> section or global CSS */
+        .canvas-container {
+            cursor: default;
+            touch-action: none;
+            /* Prevents default touch actions on the canvas */
+            -webkit-overflow-scrolling: touch;
+            /* Enables smooth scrolling on iOS */
+        }
+
+        .canvas-container.panning {
+            cursor: grabbing !important;
+        }
+
+
+        .socket {
+            width: 14px;
+            height: 14px;
+            /* border-radius: 50%; */
+            /* background: #4a5568; */
+            /* border: 2px solid #2d3748; */
+            cursor: pointer;
+            touch-action: none;
+        }
+
+        .socket:hover {
+            background: #718096;
+        }
+
+        .socket-input {
+            margin-left: -6px;
+        }
+
+        .socket-output {
+            margin-right: -6px;
+        }
+    </style>
+    <style>
+        /* Base editor */
+        .socket-editor {
+            min-height: 6rem;
+            padding: 0.75rem;
+            width: 100%;
+            font-size: 0.75rem;
+            line-height: 1.75;
+            color: #e5e7eb;
+            background-color: #111827;
+            border-radius: 0.25rem;
+
+            /* Space wrapping properties */
+            white-space: break-spaces !important;
+            /* Changed from pre-wrap to break-spaces */
+            overflow-wrap: break-word !important;
+            word-wrap: break-word !important;
+            /* For older browsers */
+            word-break: break-word !important;
+            /* Changed from break-all to break-word */
+            overflow-x: hidden !important;
+            /* Prevent horizontal scrolling */
+
+            /* Ensure proper text editing */
+            -webkit-user-modify: read-write;
+            -moz-user-modify: read-write;
+            user-modify: read-write;
+
+            /* Cursor */
+            caret-color: #fff;
+
+            max-height: 150px;
+            overflow-y: auto;
+            overflow-x: hidden;
+
+
+            -webkit-overflow-scrolling: touch;
+            /* For better touch device scrolling */
+            overscroll-behavior: contain;
+            /* Prevent scroll chaining */
+
+            cursor: text !important;
+
+        }
+
+        /* Socket tag */
+        .socket-tag {
+            display: inline;
+            background-color: #4b5563;
+            color: #f9fafb;
+            border-radius: 0.25rem;
+            padding: 0 0.25rem;
+            margin: 0 5px;
+            line-height: inherit;
+            font-size: inherit;
+            user-select: none;
+            -webkit-user-select: none;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            /* Keep tag contents from wrapping */
+            vertical-align: baseline;
+            cursor: pointer !important;
+
+        }
+
+        /* Other styles remain the same */
+        .socket-tag:hover {
+            background-color: #374151;
+        }
+
+        .socket-tag.selected {
+            background-color: #3b82f6;
+            color: white;
+            outline: 2px solid #60a5fa;
+        }
+
+        .socket-editor:empty::before {
+            content: attr(data-placeholder);
+            color: #6b7280;
+            pointer-events: none;
+        }
+
+        .socket-editor::selection {
+            background-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .socket-editor br {
+            line-height: inherit;
+            content: '';
+        }
+    </style>
+    <style>
+        /* Input container */
+        .socket-input-container {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+
+        .socket-input-container button {
+            cursor: pointer !important;
+        }
+
+
+        /* Input field */
+        .socket-input-container input {
+            flex: 1;
+            /* Fill remaining space */
+            min-width: 0;
+            /* Allow input to shrink if needed */
+            padding: 0.375rem 0.5rem;
+            background-color: #1f2937;
+            /* bg-gray-800 */
+            color: #e5e7eb;
+            /* text-gray-200 */
+            border: 1px solid #374151;
+            /* border-gray-700 */
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            /* text-xs */
+            line-height: 1.5;
+            outline: none;
+            transition: border-color 0.15s ease;
+            cursor: text !important;
+        }
+
+        .socket-input-container input:focus {
+            border-color: #4b5563;
+            /* Slightly lighter on focus */
+            box-shadow: 0 0 0 1px #4b5563;
+            /* Subtle glow effect */
+        }
+
+        /* Button */
+        .socket-input-container button {
+            flex-shrink: 0;
+            /* Prevent button from shrinking */
+            padding: 0.375rem 0.75rem;
+            background-color: #3b82f6;
+            /* bg-blue-500 */
+            color: white;
+            font-size: 0.75rem;
+            /* text-xs */
+            border-radius: 0.25rem;
+            transition: background-color 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .socket-input-container button:hover {
+            background-color: #2563eb;
+            /* bg-blue-600 */
+        }
+
+        .socket-input-container button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px #60a5fa;
+            /* Focus ring */
+        }
+    </style>
+    <style>
+        .cursor-indicator {
+            display: inline-block;
+            width: 2px;
+            height: 1.2em;
+            background-color: #3b82f6;
+            /* Tailwind blue-500 */
+            vertical-align: middle;
+            margin: 0 -1px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-dark" id="app"></div>
+</body>
+
+</html>

@@ -1,0 +1,40 @@
+{
+  "name": "logicstudio-ai",
+  "version": "0.0.1",
+  "description": "An interactive no code AI agentic builder with logic and tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "agentic",
+    "ai",
+    "architecture",
+    "tools",
+    "open source",
+    "canvas",
+    "designer",
+    "studio",
+    "MIT"
+  ],
+  "author": "Janak Alford",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@azure/openai": "^2.0.0",
+    "@deepgram/sdk": "^3.9.0",
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "groq-sdk": "^0.9.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.76.0",
+    "short-unique-id": "^5.2.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.0.3",
+    "ws": "^8.18.0"
+  }
+}

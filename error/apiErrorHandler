@@ -1,0 +1,36 @@
+require('dotenv').config();
+const uuidv4 = require('uuid').v4;
+
+const ApiError = require('./ApiError');
+const logger = require('../middleware/logger');
+
+function apiErrorHandler(err, req, res, next) {
+  const isOperationalError = err instanceof ApiError && err.isOperational;
+
+  if (isOperationalError) {
+    // Operational errors are safe to expose to the client
+    res.status(err.status).json({ message: err.message });
+  } else {
+    // Non-operational errors (programming errors, etc.) should not leak details
+    const errorId = uuidv4(); // Use a function to generate a unique error ID
+    logger.error({
+      id: errorId,
+      message: err.message,
+      stack: err.stack
+    });
+
+    const statusCode = 500;
+    const responseMessage = process.env.MODE === 'DEV'
+      ? `An unexpected error occurred. Error ID: ${errorId}`
+      : 'An unexpected error occurred. Please try again later.';
+
+    res.status(statusCode).json({ message: responseMessage });
+  }
+
+  // Ensure you call next() with an error if you cannot handle it
+  if (!res.headersSent) {
+    next(err);
+  }
+}
+
+module.exports = apiErrorHandler;

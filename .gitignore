@@ -1,0 +1,8 @@
+/node_modules
+/dist
+/build
+/src
+.env
+
+/uploads/*
+!/uploads/placeholder.txt
