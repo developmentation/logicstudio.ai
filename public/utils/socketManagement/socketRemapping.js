@@ -10,46 +10,38 @@
  * @returns {Object} Mapping of old indices to new indices and reindexed sockets
  */
 export const createSocketRemapping = ({
-    oldSockets = [],
-    newSockets = [],
-    deletedSocketIds = [],
-    type = 'input'
-  }) => {
-    // Initialize reindexMap
-    const reindexMap = {};
-    let newIndex = 0;
+  oldSockets = [],
+  newSockets = [],
+  deletedSocketIds = [],
+  type = 'input'
+}) => {
+  // Initialize reindexMap
+  const reindexMap = {};
   
-    // Map old indices to new indices
-    oldSockets.forEach((socket, oldIndex) => {
-      if (deletedSocketIds.includes(socket?.id)) {
-        reindexMap[oldIndex] = -1; // Mark deleted sockets
-      } else {
-        reindexMap[oldIndex] = newIndex++; // Assign new index to remaining sockets
-      }
-    });
-  
-    // Create reindexed sockets with updated names and indices
-    // const reindexedSockets = newSockets.map((socket, index) => ({
-    //   ...socket,
-    //   sourceIndex: index,
-    //   name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
-    //   momentUpdated: Date.now()
-    // }));
-  
+  // For each old socket, find its new position in newSockets array
+  oldSockets.forEach((oldSocket, oldIndex) => {
+    if (deletedSocketIds.includes(oldSocket?.id)) {
+      reindexMap[oldIndex] = -1; // Mark deleted sockets
+    } else {
+      // Find where this socket ended up in the new array
+      const newPosition = newSockets.findIndex(s => s.id === oldSocket.id);
+      reindexMap[oldIndex] = newPosition; // Map to its new position
+    }
+  });
 
-    const reindexedSockets = newSockets.map((socket, index) => ({
-        ...socket,
-        sourceIndex: index,
-        // Only set default name if none exists
-        name: socket.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
-        momentUpdated: Date.now()
-      }));
-      
-    return {
-      reindexMap,
-      reindexedSockets
-    };
+  // Create reindexed sockets using their new array positions
+  const reindexedSockets = newSockets.map((socket, index) => ({
+    ...socket,
+    sourceIndex: index, // Use new array position as sourceIndex
+    name: socket.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
+    momentUpdated: Date.now()
+  }));
+  
+  return {
+    reindexMap,
+    reindexedSockets
   };
+};
   
   /**
    * Handles cleanup of deleted sockets

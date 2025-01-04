@@ -72,7 +72,7 @@ export default {
       </div>
 
       <!-- Output Socket -->
-      <div class="absolute -right-[12px]" style="bottom: 16px;">
+      <div class="absolute -right-[12px]" style="top: 16px;">
         <BaseSocket
           type="output"
           :socket-id="outputSocket.id"

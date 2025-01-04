@@ -58,7 +58,7 @@ export default {
       <div 
         v-if="localCardData.sockets.outputs?.[0]"
         class="absolute -right-[12px]" 
-        style="bottom: 16px;"
+        style="top: 16px;"
       >
         <BaseSocket
           type="output"

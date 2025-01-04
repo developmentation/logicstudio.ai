@@ -59,43 +59,33 @@ export const createCanvasRegistry = (props) => {
     return true;
   };
 
-  // Manual state management
-  const saveCanvasState = () => {
-    const canvas = activeCanvas.value;
-    if (!canvas) return;
-    canvas.cards = serializeCards();
-    canvas.connectionState = serializeConnectionState();
-    canvas.lastModified = Date.now();
-    canvases.value = [...canvases.value];
-  };
 
   // Export/Import
   const exportCanvas = (canvasId = activeCanvasId.value) => {
     const canvas =activeCanvas.value;
     if (!canvas) return null;
 
-    saveCanvasState(); // Save current state before export
+    console.log("exportCanvas", JSON.parse(JSON.stringify(activeCanvas.value)))
 
     return {
       id: canvas.id,
       name: canvas.name,
       cards: canvas.cards,
-        connections: canvas.connections,
-      connectionState: canvas.connectionState,
+      connections: canvas.connections,
       viewport: canvas.viewport,
       created: canvas.created,
       lastModified: canvas.lastModified,
-      version: "2.0",
+      version: "1.0", //Could load this fromt he configs
     };
   };
 
   const importCanvas = (canvasData) => {
+    console.log("Import Data", canvasData)
     const canvas = {
       id: canvasData.id || uuidv4(),
       name: canvasData.name || "Imported Canvas",
       cards: canvasData.cards || [],
       connections: canvasData.connections || [],
-      connectionState: canvasData.connectionState || {},
       viewport: canvasData.viewport || {
         zoomLevel: 1,
         centerX: 0,
@@ -107,7 +97,7 @@ export const createCanvasRegistry = (props) => {
 
     canvases.value = [...canvases.value, canvas];
     setActiveCanvas(canvas);
-
+    
     return canvas.id;
   };
 

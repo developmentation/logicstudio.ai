@@ -27,9 +27,6 @@ export default {
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
       @select-card="$emit('select-card', $event)"
-      @mousedown.stop="$emit('select-card', { cardId: localCardData.uuid })"
-      @touchstart.stop="$emit('select-card', { cardId: localCardData.uuid })"
-      style="user-select: none;"
     >
       <!-- Output Sockets -->
       <div class="absolute -right-[12px] flex flex-col gap-4 py-4">
@@ -56,7 +53,7 @@ export default {
       </div>
 
       <!-- Content -->
-      <div class="space-y-2 text-gray-300 p-4">
+      <div class="space-y-2 text-gray-300 p-4 select-none">
         <!-- File Upload Area -->
         <div 
           class="flex justify-center items-center border-2 border-dashed border-gray-600 rounded-lg p-4 cursor-pointer"
@@ -80,7 +77,11 @@ export default {
         </div>
 
         <!-- File List -->
-        <div class="bg-gray-800 rounded overflow-hidden">
+        <div 
+          class="bg-gray-800 rounded overflow-hidden select-none"
+          @mousedown.stop
+          @touchstart.stop.prevent
+        >
           <table class="w-full text-sm">
             <thead class="bg-gray-900">
               <tr>
@@ -102,6 +103,7 @@ export default {
                     class="text-gray-400 hover:text-white"
                     @click.stop="removeFile(index)"
                     @mousedown.stop
+                    @touchstart.stop
                   >×</button>
                 </td>
               </tr>
@@ -118,29 +120,38 @@ export default {
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
 
+   
     const initializeCardData = (data) => {
+      // Extract file data from sockets
+      const filesData = data.sockets?.outputs?.map(socket => ({
+        name: socket.value?.metadata?.name || socket.name,
+        type: socket.value?.metadata?.type || 'text/plain',
+        size: socket.value?.metadata?.size || 0,
+        lastModified: socket.value?.metadata?.lastModified || Date.now()
+      })) || [];
+    
       return {
         uuid: data.uuid,
         name: data.name || "Input Card",
         description: data.description || "File Input Node",
         x: data.x || 0,
         y: data.y || 0,
-        filesData: data.filesData || [],
+        filesData: filesData,
         sockets: {
           inputs: [],
-          outputs: data.filesData?.map((file, index) => ({
-            ...createSocket({
-              type: 'output',
-              index,
-              existingId: data.sockets?.outputs?.[index]?.id,
-              value: data.sockets?.outputs?.[index]?.value
-            }),
-            // Override the default name with the filename
-            name: file.name
+          outputs: data.sockets?.outputs?.map((socket, index) => ({
+            ...socket,
+            type: 'output',
+            index: socket.sourceIndex || index,
+            // Preserve the existing socket ID and value
+            id: socket.id,
+            value: socket.value,
+            name: socket.name
           })) || []
         }
       };
     };
+    
     const localCardData = Vue.ref(initializeCardData(props.cardData));
 
     const getSocketConnections = (socketId) => connections.value.has(socketId);

@@ -15,12 +15,50 @@ import { createCardRegistry } from "../utils/cardManagement/cardRegistry.js";
 //The main array to handle all the user's canvases
 //The concept being that you can have multiple / a full array loaded
 const canvases = Vue.ref([]);
+const activeCanvasId = Vue.ref(null); //Track the activeCanvas by ID
 
 // Actives are set as shortcuts for quick reference throughout the application
-const activeCanvas = Vue.ref(null);
-const activeCanvasId = Vue.ref(null);
-const activeCards = Vue.ref(null);
-const activeConnections = Vue.ref(null);
+// const activeCanvas = Vue.ref(null);
+// const activeCards = Vue.ref(null);
+// const activeConnections = Vue.ref(null);
+
+// Cache the active canvas index
+const activeCanvasIndex = Vue.computed(() =>
+  canvases.value.findIndex((c) => c.id === activeCanvasId.value)
+);
+
+const activeCanvas = Vue.computed({
+  get: () => {
+    return canvases.value[activeCanvasIndex.value] || null;
+  },
+  set: (canvas) => {
+    if (activeCanvasIndex.value !== -1) {
+      canvases.value[activeCanvasIndex.value] = canvas;
+    }
+  },
+});
+
+const activeCards = Vue.computed({
+  get: () => {
+    return canvases.value[activeCanvasIndex.value]?.cards || [];
+  },
+  set: (newCards) => {
+    if (activeCanvasIndex.value !== -1) {
+      canvases.value[activeCanvasIndex.value].cards = newCards;
+    }
+  },
+});
+
+const activeConnections = Vue.computed({
+  get: () => {
+    return canvases.value[activeCanvasIndex.value]?.connections || [];
+  },
+  set: (newConnections) => {
+    if (activeCanvasIndex.value !== -1) {
+      canvases.value[activeCanvasIndex.value].connections = newConnections;
+    }
+  },
+});
 
 // UI Refs
 const canvasRef = Vue.ref(null);
@@ -57,56 +95,68 @@ const Z_INDEX_LAYERS = {
 };
 
 export const useCanvases = () => {
+  //Global / common functions
 
-
-    //Global / common functions
-    
   const calculateConnectionPoint = (cardId, socketId, type) => {
-    const socketElement = document.querySelector(`[data-socket-id="${socketId}"]`);
+    const socketElement = document.querySelector(
+      `[data-socket-id="${socketId}"]`
+    );
     if (!socketElement) return null;
 
     const rect = socketElement.getBoundingClientRect();
     const canvasRect = canvasRef.value.getBoundingClientRect();
 
     const screenX = type === "source" ? rect.right : rect.left;
-    const screenY = rect.top + (rect.height / 2);
+    const screenY = rect.top + rect.height / 2;
 
-    const canvasX = (screenX - canvasRect.left + canvasRef.value.scrollLeft - 4000) / zoomLevel.value;
-    const canvasY = (screenY - canvasRect.top + canvasRef.value.scrollTop - 4000) / zoomLevel.value;
+    const canvasX =
+      (screenX - canvasRect.left + canvasRef.value.scrollLeft - 4000) /
+      zoomLevel.value;
+    const canvasY =
+      (screenY - canvasRect.top + canvasRef.value.scrollTop - 4000) /
+      zoomLevel.value;
 
     return { x: canvasX, y: canvasY };
-};
+  };
 
+  const calculateConnectionPoints = (connectionData) => {
+    const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } =
+      connectionData;
 
-const calculateConnectionPoints = (connectionData) => {
-    const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } = connectionData;
-
-    const sourcePoint = calculateConnectionPoint(sourceCardId, sourceSocketId, "source");
-    const targetPoint = calculateConnectionPoint(targetCardId, targetSocketId, "target");
+    const sourcePoint = calculateConnectionPoint(
+      sourceCardId,
+      sourceSocketId,
+      "source"
+    );
+    const targetPoint = calculateConnectionPoint(
+      targetCardId,
+      targetSocketId,
+      "target"
+    );
 
     if (!sourcePoint || !targetPoint) {
-        console.warn('Could not calculate points for connection:', connectionData);
-        return null;
+      console.log("connectionData", connectionData);
+      console.warn(
+        "Could not calculate points for connection:",
+        connectionData
+      );
+      return null;
     }
 
     return {
-        sourcePoint,
-        targetPoint
+      sourcePoint,
+      targetPoint,
     };
-};
-
-
-
-
+  };
 
   // Create registry instances
   //OK
   const canvasRegistry = createCanvasRegistry({
     canvases,
-    activeCanvas,
     activeCanvasId,
-    activeConnections,
+    activeCanvas,
     activeCards,
+    activeConnections,
     serializeCards: () =>
       activeCards.value.map((card) => ({
         ...Vue.toRaw(card),
@@ -130,7 +180,7 @@ const calculateConnectionPoints = (connectionData) => {
 
   // Create utility instances
   const pointCalculation = createPointCalculation({
-    cards:activeCards,
+    cards: activeCards,
     canvasRef,
     zoomLevel,
     GRID_SIZE,
@@ -149,12 +199,12 @@ const calculateConnectionPoints = (connectionData) => {
     selectedCardIds, // Needed for clearing selection
     panBackground, // Used in some connection operation
     selectedCardIds, // Add this to allow clearing card selection in connection clicks
-    calculateConnectionPoint, 
+    calculateConnectionPoint,
     calculateConnectionPoints,
     onConnectionStart: (connection) => {
-        activeConnection.value = connection;
-      },
-    
+      activeConnection.value = connection;
+    },
+
     onConnectionCreated: (connection) => {
       if (activeCanvas.value) {
         socketConnections.updateCanvasConnections([...activeConnections.value]);
@@ -171,10 +221,9 @@ const calculateConnectionPoints = (connectionData) => {
     getScaledPoint: pointCalculation.getScaledPoint,
   });
 
-
   //OK
   const cardRegistry = createCardRegistry({
-    updateCardSockets:socketConnections.updateCardSockets,
+    updateCardSockets: socketConnections.updateCardSockets,
     activeCards,
     selectedCardIds,
     Z_INDEX_LAYERS,
@@ -199,7 +248,7 @@ const calculateConnectionPoints = (connectionData) => {
     zoomLevel,
     connections: activeConnections,
     canvasRef,
-    
+
     calculateConnectionPoint,
     calculateConnectionPoints,
     updateConnections: () => {
@@ -311,8 +360,6 @@ const calculateConnectionPoints = (connectionData) => {
     touchEvents.cleanup?.();
   });
 
-
-
   // Comprehensive return statement:
   return {
     // Core State
@@ -360,13 +407,12 @@ const calculateConnectionPoints = (connectionData) => {
     findSocket: socketConnections.findSocket,
     getSocketType: socketConnections.getSocketType,
     propagateValue: socketConnections.propagateValue,
-    updateCardSockets:socketConnections.updateCardSockets,
+    updateCardSockets: socketConnections.updateCardSockets,
 
     // Connection Styling & State
     getConnectionStyle: socketConnections.getConnectionStyle,
     getConnectionState: socketConnections.getConnectionState,
     activateConnection: socketConnections.activateConnection,
-    
 
     // Connection Event Handlers
     handleConnectionDragStart: socketConnections.handleConnectionDragStart,
