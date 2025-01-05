@@ -37,6 +37,7 @@ export default {
     }
   },
 
+
   template: `
   <div class="flex items-center relative">
     <!-- Input Label -->
@@ -58,7 +59,8 @@ export default {
             'socket-highlight': isHighlighted,
             'socket-error': hasError,
             'socket-active': isActive,
-            'socket-connected': isConnected
+            'socket-connected': isConnected,
+            'border-2 border-green-500': hasValue
           }
         ]"
         @mousedown.stop="handleMouseDown"
@@ -73,19 +75,6 @@ export default {
       >
         <div v-if="hasError" class="absolute -top-4 left-1/2 transform -translate-x-1/2 text-xs text-red-500">!</div>
       </div>
-
-      <!-- Value Indicator -->
-      <div 
-        v-if="hasValue"
-        class="absolute w-1 h-1 rounded-full z-50"
-        :class="[type === 'input' ? 'bg-blue-400' : 'bg-green-400']"
-        :style="{
-          bottom: '-6px',
-          left: 'calc(50%)',
-          pointerEvents: 'none',
-          boxShadow: '0 0 2px rgba(0,0,0,0.3)'
-        }"
-      ></div>
     </div>
 
     <!-- Output Label -->
@@ -97,6 +86,7 @@ export default {
     </span>
   </div>
 `,
+
 
   setup(props, { emit }) {
     // Refs

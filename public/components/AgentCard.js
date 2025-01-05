@@ -1,13 +1,16 @@
 // AgentCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
-import SocketEditor from './SocketEditor.js';
+import SocketEditor from "./SocketEditor.js";
+import { useConfigs } from "../composables/useConfigs.js";
+import { useRealTime } from "../composables/useRealTime.js";
+
 import {
   updateSocketArray,
   createSocketUpdateEvent,
   createSocket,
-  generateSocketId
-} from '../utils/socketManagement/socketRemapping.js';
+  generateSocketId,
+} from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "AgentCard",
@@ -46,6 +49,19 @@ export default {
       @close-card="$emit('close-card', $event)"
       @select-card="$emit('select-card', $event)"
     >
+
+    <div class = "w-full">
+        <select
+        v-model="localCardData.model"
+        class="flex-1 bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded cursor-pointer;" style = "border: 1px solid #374151; width:100%"
+        @mousedown.stop
+        @change="handleCardUpdate">
+        <option v-for="model in models" :key="model.model" :value="model">
+          {{model.name.en}}
+        </option>
+      </select>
+      </div>
+
       <!-- Input Sockets -->
        <div class="absolute -left-[12px] flex flex-col gap-1" style="top: 16px;">
         <div
@@ -117,6 +133,8 @@ export default {
           />
         </div>
 
+        {{localCardData.userPrompt}}
+
         <!-- Output Display -->
         <div class="space-y-1">
           <label class="text-xs text-gray-400 font-medium">Output</label>
@@ -124,7 +142,24 @@ export default {
             {{ localCardData.output || 'No output yet...' }}
           </div>
         </div>
-      </div>
+
+ <div class="mt-4">
+          <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2">
+              <input 
+                type="checkbox"
+                v-model="localCardData.triggerOnInput"
+                class="form-checkbox"
+              />
+              <span class="text-xs text-gray-400">Trigger on input</span>
+            </label>
+            <button
+              class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
+              @click="triggerAgent"
+            >Trigger</button>
+          </div>
+        </div>
+     </div>
     </BaseCard>
   `,
 
@@ -134,37 +169,63 @@ export default {
     const isProcessing = Vue.ref(false);
     const socketMap = Vue.ref(new Map());
 
+    const { models } = useConfigs();
+    const {
+      wsUuid,
+      sessions,
+      sessionsContent,
+      registerSession,
+      unregisterSession,
+      sendToServer,
+    } = useRealTime();
+
+    let websocketId = Vue.ref(uuidv4()); //Create a unique websocket ID for gathering the results back
+
     // Initialize card data with proper socket structure
-const initializeCardData = (data) => {
-  return {
-    uuid: data.uuid,
-    name: data.name || "Agent",
-    description: data.description || "Agent Node",
-    systemPrompt: data.systemPrompt || "",
-    userPrompt: data.userPrompt || "",
-    output: data.output || "",
-    x: data.x || 0,
-    y: data.y || 0,
-    sockets: {
-      inputs: data.sockets?.inputs?.map((socket, index) => ({
-        ...createSocket({
-          type: 'input',
-          index,
-          existingId: socket.id,
-          value: socket.value
-        }),
-        name: socket.name,
-        source: socket.source
-      })) || [],
-      outputs: [createSocket({
-        type: 'output',
-        index: 0,
-        existingId: data.sockets?.outputs?.[0]?.id,
-        value: data.sockets?.outputs?.[0]?.value
-      })]
-    }
-  };
-};
+    const initializeCardData = (data) => {
+      return {
+        //Unique and identification properties
+        uuid: data.uuid,
+        name: data.name || "Agent",
+        description: data.description || "Agent Node",
+
+        //Card specific properties
+        model: data.model || "", //make this models in the near future to account for parallel processing
+        temperature: data.temperature || 0.4,
+        triggerOnInput: data.triggerOnInput || false,
+        systemPrompt: data.systemPrompt || "",
+        userPrompt: data.userPrompt || "",
+        output: data.output || "",
+        status: data.status || "idle",
+
+        //Display
+        x: data.x || 0,
+        y: data.y || 0,
+
+        //Sockets
+        sockets: {
+          inputs:
+            data.sockets?.inputs?.map((socket, index) => ({
+              ...createSocket({
+                type: "input",
+                index,
+                existingId: socket.id,
+                value: socket.value,
+              }),
+              name: socket.name,
+              source: socket.source,
+            })) || [],
+          outputs: [
+            createSocket({
+              type: "output",
+              index: 0,
+              existingId: data.sockets?.outputs?.[0]?.id,
+              value: data.sockets?.outputs?.[0]?.value,
+            }),
+          ],
+        },
+      };
+    };
 
     // Initialize local state
     const localCardData = Vue.reactive(initializeCardData(props.cardData));
@@ -177,11 +238,21 @@ const initializeCardData = (data) => {
     const getSocketConnections = (socketId) => connections.value.has(socketId);
     const hasSocketError = () => false;
 
+    Vue.onMounted(() => {
+      //If no model is provided, then assign the first one automatically
+      if (models.value.length && !localCardData.model) {
+        localCardData.model = models.value[0];
+      }
+
+      //Register this agent into the websocket registry
+      registerSession(websocketId.value, null);
+    });
+
     const handleSocketMount = (event) => {
       if (!event) return;
-      socketRegistry.set(event.socketId, { 
-        element: event.element, 
-        cleanup: [] 
+      socketRegistry.set(event.socketId, {
+        element: event.element,
+        cleanup: [],
       });
     };
 
@@ -194,17 +265,23 @@ const initializeCardData = (data) => {
     const parseSocketDeclarations = (text, source) => {
       const pattern = /<socket\s+name\s*=\s*"([^"]+)"\s*\/>/g;
       const matches = [...text.matchAll(pattern)];
-      
-      return matches.map(match => ({
+
+      return matches.map((match) => ({
         name: match[1],
-        source
+        source,
       }));
     };
 
     // Get both prompt's socket declarations
     const getMergedSocketDeclarations = () => {
-      const systemDeclarations = parseSocketDeclarations(localCardData.systemPrompt, "system");
-      const userDeclarations = parseSocketDeclarations(localCardData.userPrompt, "user");
+      const systemDeclarations = parseSocketDeclarations(
+        localCardData.systemPrompt,
+        "system"
+      );
+      const userDeclarations = parseSocketDeclarations(
+        localCardData.userPrompt,
+        "user"
+      );
       return systemDeclarations.concat(userDeclarations);
     };
 
@@ -212,71 +289,76 @@ const initializeCardData = (data) => {
     const handleSocketUpdate = ({ type }) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
-    
+
       try {
         const oldSockets = [...localCardData.sockets.inputs];
         const declarations = getMergedSocketDeclarations();
-        
+
         // Create new sockets with proper names from declarations
         const newSockets = declarations.map((decl, index) => {
-          const existingSocket = oldSockets.find(s => 
-            s.name === decl.name && s.source === decl.source
+          const existingSocket = oldSockets.find(
+            (s) => s.name === decl.name && s.source === decl.source
           );
-    
+
           // Create the socket with preserved name and source
           const socket = createSocket({
-            type: 'input',
+            type: "input",
             index,
             existingId: existingSocket?.id,
-            value: existingSocket?.value
+            value: existingSocket?.value,
           });
-          
+
           // Explicitly override the name to prevent default naming
           socket.name = decl.name;
           socket.source = decl.source;
           return socket;
         });
-    
+
         // Find deleted sockets
         const deletedSocketIds = oldSockets
-          .filter(old => !newSockets.some(n => 
-            n.name === old.name && n.source === old.source
-          ))
-          .map(s => s.id);
-    
+          .filter(
+            (old) =>
+              !newSockets.some(
+                (n) => n.name === old.name && n.source === old.source
+              )
+          )
+          .map((s) => s.id);
+
         // Use utility for socket array update
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'input',
+          type: "input",
           deletedSocketIds,
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
-    
+
         // Ensure the reindexed sockets retain their names
         const finalSockets = reindexedSockets.map((socket, index) => {
           const declaration = declarations[index];
           return {
             ...socket,
             name: declaration.name,
-            source: declaration.source
+            source: declaration.source,
           };
         });
-    
+
         // Update local state with properly named sockets
         localCardData.sockets.inputs = finalSockets;
-    
+
         // Emit socket update event
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.uuid,
-          oldSockets,
-          newSockets: finalSockets,
-          reindexMap,
-          deletedSocketIds,
-          type: 'input'
-        }));
-    
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.uuid,
+            oldSockets,
+            newSockets: finalSockets,
+            reindexMap,
+            deletedSocketIds,
+            type: "input",
+          })
+        );
       } finally {
         isProcessing.value = false;
         Vue.nextTick(() => {
@@ -287,13 +369,13 @@ const initializeCardData = (data) => {
     // Handle prompt changes
     const handlePromptChange = (type, text) => {
       if (isProcessing.value) return;
-      
+
       if (type === "system") {
         localCardData.systemPrompt = text;
       } else {
         localCardData.userPrompt = text;
       }
-      
+
       Vue.nextTick(() => {
         handleCardUpdate();
       });
@@ -311,39 +393,121 @@ const initializeCardData = (data) => {
       }
     };
 
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value || !oldData) return;
-      isProcessing.value = true;
+    //Agent management
+    const triggerAgent = () => {
+      //Replace content with socket values.
 
-      try {
-        // Update position and output only if changed
-        if (newData.x !== oldData.x) localCardData.x = newData.x;
-        if (newData.y !== oldData.y) localCardData.y = newData.y;
-        if (newData.output !== oldData.output) {
-          localCardData.output = newData.output;
-        }
+      //Add them into a messageHistory object
+      let messageHistory = [
+        { role: "system", content: localCardData.systemPrompt },
+        { role: "user", content: localCardData.userPrompt },
+      ];
 
-        // Update socket values
-        if (newData.sockets?.inputs) {
-          newData.sockets.inputs.forEach(socket => {
-            const existingSocket = socketMap.value.get(socket.id);
-            if (existingSocket) {
-              existingSocket.value = socket.value;
-            }
-          });
+      let temperature = localCardData.temperature;
+
+      //System prompts not yet supported by some models.
+      if(localCardData.model.model == 'o1-mini-2024-09-12') 
+        {
+          messageHistory[0].role = 'user';
+          temperature = 1;
         }
-      } finally {
-        isProcessing.value = false;
+      sendToServer(
+        wsUuid.value, //Websocket connection
+        websocketId.value, //UUID for the Socket
+        localCardData.model.provider || "openAi", //Model provider
+        localCardData.model.model || "gpt-4o", //Model name
+        temperature, //Tempoerature
+        null, //System prompt directly OR messageHistory for a chat function
+        null, //The user prompt
+        messageHistory, //A longer message history, if a chat function
+        "prompt",
+        false //Specify whether to force JSON in the response or not.
+      );
+    };
+
+    const partialMessage = Vue.computed(() => {
+      if (sessions?.value) {
+        const session = sessions.value[websocketId.value]; // Use the sessionId prop to access the correct session
+        return session ? session?.partialMessage : "";
+      } else return "";
+    });
+
+    const completedMessage = Vue.computed(() => {
+      if (sessions?.value) {
+        const session = sessions.value[websocketId.value]; // Use the sessionId prop to access the correct session
+        return session ? session?.completedMessage : "";
+      } else return "";
+    });
+
+    const errorMessage = Vue.computed(() => {
+      if (sessions?.value) {
+        const session = sessions.value[websocketId.value]; // Use the sessionId prop to access the correct session
+        return session ? session?.errorMessage : "";
+      } else return "";
+    });
+
+    Vue.watch(partialMessage, (newValue, oldValue) => {
+      localCardData.output = newValue;
+      localCardData.status = "partial";
+    });
+
+    Vue.watch(completedMessage, (newValue, oldValue) => {
+      localCardData.output = newValue;
+      localCardData.status = "completed";
+      emit("update-card", Vue.toRaw(localCardData));
+      //Emit a card update
+    });
+
+    Vue.watch(errorMessage, (newValue, oldValue) => {
+      if (!oldValue?.length && newValue?.length) {
+        localCardData.output = null;
+        localCardData.status = "error";
+        emit("update-card", Vue.toRaw(localCardData));
       }
-    }, { deep: true });
+      //Emit a card update
+    });
+
+    // Watch for card data changes
+    Vue.watch(
+      () => props.cardData,
+      (newData, oldData) => {
+        if (!newData || isProcessing.value || !oldData) return;
+        isProcessing.value = true;
+
+        try {
+          // Update position and output only if changed
+          if (newData.x !== oldData.x) localCardData.x = newData.x;
+          if (newData.y !== oldData.y) localCardData.y = newData.y;
+          if (newData.output !== oldData.output) {
+            localCardData.output = newData.output;
+          }
+
+          // Update socket values
+          if (newData.sockets?.inputs) {
+            newData.sockets.inputs.forEach((socket) => {
+              const existingSocket = socketMap.value.get(socket.id);
+              if (existingSocket) {
+                existingSocket.value = socket.value;
+              }
+            });
+          }
+        } finally {
+          isProcessing.value = false;
+        }
+      },
+      { deep: true }
+    );
 
     // Cleanup on unmount
     Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
+      socketRegistry.forEach((socket) =>
+        socket.cleanup.forEach((cleanup) => cleanup())
+      );
       socketRegistry.clear();
       connections.value.clear();
       socketMap.value.clear();
+
+      unregisterSession(websocketId.value)
     });
 
     return {
@@ -358,6 +522,12 @@ const initializeCardData = (data) => {
       handleSocketMount,
       handleCardUpdate,
       handleSocketUpdate,
+
+      sessions,
+      websocketId,
+      triggerAgent,
+      models,
+      partialMessage, completedMessage
     };
   },
 };

@@ -31,8 +31,8 @@ exports.getConfigs = async function (req, res, next) {
           provider: "openAi",
         },
         {
-          name: { en: "GPT o1", fr: "GPT o1" },
-          model: "o1",
+          name: { en: "GPT o1-mini", fr: "GPT o1-mini" },
+          model: "o1-mini-2024-09-12",
           provider: "openAi",
         },
       ],

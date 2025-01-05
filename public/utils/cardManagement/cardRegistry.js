@@ -33,6 +33,7 @@ export const createCardRegistry = (props) => {
     [CARD_TYPES.AGENT]: {
       width: 300,
       height: 200,
+      model:null,
       systemPrompt: '<socket name = "b"/>',
       userPrompt: '<socket name = "c"/>',
       messageHistory: [],

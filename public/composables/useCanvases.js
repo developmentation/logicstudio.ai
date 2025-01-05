@@ -61,21 +61,20 @@ const activeCanvasIndex = Vue.computed(() => {
   // console.log('Computing activeCanvasIndex...');
   // console.log('Current canvases:', canvases.value.map(c => c.id));
   // console.log('Current activeCanvasId:', activeCanvasId.value);
-  
+
   if (!activeCanvasId.value || !canvases.value.length) {
     // console.log('Returning 0 due to no activeCanvasId or empty canvases');
     return 0;
   }
-  
+
   const index = canvases.value.findIndex((c) => {
     // console.log('Comparing', c.id, 'with', activeCanvasId.value);
     return c.id === activeCanvasId.value;
   });
-  
+
   // console.log('Found index:', index);
   return index;
 });
-
 
 const activeCanvas = Vue.computed({
   get: () => {
@@ -109,7 +108,6 @@ const activeConnections = Vue.computed({
     }
   },
 });
-
 
 export const useCanvases = () => {
   //Global / common functions
@@ -364,22 +362,26 @@ export const useCanvases = () => {
     cards: activeCards,
     connections: activeConnections,
   });
-  
-const moveCanvasLeft = () => {
-  if (!activeCanvasId.value || activeCanvasIndex.value <= 0) return;
-  const newIndex = activeCanvasIndex.value - 1;
-  if (newIndex >= 0 && newIndex < canvases.value.length) {
-    activeCanvasId.value = canvases.value[newIndex].id;
-  }
-};
 
-const moveCanvasRight = () => {
-  if (!activeCanvasId.value || activeCanvasIndex.value >= canvases.value.length - 1) return;
-  const newIndex = activeCanvasIndex.value + 1;
-  if (newIndex >= 0 && newIndex < canvases.value.length) {
-    activeCanvasId.value = canvases.value[newIndex].id;
-  }
-};
+  const moveCanvasLeft = () => {
+    if (!activeCanvasId.value || activeCanvasIndex.value <= 0) return;
+    const newIndex = activeCanvasIndex.value - 1;
+    if (newIndex >= 0 && newIndex < canvases.value.length) {
+      activeCanvasId.value = canvases.value[newIndex].id;
+    }
+  };
+
+  const moveCanvasRight = () => {
+    if (
+      !activeCanvasId.value ||
+      activeCanvasIndex.value >= canvases.value.length - 1
+    )
+      return;
+    const newIndex = activeCanvasIndex.value + 1;
+    if (newIndex >= 0 && newIndex < canvases.value.length) {
+      activeCanvasId.value = canvases.value[newIndex].id;
+    }
+  };
 
   // Lifecycle hooks
   Vue.onMounted(() => {
@@ -396,6 +398,115 @@ const moveCanvasRight = () => {
     mouseEvents.cleanup?.();
     touchEvents.cleanup?.();
   });
+
+  /////////////// The Orchestrator
+// Helper functions remain the same
+const findSocketInCard = (card, socketId) => {
+  const inputSocket = card.sockets.inputs.find(s => s.id === socketId);
+  if (inputSocket) return { socket: inputSocket, type: 'input' };
+  
+  const outputSocket = card.sockets.outputs.find(s => s.id === socketId);
+  if (outputSocket) return { socket: outputSocket, type: 'output' };
+  
+  return null;
+};
+
+const propagateValueThroughConnection = (connection, canvas) => {
+  const sourceCard = canvas.cards.find(card => card.uuid === connection.sourceCardId);
+  const targetCard = canvas.cards.find(card => card.uuid === connection.targetCardId);
+  
+  if (!sourceCard || !targetCard) return;
+
+  const sourceResult = findSocketInCard(sourceCard, connection.sourceSocketId);
+  const targetResult = findSocketInCard(targetCard, connection.targetSocketId);
+  
+  if (!sourceResult || !targetResult) return;
+
+  targetResult.socket.value = sourceResult.socket.value;
+  targetResult.socket.momentUpdated = Date.now();
+};
+
+// Helper to clear target socket value when connection is removed
+const clearTargetSocket = (connection, canvas) => {
+  const targetCard = canvas.cards.find(card => card.uuid === connection.targetCardId);
+  if (!targetCard) return;
+
+  const targetResult = findSocketInCard(targetCard, connection.targetSocketId);
+  if (!targetResult) return;
+
+  targetResult.socket.value = null;
+  targetResult.socket.momentUpdated = Date.now();
+};
+
+// Create a computed that only extracts the data we need to watch
+const socketAndConnectionState = Vue.computed(() => 
+  canvases.value.map(canvas => ({
+    id: canvas.id,
+    connections: canvas.connections.map(conn => ({
+      id: conn.id,
+      sourceCardId: conn.sourceCardId,
+      sourceSocketId: conn.sourceSocketId,
+      targetCardId: conn.targetCardId,
+      targetSocketId: conn.targetSocketId
+    })),
+    socketValues: canvas.cards.map(card => ({
+      cardId: card.uuid,
+      outputs: card.sockets.outputs.map(socket => ({
+        id: socket.id,
+        value: socket.value
+      }))
+    }))
+  }))
+);
+
+// Watch the computed instead of the entire canvases array
+Vue.watch(
+  socketAndConnectionState,
+  (newState, oldState) => {
+    if (!newState?.length) return;
+    
+    newState.forEach((canvasState, canvasIndex) => {
+      const canvas = canvases.value[canvasIndex];
+      const oldCanvasState = oldState?.[canvasIndex];
+      
+      if (oldCanvasState) {
+        // Check for deleted connections
+        oldCanvasState.connections.forEach(oldConnection => {
+          const stillExists = canvasState.connections.some(conn => conn.id === oldConnection.id);
+          if (!stillExists) {
+            clearTargetSocket(oldConnection, canvas);
+          }
+        });
+      }
+
+      // Check for new connections
+      canvasState.connections.forEach(connection => {
+        const oldConnection = oldCanvasState?.connections.find(c => c.id === connection.id);
+        if (!oldConnection) {
+          propagateValueThroughConnection(connection, canvas);
+        }
+      });
+
+      // Check for socket value changes
+      canvasState.socketValues.forEach((cardState) => {
+        const oldCardState = oldCanvasState?.socketValues.find(c => c.cardId === cardState.cardId);
+        
+        cardState.outputs.forEach(output => {
+          const oldOutput = oldCardState?.outputs.find(o => o.id === output.id);
+          if (oldOutput && output.value !== oldOutput.value) {
+            canvas.connections
+              .filter(conn => conn.sourceCardId === cardState.cardId && conn.sourceSocketId === output.id)
+              .forEach(conn => propagateValueThroughConnection(conn, canvas));
+          }
+        });
+      });
+    });
+  },
+  { 
+    deep: true,
+    immediate: true
+  }
+);
 
   // Comprehensive return statement:
   return {
