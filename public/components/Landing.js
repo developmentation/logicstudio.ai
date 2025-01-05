@@ -1,4 +1,5 @@
 // LandingPage.js
+
 export default {
   name: "LandingPage",
   template: `
@@ -65,48 +66,61 @@ export default {
           </div>
         </section>
 
+       <section class="py-24 bg-gray-800">
+          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex flex-col items-center gap-6 p-6 bg-gray-900 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+              <img 
+                :src="albertaLogoRef" 
+                alt="Alberta Logo" 
+                class="h-12 w-auto opacity-90"
+              />
+              <h2 class="text-3xl font-bold text-white">Built in Alberta</h2>
+              <span class="text-gray-400 text-lg">Let's get building.</span>
+            </div>
+          </div>
+        </section>
         <section class="py-24 bg-gray-900">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-    <h2 class="text-3xl font-bold text-white mb-4">Supported AI Models</h2>
-    <p class="text-gray-400 text-lg mb-12 max-w-2xl mx-auto">
-      Connect with leading AI providers through our native integrations. Build workflows with the most advanced language models available.
-    </p>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-      <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-star text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">Anthropic Claude</h3>
-        <p class="text-gray-400 text-sm mt-2">Claude 3.5 Sonnet & Haiku</p>
-      </div>
-      
-      <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-globe text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">OpenAI</h3>
-        <p class="text-gray-400 text-sm mt-2">GPT-4o, o1</p>
-      </div>
-
-      <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-cloud text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">Azure OpenAI</h3>
-        <p class="text-gray-400 text-sm mt-2">A range of models, including Llama</p>
-      </div>
-
-      <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-bolt text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">Groq</h3>
-        <p class="text-gray-400 text-sm mt-2">Ultra-fast inference</p>
-      </div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+      <h2 class="text-3xl font-bold text-white mb-4">Supported AI Models</h2>
+      <p class="text-gray-400 text-lg mb-12 max-w-2xl mx-auto">
+        Connect with leading AI providers through our native integrations. Build workflows with the most advanced language models available.
+      </p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+          <i class="pi pi-star text-3xl text-emerald-500 mb-4"></i>
+          <h3 class="text-white font-semibold">Anthropic Claude</h3>
+          <p class="text-gray-400 text-sm mt-2">Claude 3.5 Sonnet & Haiku</p>
+        </div>
+        
+        <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+          <i class="pi pi-globe text-3xl text-emerald-500 mb-4"></i>
+          <h3 class="text-white font-semibold">OpenAI</h3>
+          <p class="text-gray-400 text-sm mt-2">GPT-4o, o1</p>
+        </div>
 
         <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-map text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">Mistral</h3>
-        <p class="text-gray-400 text-sm mt-2">Leading EU AI Models</p>
-      </div>
+          <i class="pi pi-cloud text-3xl text-emerald-500 mb-4"></i>
+          <h3 class="text-white font-semibold">Azure OpenAI</h3>
+          <p class="text-gray-400 text-sm mt-2">A range of models, including Llama</p>
+        </div>
 
-      <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-      <i class="pi pi-twitter text-3xl text-emerald-500 mb-4"></i>
-      <h3 class="text-white font-semibold">X</h3>
-      <p class="text-gray-400 text-sm mt-2">Grok 2 Leading Model</p>
-    </div>
+        <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+          <i class="pi pi-bolt text-3xl text-emerald-500 mb-4"></i>
+          <h3 class="text-white font-semibold">Groq</h3>
+          <p class="text-gray-400 text-sm mt-2">Ultra-fast inference</p>
+        </div>
+
+          <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+          <i class="pi pi-map text-3xl text-emerald-500 mb-4"></i>
+          <h3 class="text-white font-semibold">Mistral</h3>
+          <p class="text-gray-400 text-sm mt-2">Leading EU AI Models</p>
+        </div>
+
+        <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
+        <i class="pi pi-twitter text-3xl text-emerald-500 mb-4"></i>
+        <h3 class="text-white font-semibold">X</h3>
+        <p class="text-gray-400 text-sm mt-2">Grok 2 Leading Model</p>
+      </div>
 
     </div>
   </div>
@@ -180,11 +194,12 @@ export default {
     `,
   setup() {
     const videoEl = Vue.ref(null);
-
     const videoUrl = Vue.computed(
       () => `../assets/video${Math.floor(Math.random() * 5) + 1}.mp4`
     );
-
+    const albertaLogoRef = Vue.computed(() => `../assets/albertaLogo.svg`);
+    
+    
     Vue.onMounted(() => {
       // Add landing-page class to both body and app
       document.documentElement.classList.add("landing-page"); // Add to html element
@@ -274,6 +289,7 @@ export default {
     ]);
 
     return {
+      albertaLogoRef,
       features,
       techFeatures,
       stack,

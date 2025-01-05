@@ -19,6 +19,9 @@ app.use((req, res, next) => {
   if (req.path.endsWith(".js")) {
     res.setHeader("Content-Type", "application/javascript");
   }
+  if (req.path.endsWith(".svg")) {
+    res.setHeader("Content-Type", "image/svg+xml");
+  }
   next();
 });
 
