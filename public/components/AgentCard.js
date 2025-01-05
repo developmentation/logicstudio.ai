@@ -75,7 +75,7 @@ export default {
             :socket-id="socket.id"
             :card-id="localCardData.uuid"
             :name="socket.name"
-            :value="getSocketValue(socket.id)"
+            :value="socket?.value"  
             :is-connected="getSocketConnections(socket.id)"
             :has-error="hasSocketError(socket.id)"
             :zoom-level="zoomLevel"
@@ -88,13 +88,15 @@ export default {
       </div>
 
       <!-- Output Socket -->
-      <div class="absolute -right-[12px]" style="top: 16px;">
+      <div 
+       v-if="localCardData.sockets.outputs?.[0]"
+       class="absolute -right-[12px]" style="top: 16px;">
         <BaseSocket
           type="output"
           :socket-id="outputSocket.id"
           :card-id="localCardData.uuid"
           :name="outputSocket.name"
-          :value="getSocketValue(outputSocket.id)"
+          :value="localCardData.sockets.outputs[0].value"
           :is-connected="getSocketConnections(outputSocket.id)"
           :has-error="hasSocketError(outputSocket.id)"
           :zoom-level="zoomLevel"
@@ -117,7 +119,8 @@ export default {
             :existing-sockets="localCardData.sockets.inputs"
             @update:modelValue="text => handlePromptChange('system', text)"
             @socket-update="handleSocketUpdate"
-          />
+            @html-update="html => handleHtmlUpdate(html, 'systemPrompt')"
+            />
         </div>
 
         <!-- User Prompt -->
@@ -130,6 +133,7 @@ export default {
             :existing-sockets="localCardData.sockets.inputs"
             @update:modelValue="text => handlePromptChange('user', text)"
             @socket-update="handleSocketUpdate"
+            @html-update="html => handleHtmlUpdate(html, 'userPrompt')"
           />
         </div>
 
@@ -195,6 +199,8 @@ export default {
         triggerOnInput: data.triggerOnInput || false,
         systemPrompt: data.systemPrompt || "",
         userPrompt: data.userPrompt || "",
+        systemPromptHtml: data.systemPromptHtml || "",
+        userPromptHtml: data.userPromptHtml || "",
         output: data.output || "",
         status: data.status || "idle",
 
@@ -286,7 +292,7 @@ export default {
     };
 
     // Handle socket updates from SocketEditor
-    const handleSocketUpdate = ({ type }) => {
+    const handleSocketUpdate = (event) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
 
@@ -294,21 +300,22 @@ export default {
         const oldSockets = [...localCardData.sockets.inputs];
         const declarations = getMergedSocketDeclarations();
 
-        // Create new sockets with proper names from declarations
+        // Create new sockets using IDs from SocketEditor when available
         const newSockets = declarations.map((decl, index) => {
           const existingSocket = oldSockets.find(
             (s) => s.name === decl.name && s.source === decl.source
           );
 
-          // Create the socket with preserved name and source
+          // Find matching socket info from the event
+          const socketInfo = event.sockets?.find((s) => s.name === decl.name);
+
           const socket = createSocket({
             type: "input",
             index,
-            existingId: existingSocket?.id,
+            existingId: socketInfo?.id || existingSocket?.id,
             value: existingSocket?.value,
           });
 
-          // Explicitly override the name to prevent default naming
           socket.name = decl.name;
           socket.source = decl.source;
           return socket;
@@ -366,6 +373,17 @@ export default {
         });
       }
     };
+
+    // Add logging to handleHtmlUpdate
+    const handleHtmlUpdate = (html, source) => {
+      if (source == "systemPrompt") {
+        localCardData.systemPromptHtml = html;
+      }
+      if (source == "userPrompt") {
+        localCardData.userPromptHtml = html;
+      }
+    };
+
     // Handle prompt changes
     const handlePromptChange = (type, text) => {
       if (isProcessing.value) return;
@@ -394,34 +412,60 @@ export default {
     };
 
     //Agent management
-    const triggerAgent = () => {
-      //Replace content with socket values.
 
-      //Add them into a messageHistory object
+    const triggerAgent = () => {
+      // Resolve HTML content with socket values
+
+      console.log(
+        "Step 1 - Here is the systemPromptHtml",
+        localCardData.systemPromptHtml
+      );
+      const resolvedSystemPrompt = resolveSocketContent(
+        localCardData.systemPromptHtml,
+        localCardData.sockets.inputs
+      ); //|| localCardData.systemPrompt;
+
+      console.log(
+        "Step 2 - Here is the userPromptHtml",
+        localCardData.userPromptHtml
+      );
+      const resolvedUserPrompt = resolveSocketContent(
+        localCardData.userPromptHtml,
+        localCardData.sockets.inputs
+      ); //|| localCardData.userPrompt;
+
       let messageHistory = [
-        { role: "system", content: localCardData.systemPrompt },
-        { role: "user", content: localCardData.userPrompt },
+        { role: "system", content: resolvedSystemPrompt },
+        { role: "user", content: resolvedUserPrompt },
       ];
 
       let temperature = localCardData.temperature;
 
       //System prompts not yet supported by some models.
-      if(localCardData.model.model == 'o1-mini-2024-09-12') 
-        {
-          messageHistory[0].role = 'user';
-          temperature = 1;
-        }
+      if (localCardData.model.model == "o1-mini-2024-09-12") {
+        messageHistory[0].role = "user";
+        temperature = 1;
+      }
+
+      console.log("Calling LLM:", messageHistory);
+
+      //Set the output to null
+      Vue.nextTick(()=>{
+        if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = null;
+        emit("update-card", Vue.toRaw(localCardData));
+      })
+
       sendToServer(
-        wsUuid.value, //Websocket connection
-        websocketId.value, //UUID for the Socket
-        localCardData.model.provider || "openAi", //Model provider
-        localCardData.model.model || "gpt-4o", //Model name
-        temperature, //Tempoerature
-        null, //System prompt directly OR messageHistory for a chat function
-        null, //The user prompt
-        messageHistory, //A longer message history, if a chat function
+        wsUuid.value,
+        websocketId.value,
+        localCardData.model.provider || "openAi",
+        localCardData.model.model || "gpt-4o",
+        temperature,
+        null,
+        null,
+        messageHistory,
         "prompt",
-        false //Specify whether to force JSON in the response or not.
+        false
       );
     };
 
@@ -454,6 +498,8 @@ export default {
     Vue.watch(completedMessage, (newValue, oldValue) => {
       localCardData.output = newValue;
       localCardData.status = "completed";
+      //Set the socket output value
+      if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = newValue;
       emit("update-card", Vue.toRaw(localCardData));
       //Emit a card update
     });
@@ -462,10 +508,64 @@ export default {
       if (!oldValue?.length && newValue?.length) {
         localCardData.output = null;
         localCardData.status = "error";
+        if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = null;
         emit("update-card", Vue.toRaw(localCardData));
       }
       //Emit a card update
     });
+
+    const isJSON = (str) => {
+      try {
+        const obj = JSON.parse(str);
+        return typeof obj === "object" && obj !== null;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    //Convert system and user prompts with the input value
+    const resolveSocketContent = (html, sockets) => {
+      if (!html || !sockets?.length) return html;
+
+      try {
+        // Create a socket map for faster lookups
+        const socketMap = new Map(sockets.map((socket) => [socket.id, socket]));
+
+        // Create a temporary DOM element to parse the HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+
+        // Find all socket tags
+        const socketTags = doc.querySelectorAll("span.socket-tag");
+
+        // Replace each socket tag with its corresponding value
+        socketTags.forEach((tag) => {
+          const socketId = tag.getAttribute("data-socket-id");
+          const socket = socketMap.get(socketId);
+
+          // If socket exists and has a value, replace with value, otherwise empty string
+          let replacement = "";
+          if (socket?.value?.content) {
+            replacement = socket.value.content;
+          } else if (socket?.value) {
+            if (isJSON(socket.value)) {
+              replacement = JSON.stringify(socket.value);
+            } else {
+              replacement = socket.value;
+            }
+          }
+          // Create a text node with the replacement value
+          const textNode = doc.createTextNode(replacement);
+          tag.parentNode.replaceChild(textNode, tag);
+        });
+
+        // Return the body's inner HTML
+        return doc.body.innerHTML;
+      } catch (error) {
+        console.error("Error resolving socket HTML:", error);
+        return html; // Return original content on error
+      }
+    };
 
     // Watch for card data changes
     Vue.watch(
@@ -507,7 +607,7 @@ export default {
       connections.value.clear();
       socketMap.value.clear();
 
-      unregisterSession(websocketId.value)
+      unregisterSession(websocketId.value);
     });
 
     return {
@@ -522,12 +622,14 @@ export default {
       handleSocketMount,
       handleCardUpdate,
       handleSocketUpdate,
+      handleHtmlUpdate,
 
       sessions,
       websocketId,
       triggerAgent,
       models,
-      partialMessage, completedMessage
+      partialMessage,
+      completedMessage,
     };
   },
 };

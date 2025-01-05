@@ -420,8 +420,9 @@ const propagateValueThroughConnection = (connection, canvas) => {
   const sourceResult = findSocketInCard(sourceCard, connection.sourceSocketId);
   const targetResult = findSocketInCard(targetCard, connection.targetSocketId);
   
-  if (!sourceResult || !targetResult) return;
-
+  //Ive temporarily removed this. Sometimes null is valid.
+  // if (!sourceResult || !targetResult) return; // Only update if not null
+  // console.log("targetResult.socket.value = sourceResult.socket.value", {target:targetResult.socket.value , source:sourceResult.socket.value})
   targetResult.socket.value = sourceResult.socket.value;
   targetResult.socket.momentUpdated = Date.now();
 };

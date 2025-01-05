@@ -328,7 +328,16 @@ export default {
         // Update position
         if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
         if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
-
+    
+        // Add this block to update socket values
+        if (newData.sockets?.inputs) {
+          newData.sockets.inputs.forEach((socket, index) => {
+            if (localCardData.value.sockets.inputs[index]) {
+              localCardData.value.sockets.inputs[index].value = socket.value;
+            }
+          });
+        }
+    
         // Update outputs and sockets
         if (newData.outputs !== undefined && 
             newData.outputs.length !== oldData?.outputs?.length) {

@@ -70,7 +70,7 @@ export default {
   </div>
 `,
 
-  emits: ["update:modelValue", "socket-update", "blur"],
+  emits: ["update:modelValue", "socket-update", "blur", "html-update"],
 
   setup(props, { emit }) {
     const editor = Vue.ref(null);
@@ -316,7 +316,7 @@ const cleanHtml = (html) => {
     return cleanHtml(unescaped.replace(
       /<socket\s+name\s*=\s*"([^"]+)"\s*\/>/g,
       (match, socketName) => {
-        const socketId = getOrCreateSocketId(socketName, true);
+        const socketId = getOrCreateSocketId(socketName, false);
         // Add a space wrapper that preserves whitespace
         return `<span 
           class="socket-tag"
@@ -391,7 +391,7 @@ const cleanHtml = (html) => {
           while ((match = socketTagPattern.exec(currentContent)) !== null) {
             tagCount++;
             const [fullMatch, socketName] = match;
-            const socketId = getOrCreateSocketId(socketName, true);
+            const socketId = getOrCreateSocketId(socketName, false);
             lastCreatedId = socketId;
 
             const replacement = `<span 
@@ -460,6 +460,7 @@ const cleanHtml = (html) => {
         if (updatedText !== lastText.value) {
           lastText.value = updatedText;
           emit("update:modelValue", updatedText);
+          emit("html-update", editor.value.innerHTML);
 
           const sockets = Array.from(
             editor.value.querySelectorAll(".socket-tag")
