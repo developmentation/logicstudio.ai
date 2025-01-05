@@ -17,21 +17,65 @@ import { createCardRegistry } from "../utils/cardManagement/cardRegistry.js";
 const canvases = Vue.ref([]);
 const activeCanvasId = Vue.ref(null); //Track the activeCanvas by ID
 
+// UI Refs
+const canvasRef = Vue.ref(null);
+const zoomLevel = Vue.ref(1);
+const isPanning = Vue.ref(false);
+const isOverBackground = Vue.ref(false);
+
+// Interaction state
+const selectedCardIds = Vue.ref(new Set());
+const dragStartPositions = Vue.ref(new Map());
+const lastSelectionTime = Vue.ref(null);
+const activeConnection = Vue.ref(null);
+const nearestSocket = Vue.ref(null);
+const selectedConnectionId = Vue.ref(null);
+
+// Touch state
+const lastTouchDistance = Vue.ref(null);
+const lastTouchCenter = Vue.ref(null);
+const connectionTouchStart = Vue.ref(null);
+
+// Pan state
+const panStart = Vue.reactive({ x: 0, y: 0 });
+const lastScroll = Vue.reactive({ x: 0, y: 0 });
+const panBackground = Vue.ref(null);
+
+// Constants
+const SNAP_RADIUS = 50;
+const GRID_SIZE = 20;
+const Z_INDEX_LAYERS = {
+  DEFAULT: 1,
+  HOVERED: 50,
+  SELECTED: 100,
+  DRAGGING: 1000,
+};
+
 // Actives are set as shortcuts for quick reference throughout the application
 // const activeCanvas = Vue.ref(null);
 // const activeCards = Vue.ref(null);
 // const activeConnections = Vue.ref(null);
 
 // Cache the active canvas index
-const activeCanvasIndex = Vue.computed({
-  get: () => {
-    if (!activeCanvasId.value || !canvases.value.length) return 0;
-    return canvases.value.findIndex((c) => c.id === activeCanvasId.value);
-    },
-  set: (id) => {
-    activeCanvasIndex.value = id;
-  },
+const activeCanvasIndex = Vue.computed(() => {
+  // console.log('Computing activeCanvasIndex...');
+  // console.log('Current canvases:', canvases.value.map(c => c.id));
+  // console.log('Current activeCanvasId:', activeCanvasId.value);
+  
+  if (!activeCanvasId.value || !canvases.value.length) {
+    // console.log('Returning 0 due to no activeCanvasId or empty canvases');
+    return 0;
+  }
+  
+  const index = canvases.value.findIndex((c) => {
+    // console.log('Comparing', c.id, 'with', activeCanvasId.value);
+    return c.id === activeCanvasId.value;
+  });
+  
+  // console.log('Found index:', index);
+  return index;
 });
+
 
 const activeCanvas = Vue.computed({
   get: () => {
@@ -66,41 +110,6 @@ const activeConnections = Vue.computed({
   },
 });
 
-
-
-// UI Refs
-const canvasRef = Vue.ref(null);
-const zoomLevel = Vue.ref(1);
-const isPanning = Vue.ref(false);
-const isOverBackground = Vue.ref(false);
-
-// Interaction state
-const selectedCardIds = Vue.ref(new Set());
-const dragStartPositions = Vue.ref(new Map());
-const lastSelectionTime = Vue.ref(null);
-const activeConnection = Vue.ref(null);
-const nearestSocket = Vue.ref(null);
-const selectedConnectionId = Vue.ref(null);
-
-// Touch state
-const lastTouchDistance = Vue.ref(null);
-const lastTouchCenter = Vue.ref(null);
-const connectionTouchStart = Vue.ref(null);
-
-// Pan state
-const panStart = Vue.reactive({ x: 0, y: 0 });
-const lastScroll = Vue.reactive({ x: 0, y: 0 });
-const panBackground = Vue.ref(null);
-
-// Constants
-const SNAP_RADIUS = 50;
-const GRID_SIZE = 20;
-const Z_INDEX_LAYERS = {
-  DEFAULT: 1,
-  HOVERED: 50,
-  SELECTED: 100,
-  DRAGGING: 1000,
-};
 
 export const useCanvases = () => {
   //Global / common functions
@@ -165,6 +174,7 @@ export const useCanvases = () => {
     activeCanvas,
     activeCards,
     activeConnections,
+    activeCanvasIndex,
     serializeCards: () =>
       activeCards.value.map((card) => ({
         ...Vue.toRaw(card),
@@ -345,16 +355,15 @@ export const useCanvases = () => {
 
   const exportImport = createExportImport({
     canvases,
-    setActiveCanvas:canvasRegistry.setActiveCanvas,
+    activeCards,
     exportCanvas: canvasRegistry.exportCanvas,
     importCanvas: canvasRegistry.importCanvas,
+    zoomLevel,
     canvasRef,
     activeCanvasId,
     cards: activeCards,
     connections: activeConnections,
   });
-
-
   
 const moveCanvasLeft = () => {
   if (!activeCanvasId.value || activeCanvasIndex.value <= 0) return;
@@ -371,7 +380,6 @@ const moveCanvasRight = () => {
     activeCanvasId.value = canvases.value[newIndex].id;
   }
 };
-
 
   // Lifecycle hooks
   Vue.onMounted(() => {

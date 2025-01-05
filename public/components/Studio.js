@@ -20,10 +20,14 @@ export default {
     <div class="absolute inset-0 flex flex-col overflow-hidden">
         <!-- Top Toolbar -->
         <div class="flex items-center space-x-2 p-4 bg-gray-800 select-none z-40">
-
-                  
-
         <div class="flex items-center gap-2">
+          <button 
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="addCanvas"
+            >
+            <i class="pi pi-plus mt-1"></i>
+            </button>
+
           <InputText v-if="activeCanvas"
               v-model="activeCanvas.name"
               placeholder="Canvas Name"
@@ -60,17 +64,24 @@ export default {
                 class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 @click="zoomIn"
             >
-                <i class="pi pi-plus mr-1"></i>
+                <i class="pi pi-search-plus mt-1"></i>
             </button>
             <button 
                 class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                 @click="zoomOut"
             >
-                <i class="pi pi-minus mr-1"></i>
+                <i class="pi pi-search-minus mt-1"></i>
             </button>
             <div class="text-gray-400 text-sm ml-2">
                 {{ getZoomPercent() }}%
             </div>
+
+              <button 
+                class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="closeCanvas"
+            >
+                <i class="pi pi-times mt-1 "></i>
+            </button>
         </div>
 
         <!-- Main Content Area -->
@@ -252,12 +263,14 @@ export default {
       activeConnections,
       activateConnection,
 
+      activeCanvasId,
       activeCanvasIndex,
       moveCanvasLeft,
       moveCanvasRight,
 
       // Canvas management
       createCanvas,
+      removeCanvas,
 
       // Card management
       createCard,
@@ -339,6 +352,16 @@ export default {
       window.removeEventListener("keydown", handleKeyDown);
       initialized.value = false;
     });
+
+    const addCanvas = ()=>{
+      createCanvas();
+    }
+
+    const closeCanvas = ()=>{
+      removeCanvas(activeCanvasId.value);
+      // createCanvas();
+    }
+
 
     // Component utility functions
     const getCardComponent = (type) => {
@@ -675,6 +698,9 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       selectedConnectionId,
 
       activeCanvasIndex,
+      activeCanvasId,
+      addCanvas,
+      closeCanvas,
       moveCanvasLeft,
       moveCanvasRight,
 

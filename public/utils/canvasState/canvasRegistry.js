@@ -7,10 +7,6 @@ export const createCanvasRegistry = (props) => {
     activeCanvasId,
     activeCards,
     activeConnections,
-    serializeCards,
-    deserializeCards,
-    serializeConnectionState,
-    deserializeConnectionState,
   } = props;
 
   // Canvas Management
@@ -32,33 +28,35 @@ export const createCanvasRegistry = (props) => {
         centerY: 0,
       },
     };
-
-    canvases.value = [...canvases.value, canvas];
-    setActiveCanvas(canvas);
-    console.log("Canvas Created", canvas);
+  
+    const newCanvasesArray = [...canvases.value, canvas];
+    canvases.value = newCanvasesArray;
+    activeCanvasId.value = canvas.id;
     return canvas.id;
   };
+  
 
   const removeCanvas = (canvasId) => {
     const index = canvases.value.findIndex((c) => c.id === canvasId);
     if (index === -1) return false;
-
+  
     const newCanvases = [...canvases.value];
     newCanvases.splice(index, 1);
     canvases.value = newCanvases;
-
+  
     if (activeCanvasId.value === canvasId) {
-      const nextCanvas = newCanvases[index] || newCanvases[index - 1];
-      if (nextCanvas) {
-        activeCanvas.value = canvases.value[nextCanvas.id];
+      // If there are no canvases left, create a new one
+      if (newCanvases.length === 0) {
+        createCanvas();
       } else {
-        activeCanvasId.value = null;
+        // Try to activate the next canvas, or the previous one if there is no next
+        const targetCanvas = newCanvases[index] || newCanvases[index - 1];
+        activeCanvasId.value = targetCanvas.id;
       }
     }
-
+  
     return true;
   };
-
 
   // Export/Import
   const exportCanvas = (canvasId = activeCanvasId.value) => {
@@ -101,25 +99,13 @@ export const createCanvasRegistry = (props) => {
     
     // IMPORTANT: Set this as the active canvas
     activeCanvasId.value = canvas.id;
-    Vue.nextTick(() => {
-        setActiveCanvas(canvas);
-    });
-    
     return canvas.id;
 };
-
-  const setActiveCanvas = (canvas) => {
-    activeCanvas.value = canvas;
-    activeCanvasId.value = canvas.id;
-    activeCards.value = canvas.cards;
-    activeConnections.value = canvas.connections;
-  };
 
   return {
     // Core functionality
     createCanvas,
     removeCanvas,
-    setActiveCanvas,
 
     exportCanvas,
     importCanvas,

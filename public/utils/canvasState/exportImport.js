@@ -4,9 +4,10 @@ export const createExportImport = (props) => {
     const {
         // Core canvas operations
         canvases,
-        setActiveCanvas,
+        activeCards,
         exportCanvas,
         importCanvas,
+        zoomLevel,
         
         // Canvas refs
         canvasRef,
@@ -32,31 +33,136 @@ export const createExportImport = (props) => {
 
         return true;
     };
-
-    // PNG Export
+    
+    
+    
+    const calculateBoundingBox = (cards) => {
+        if (!cards || cards.length === 0) {
+            return {
+                minX: 0,
+                minY: 0,
+                maxX: 0,
+                maxY: 0,
+                width: 0,
+                height: 0
+            };
+        }
+    
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+    
+        // Calculate the bounds including all cards
+        cards.forEach(card => {
+            const cardLeft = card.x;
+            const cardTop = card.y;
+            const cardWidth = 320; // Default card width
+            const cardHeight = 200; // Default card height
+            
+            const cardRight = cardLeft + cardWidth;
+            const cardBottom = cardTop + cardHeight;
+    
+            minX = Math.min(minX, cardLeft);
+            minY = Math.min(minY, cardTop);
+            maxX = Math.max(maxX, cardRight);
+            maxY = Math.max(maxY, cardBottom);
+        });
+    
+        // Add padding around the bounds
+        const padding = 100;
+        minX -= padding;
+        minY -= padding;
+        maxX += padding;
+        maxY += padding;
+    
+        return {
+            minX,
+            minY,
+            maxX,
+            maxY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    };
+    
     const exportToPNG = async (options = {}) => {
         if (!canvasRef.value) return null;
-
+    
         try {
+            await Vue.nextTick();
+    
+            // Get the main canvas container
+            const contentContainer = canvasRef.value;
+            
+            // Calculate viewport size based on zoom
+            const viewportWidth = 8000 * zoomLevel.value;
+            const viewportHeight = 8000 * zoomLevel.value;
+    
+            console.log('Starting export with:', {
+                container: contentContainer,
+                viewport: {
+                    width: viewportWidth,
+                    height: viewportHeight
+                },
+                zoomLevel: zoomLevel.value,
+
+                width: viewportWidth,
+                height: viewportHeight,
+                windowWidth: viewportWidth,
+                windowHeight: viewportHeight,
+
+            });
+    
             const defaultOptions = {
                 backgroundColor: '#1a1a1a',
-                scale: window.devicePixelRatio,
-                logging: false,
-                removeContainer: true,
-                foreignObjectRendering: true
+                scale: 1, // Set scale to 1 since we're handling zoom separately
+                useCORS: true,
+                allowTaint: true,
+                logging: true,
+                foreignObjectRendering: true,
+                width: viewportWidth,
+                height: viewportHeight,
+                windowWidth: viewportWidth,
+                windowHeight: viewportHeight,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0,
+                onclone: (clonedDoc) => {
+                    const clonedContent = clonedDoc.querySelector('.canvas-container');
+                    if (clonedContent) {
+                        // Force size on cloned element
+                        clonedContent.style.width = `${viewportWidth}px`;
+                        clonedContent.style.height = `${viewportHeight}px`;
+                        clonedContent.style.position = 'relative';
+                        clonedContent.style.transform = 'none';
+                        
+                        // Force size on pan background
+                        const panBackground = clonedContent.querySelector('.pan-background');
+                        if (panBackground) {
+                            panBackground.style.width = `${viewportWidth}px`;
+                            panBackground.style.height = `${viewportHeight}px`;
+                            panBackground.style.transform = 'none';
+                        }
+                    }
+                    console.log('Cloned document prepared');
+                }
             };
-
-            const canvas = await html2canvas(canvasRef.value, {
-                ...defaultOptions,
-                ...options
+    
+            return html2canvas(contentContainer, defaultOptions).then(canvas => {
+                // Create the data URL
+                const dataURL = canvas.toDataURL('image/png');
+    
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `canvas-${activeCanvasId.value || 'export'}.png`;
+                link.href = dataURL;
+                link.click();
+    
+                return dataURL;
             });
-
-            const dataURL = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `canvas-${activeCanvasId.value || 'export'}.png`;
-            link.href = dataURL;
-            link.click();
-            return dataURL;
+    
         } catch (error) {
             console.error('Error exporting to PNG:', error);
             return null;
@@ -174,7 +280,7 @@ const importFromJSON = () => {
                 const lastCanvasId = importedCanvasIds[importedCanvasIds.length - 1];
                 const lastCanvas = canvases.value.find(c => c.id === lastCanvasId);
                 if (lastCanvas) {
-                    setActiveCanvas(lastCanvas);
+                    activeCanvasId.value = lastCanvasId;
                 }
 
                 resolve({

@@ -76,7 +76,6 @@ export const createCardRegistry = (props) => {
         outputs: [],
       },
     },
-
     [CARD_TYPES.TEMPLATE]: {
       width: 300,
       height: 150,
@@ -86,59 +85,63 @@ export const createCardRegistry = (props) => {
       },
     },
 
-    [CARD_TYPES.DISPLAY]: {
-      width: 300,
-      height: 200,
-      displayType: "markdown",
-      content: "",
-      sockets: {
-        inputs: [ ],
-        outputs: [],
-      },
-    },
-    [CARD_TYPES.TEXT]: {
-      width: 250,
-      height: 150,
-      content: "Enter text here...",
-      sockets: {
-        inputs: [],
-        outputs: [
-          {
-            id: uuidv4(),
-            name: "text",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
-      },
-    },
-    [CARD_TYPES.TOOL]: {
-      width: 250,
-      height: 150,
-      toolType: "custom",
-      config: {},
-      sockets: {
-        inputs: [
-          {
-            id: uuidv4(),
-            name: "input",
-            type: SOCKET_TYPES.INPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
-        outputs: [
-          {
-            id: uuidv4(),
-            name: "output",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
-      },
-    },
+    // [CARD_TYPES.DISPLAY]: {
+    //   width: 300,
+    //   height: 200,
+    //   displayType: "markdown",
+    //   content: "",
+    //   sockets: {
+    //     inputs: [ ],
+    //     outputs: [],
+    //   },
+    // },
+
+    // [CARD_TYPES.TEXT]: {
+    //   width: 250,
+    //   height: 150,
+    //   content: "Enter text here...",
+    //   sockets: {
+    //     inputs: [],
+    //     outputs: [
+    //       {
+    //         id: uuidv4(),
+    //         name: "text",
+    //         type: SOCKET_TYPES.OUTPUT,
+    //         value: null,
+    //         momentUpdated: Date.now(),
+    //       },
+    //     ],
+    //   },
+    // },
+
+    // [CARD_TYPES.TOOL]: {
+    //   width: 250,
+    //   height: 150,
+    //   toolType: "custom",
+    //   config: {},
+    //   sockets: {
+    //     inputs: [
+    //       {
+    //         id: uuidv4(),
+    //         name: "input",
+    //         type: SOCKET_TYPES.INPUT,
+    //         value: null,
+    //         momentUpdated: Date.now(),
+    //       },
+    //     ],
+    //     outputs: [
+    //       {
+    //         id: uuidv4(),
+    //         name: "output",
+    //         type: SOCKET_TYPES.OUTPUT,
+    //         value: null,
+    //         momentUpdated: Date.now(),
+    //       },
+    //     ],
+    //   },
+    // },
+
+
   };
 
 
