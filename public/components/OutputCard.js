@@ -1,12 +1,13 @@
 // OutputCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
+
 import {
   updateSocketArray,
   createSocketUpdateEvent,
   createSocket,
-  generateSocketId
-} from '../utils/socketManagement/socketRemapping.js';
+  generateSocketId,
+} from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "OutputCard",
@@ -15,7 +16,7 @@ export default {
     cardData: { type: Object, required: true },
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
-    isSelected: { type: Boolean, default: false }
+    isSelected: { type: Boolean, default: false },
   },
   template: `
     <BaseCard
@@ -104,6 +105,14 @@ export default {
                   {{ type.toUpperCase() }}
                 </option>
               </select>
+
+              <button 
+                class="text-gray-400 hover:text-gray-200"
+                @click.stop="downloadFile(index)"
+                @mousedown.stop
+                @touchstart.stop
+              > <i class="pi pi-download text-xs"></i></button>
+
               <button 
                 class="text-gray-400 hover:text-gray-200"
                 @click.stop="removeInput(index)"
@@ -115,7 +124,8 @@ export default {
         </div>
 
         <div class="mt-4">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-right">
+          <!--
             <label class="flex items-center gap-2">
               <input 
                 type="checkbox"
@@ -125,10 +135,11 @@ export default {
               />
               <span class="text-xs text-gray-400">Auto Download</span>
             </label>
+            -->
             <button
               class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
               @click="handleDownload"
-            >Download</button>
+            >Download All</button>
           </div>
         </div>
       </div>
@@ -137,7 +148,7 @@ export default {
 
   setup(props, { emit }) {
     // Constants
-    const outputTypes = ['markdown', 'docx', 'pdf', 'json', 'pptx', 'text'];
+    const outputTypes = ["markdown", "docx", "pdf", "json", "txt"];
     const socketRegistry = new Map();
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
@@ -150,33 +161,35 @@ export default {
         description: data.description || "Output Node",
         x: data.x || 0,
         y: data.y || 0,
-        outputs: data.outputs || [{ type: 'markdown', id: generateSocketId() }],
+        outputs: data.outputs || [{ type: "markdown", id: generateSocketId() }],
         autoDownload: data.autoDownload || false,
         sockets: {
           inputs: [],
-          outputs: [createSocket({
-            type: 'output',
-            index: 0,
-            existingId: data.sockets?.outputs?.[0]?.id
-          })]
-        }
+          outputs: [
+            createSocket({
+              type: "output",
+              index: 0,
+              existingId: data.sockets?.outputs?.[0]?.id,
+            }),
+          ],
+        },
       };
 
       // Initialize input sockets
       if (data.sockets?.inputs?.length) {
-        baseData.sockets.inputs = data.sockets.inputs.map((socket, index) => 
+        baseData.sockets.inputs = data.sockets.inputs.map((socket, index) =>
           createSocket({
-            type: 'input',
+            type: "input",
             index,
             existingId: socket.id,
-            value: socket.value
+            value: socket.value,
           })
         );
       } else {
-        baseData.sockets.inputs = baseData.outputs.map((_, index) => 
+        baseData.sockets.inputs = baseData.outputs.map((_, index) =>
           createSocket({
-            type: 'input',
-            index
+            type: "input",
+            index,
           })
         );
       }
@@ -196,7 +209,7 @@ export default {
       if (!event) return;
       socketRegistry.set(event.socketId, {
         element: event.element,
-        cleanup: []
+        cleanup: [],
       });
     };
 
@@ -213,13 +226,13 @@ export default {
       try {
         const oldSockets = [...localCardData.value.sockets.inputs];
         const newSocket = createSocket({
-          type: 'input',
-          index: localCardData.value.outputs.length
+          type: "input",
+          index: localCardData.value.outputs.length,
         });
 
-        localCardData.value.outputs.push({ 
-          type: 'markdown', 
-          id: generateSocketId() 
+        localCardData.value.outputs.push({
+          type: "markdown",
+          id: generateSocketId(),
         });
 
         const newSockets = [...oldSockets, newSocket];
@@ -227,21 +240,24 @@ export default {
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'input',
+          type: "input",
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         localCardData.value.sockets.inputs = reindexedSockets;
 
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: [],
-          type: 'input'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds: [],
+            type: "input",
+          })
+        );
 
         handleCardUpdate();
       } finally {
@@ -265,22 +281,25 @@ export default {
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'input',
+          type: "input",
           deletedSocketIds,
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         localCardData.value.sockets.inputs = reindexedSockets;
 
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds,
-          type: 'input'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds,
+            type: "input",
+          })
+        );
 
         handleCardUpdate();
       } finally {
@@ -307,81 +326,487 @@ export default {
     // Handle card updates
     const handleCardUpdate = () => {
       if (!isProcessing.value) {
-        emit('update-card', Vue.toRaw(localCardData.value));
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
     // Handle downloads
     const handleDownload = () => {
-      const outputSocket = localCardData.value.sockets.outputs[0];
-      if (outputSocket?.value) {
-        console.log("Download triggered for:", outputSocket.value);
-      }
+      // const outputSocket = localCardData.value.sockets.outputs[0];
+      // if (outputSocket?.value) {
+      //   console.log("Download triggered for:", outputSocket.value);
+      // }
     };
 
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value) return;
-      isProcessing.value = true;
 
-      try {
-        // Update position
-        if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-        if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+    // Helper function to convert HTML elements to docx elements with improved formatting
+    const convertHtmlToDocxElements = (html, filename) => {
+      const elements = [];
+      const lines = html.split("\n");
     
-        // Add this block to update socket values
-        if (newData.sockets?.inputs) {
-          newData.sockets.inputs.forEach((socket, index) => {
-            if (localCardData.value.sockets.inputs[index]) {
-              localCardData.value.sockets.inputs[index].value = socket.value;
-            }
-          });
-        }
+      lines.forEach((line) => {
+        const cleanText = line.replace(/<[^>]*>/g, "").trim();
+        if (!cleanText) return;
     
-        // Update outputs and sockets
-        if (newData.outputs !== undefined && 
-            newData.outputs.length !== oldData?.outputs?.length) {
-          const oldSockets = [...localCardData.value.sockets.inputs];
-          localCardData.value.outputs = [...newData.outputs];
-
-          const newSockets = newData.outputs.map((_, index) => 
-            createSocket({
-              type: 'input',
-              index,
-              existingId: oldSockets[index]?.id,
-              value: oldSockets[index]?.value
+        if (line.startsWith("<h1>")) {
+          elements.push(
+            new docx.Paragraph({
+              text: cleanText,
+              heading: docx.HeadingLevel.HEADING_1,
+              spacing: { before: 240, after: 120 },
+              run: {
+                font: "Calibri",
+                size: 32,
+              },
             })
           );
-
-          const { reindexMap, reindexedSockets } = updateSocketArray({
-            oldSockets,
-            newSockets,
-            type: 'input',
-            socketRegistry,
-            connections: connections.value
-          });
-
-          localCardData.value.sockets.inputs = reindexedSockets;
-
-          emit('sockets-updated', createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type: 'input'
-          }));
-
-          handleCardUpdate();
+        } else if (line.startsWith("<h2>")) {
+          elements.push(
+            new docx.Paragraph({
+              text: cleanText,
+              heading: docx.HeadingLevel.HEADING_2,
+              spacing: { before: 240, after: 120 },
+              run: {
+                font: "Calibri",
+                size: 28,
+              },
+            })
+          );
+        } else {
+          elements.push(
+            new docx.Paragraph({
+              children: [
+                new docx.TextRun({
+                  text: cleanText,
+                  font: "Calibri",
+                  size: 24,
+                }),
+              ],
+              spacing: { before: 120, after: 120, line: 360 },
+            })
+          );
         }
-      } finally {
-        isProcessing.value = false;
+      });
+    
+      return elements;
+    };
+    
+
+// Function to create styled PDF content
+const createStyledPdf = (pdf, content, filename) => {
+  // Set default font and colors
+  const colors = {
+    header: '#1a1a1a',
+    subheader: '#2d2d2d',
+    text: '#333333',
+    muted: '#808080'
+  };
+
+  const headerStyles = {
+    h1: {
+      fontSize: 24,
+      spacing: 6,  // Significantly reduced from 12
+      style: "bold"
+    },
+    h2: {
+      fontSize: 20,
+      spacing: 5,  // Significantly reduced from 10
+      style: "bold"
+    },
+    h3: {
+      fontSize: 16,
+      spacing: 4,  // Significantly reduced from 8
+      style: "bold"
+    }
+  };
+
+  // Initialize PDF
+  pdf.setFont("helvetica");
+  
+  // Add header
+  pdf.setFontSize(12);
+  pdf.setTextColor(128, 128, 128);
+  pdf.text(filename, 15, 10);
+  pdf.text("Generated by LogicStudio.ai", pdf.internal.pageSize.width - 65, 10);
+  
+  // Add horizontal line under header
+  pdf.setDrawColor(200, 200, 200);
+  pdf.line(15, 12, pdf.internal.pageSize.width - 15, 12);
+
+  // Set up content styling
+  let y = 25;
+  const margins = {
+    left: 15,
+    right: 15,
+    bottom: 20
+  };
+  const pageWidth = pdf.internal.pageSize.width;
+  const contentWidth = pageWidth - margins.left - margins.right;
+  const pageHeight = pdf.internal.pageSize.height;
+  let lastLineWasHeader = false;
+
+  // Function to handle header styling
+  const renderHeader = (text, level) => {
+    const style = headerStyles[level];
+    // Add less space before header if previous line wasn't a header
+    if (!lastLineWasHeader) {
+      y += 3; // Minimal spacing before header
+    }
+    pdf.setFont("helvetica", style.style);
+    pdf.setFontSize(style.fontSize);
+    pdf.setTextColor(colors.header);
+    const wrappedText = pdf.splitTextToSize(text, contentWidth);
+    pdf.text(wrappedText, margins.left, y);
+    lastLineWasHeader = true;
+    return (wrappedText.length * (style.fontSize / 3)) + style.spacing; // Reduced multiplier
+  };
+
+  // Process each line with proper styling
+  const lines = content.split('\n').filter(line => line.trim());
+  
+  lines.forEach((line) => {
+    // Check if we need a new page
+    if (y + 20 > pageHeight - margins.bottom) {
+      pdf.addPage();
+      y = 25;
+      lastLineWasHeader = false;
+      
+      // Add header to new page
+      pdf.setFontSize(12);
+      pdf.setTextColor(colors.muted);
+      pdf.text(filename, margins.left, 10);
+      pdf.text("Generated by LogicStudio.ai", pageWidth - 65, 10);
+      pdf.line(margins.left, 12, pageWidth - margins.right, 12);
+    }
+
+    // Style based on markdown syntax
+    if (line.startsWith('# ')) {
+      const text = line.replace('# ', '');
+      y += renderHeader(text, 'h1');
+    } 
+    else if (line.startsWith('## ')) {
+      const text = line.replace('## ', '');
+      y += renderHeader(text, 'h2');
+    }
+    else if (line.startsWith('### ')) {
+      const text = line.replace('### ', '');
+      y += renderHeader(text, 'h3');
+    }
+    else if (line.startsWith('```')) {
+      lastLineWasHeader = false;
+      pdf.setFillColor(245, 245, 245);
+      pdf.rect(margins.left, y - 5, contentWidth, 2, 'F');
+      pdf.setFont("courier", "normal");
+      pdf.setFontSize(11);
+      pdf.setTextColor(colors.text);
+      y += 4;
+    }
+    else if (line.startsWith('- ') || line.startsWith('* ')) {
+      lastLineWasHeader = false;
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+      pdf.setTextColor(colors.text);
+      const text = line.replace(/^[-*]\s/, '• ');
+      const wrappedText = pdf.splitTextToSize(text, contentWidth - 10);
+      pdf.text(wrappedText, margins.left + 5, y);
+      y += (wrappedText.length * 5) + 2;
+    }
+    else {
+      lastLineWasHeader = false;
+      // Add minimal spacing after header if this is text following a header
+      if (!lastLineWasHeader) {
+        y += 2; // Minimal spacing before regular text
       }
-    }, { deep: true });
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(12);
+      pdf.setTextColor(colors.text);
+      const wrappedText = pdf.splitTextToSize(line, contentWidth);
+      pdf.text(wrappedText, margins.left, y);
+      y += (wrappedText.length * 5) + 2; // Reduced from 3
+    }
+  });
+
+  // Add page numbers
+  const pageCount = pdf.internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    pdf.setPage(i);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.setTextColor(colors.muted);
+    pdf.text(
+      `Page ${i} of ${pageCount}`,
+      pageWidth / 2,
+      pageHeight - 10,
+      { align: "center" }
+    );
+  }
+};
+
+// Main download file function
+const downloadFile = async (index) => {
+  if (isProcessing.value) return;
+  isProcessing.value = true;
+
+  try {
+    const inputSocket = localCardData.value.sockets.inputs[index];
+    const outputType = localCardData.value.outputs[index].type;
+    let socketValue = inputSocket?.value;
+
+    if (!socketValue) {
+      console.warn("No content to download");
+      return;
+    }
+
+    // Extract the actual content from socket value
+    let content;
+    if (typeof socketValue === "string") {
+      content = socketValue;
+    } else if (typeof socketValue === "object") {
+      content = socketValue.content !== undefined ? socketValue.content : socketValue;
+    }
+
+    const timestamp = Date.now();
+    const baseFilename = `File${index + 1}_${timestamp}`;
+
+    // Helper function to trigger download
+    const downloadBlob = (blob, filename) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    };
+
+    // Try to parse as JSON if it's a string that looks like JSON
+    if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
+      try {
+        content = JSON.parse(content);
+      } catch (e) {
+        console.log("Not valid JSON, keeping as string");
+      }
+    }
+
+    switch (outputType) {
+      case "markdown": {
+        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+        const blob = new Blob([markdownContent], { type: "text/markdown" });
+        downloadBlob(blob, `${baseFilename}.md`);
+        break;
+      }
+
+      case "txt": {
+        const textContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+        const blob = new Blob([textContent], { type: "text/plain" });
+        downloadBlob(blob, `${baseFilename}.txt`);
+        break;
+      }
+
+      case "json": {
+        const jsonContent = typeof content === "object" ? content : { content: content };
+        const blob = new Blob([JSON.stringify(jsonContent, null, 2)], { type: "application/json" });
+        downloadBlob(blob, `${baseFilename}.json`);
+        break;
+      }
+
+      case "docx": {
+        // Convert to markdown first if it's an object
+        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+        const md = markdownit();
+        const htmlContent = md.render(markdownContent);
+
+        // Create document with proper sections and styles
+        const doc = new docx.Document({
+          sections: [
+            {
+              properties: {
+                page: {
+                  margin: {
+                    top: 1440, // 1 inch
+                    right: 1440,
+                    bottom: 1440,
+                    left: 1440,
+                  },
+                },
+                type: docx.SectionType.CONTINUOUS,
+              },
+              headers: {
+                default: new docx.Header({
+                  children: [
+                    new docx.Paragraph({
+                      children: [
+                        new docx.TextRun({
+                          text: baseFilename,
+                          font: "Calibri",
+                          size: 20,
+                        }),
+                        new docx.TextRun({
+                          text: "\t\tGenerated by LogicStudio.ai",
+                          font: "Calibri",
+                          size: 20,
+                          color: "808080",
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              },
+              footers: {
+                default: new docx.Footer({
+                  children: [
+                    new docx.Paragraph({
+                      alignment: docx.AlignmentType.CENTER,
+                      children: [
+                        new docx.TextRun({
+                          children: ["Page ", docx.PageNumber.CURRENT, " of ", docx.PageNumber.TOTAL_PAGES],
+                          font: "Calibri",
+                          size: 20,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              },
+              children: convertHtmlToDocxElements(htmlContent, baseFilename),
+            },
+          ],
+          styles: {
+            default: {
+              document: {
+                run: {
+                  font: "Calibri",
+                  size: 24,
+                },
+              },
+            },
+          },
+        });
+
+        const buffer = await docx.Packer.toBlob(doc);
+        downloadBlob(buffer, `${baseFilename}.docx`);
+        break;
+      }
+
+
+      case "pdf": {
+        // Convert to markdown first if it's an object
+        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+        
+        // First use markdownit to parse the markdown
+        const md = markdownit();
+        const htmlContent = md.render(markdownContent);
+        
+        // Process the HTML content back to clean text with markdown indicators
+        const processedContent = htmlContent
+          .replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1')
+          .replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1')
+          .replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1')
+          .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```')
+          .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1')
+          .replace(/<p[^>]*>(.*?)<\/p>/g, '$1')
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&amp;/g, '&')
+          .replace(/\n\s*\n/g, '\n\n'); // Clean up multiple newlines
+      
+        // Create new PDF document
+        const pdf = new jspdf.jsPDF();
+        
+        // Apply styling and create PDF
+        createStyledPdf(pdf, processedContent, baseFilename);
+      
+        // Download the PDF
+        pdf.save(`${baseFilename}.pdf`);
+        break;
+      }
+
+    }
+  } catch (error) {
+    console.error("Error downloading file:", error);
+  } finally {
+    isProcessing.value = false;
+  }
+};
+
+    
+    // Watch for card data changes
+    Vue.watch(
+      () => props.cardData,
+      (newData, oldData) => {
+        if (!newData || isProcessing.value) return;
+        isProcessing.value = true;
+
+        try {
+          // Update position
+          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
+          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+
+          // Add this block to update socket values
+          if (newData.sockets?.inputs) {
+            newData.sockets.inputs.forEach((socket, index) => {
+              if (localCardData.value.sockets.inputs[index]) {
+                localCardData.value.sockets.inputs[index].value = socket.value;
+              }
+            });
+          }
+
+          // Update outputs and sockets
+          if (
+            newData.outputs !== undefined &&
+            newData.outputs.length !== oldData?.outputs?.length
+          ) {
+            const oldSockets = [...localCardData.value.sockets.inputs];
+            localCardData.value.outputs = [...newData.outputs];
+
+            const newSockets = newData.outputs.map((_, index) =>
+              createSocket({
+                type: "input",
+                index,
+                existingId: oldSockets[index]?.id,
+                value: oldSockets[index]?.value,
+              })
+            );
+
+            const { reindexMap, reindexedSockets } = updateSocketArray({
+              oldSockets,
+              newSockets,
+              type: "input",
+              socketRegistry,
+              connections: connections.value,
+            });
+
+            localCardData.value.sockets.inputs = reindexedSockets;
+
+            emit(
+              "sockets-updated",
+              createSocketUpdateEvent({
+                cardId: localCardData.value.uuid,
+                oldSockets,
+                newSockets: reindexedSockets,
+                reindexMap,
+                deletedSocketIds: [],
+                type: "input",
+              })
+            );
+
+            handleCardUpdate();
+          }
+        } finally {
+          isProcessing.value = false;
+        }
+      },
+      { deep: true }
+    );
 
     // Cleanup on unmount
     Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
+      socketRegistry.forEach((socket) =>
+        socket.cleanup.forEach((cleanup) => cleanup())
+      );
       socketRegistry.clear();
       connections.value.clear();
     });
@@ -394,10 +819,11 @@ export default {
       emitWithCardId,
       addInput,
       removeInput,
+      downloadFile,
       handleDownload,
       handleCardUpdate,
       updateOutputType,
-      handleSocketMount
+      handleSocketMount,
     };
-  }
+  },
 };

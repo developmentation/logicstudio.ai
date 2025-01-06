@@ -29,7 +29,7 @@ export default {
       @select-card="$emit('select-card', $event)"
     >
       <!-- Output Sockets -->
-      <div class="absolute -right-[12px] flex flex-col gap-4 py-4"  style="top: 16px;">
+      <div class="absolute -right-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
         <div 
           v-for="(socket, index) in localCardData.sockets.outputs"
           :key="socket.id"
@@ -39,7 +39,7 @@ export default {
             type="output"
             :socket-id="socket.id"
             :card-id="localCardData.uuid"
-            :name="socket.name || \`File \${index + 1}\`"
+            :name="\`\${index + 1}. \${socket.name || \`File \${index + 1}\`}\`"
             :value="socket.value"
             :is-connected="getSocketConnections(socket.id)"
             :has-error="false"
@@ -77,38 +77,58 @@ export default {
         </div>
 
         <!-- File List -->
-        <div 
-          class="bg-gray-800 rounded overflow-hidden select-none"
-          @mousedown.stop
-          @touchstart.stop.prevent
-        >
-          <table class="w-full text-sm">
-            <thead class="bg-gray-900">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-400 w-8">#</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-400">File Name</th>
-                <th class="px-4 py-2 w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="(fileData, index) in localCardData.filesData" 
-                :key="fileData.name"
-                class="border-t border-gray-700"
+        <div class="space-y-2">
+          <div 
+            v-for="(fileData, index) in localCardData.filesData" 
+            :key="fileData.name + index"
+            class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
+          >
+            <span class="text-xs text-gray-400 w-4">{{ index + 1 }}</span>
+            <div class="flex-1 min-w-0">
+              <div v-if="editingIndex === index" class="flex items-center">
+                <input
+                  type="text"
+                  v-model="editingName"
+                  @blur="saveFileName(index)"
+                  @keyup.enter="saveFileName(index)"
+                  @keyup.esc="cancelEdit"
+                  ref="fileNameInput"
+                  class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  @mousedown.stop
+                  @click.stop
+                />
+              </div>
+              <div 
+                v-else
+                @click.stop="startEditing(index, fileData.name)"
+                class="truncate cursor-text hover:text-gray-100 text-xs"
+                :title="fileData.name"
               >
-                <td class="px-4 py-2">{{ index + 1 }}</td>
-                <td class="px-4 py-2 text-xs overflow-auto">{{ fileData.name }}</td>
-                <td class="px-4 py-2">
-                  <button 
-                    class="text-gray-400 hover:text-white"
-                    @click.stop="removeFile(index)"
-                    @mousedown.stop
-                    @touchstart.stop
-                  >×</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                {{ fileData.name }}
+              </div>
+            </div>
+             <input
+                type="file"
+                :ref="el => { if (el) refreshInputs[index] = el }"
+                class="hidden"
+                @change="(e) => handleRefreshFile(e, index)"
+              />
+            <button 
+              class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+              @click.stop="triggerRefreshFile(index)"
+              @mousedown.stop
+              @touchstart.stop
+              title="Update file"
+            >
+              <i class="pi pi-refresh text-xs"></i>
+            </button>
+            <button 
+              class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+              @click.stop="removeFile(index)"
+              @mousedown.stop
+              @touchstart.stop
+            >×</button>
+          </div>
         </div>
       </div>
     </BaseCard>
@@ -116,9 +136,114 @@ export default {
   
   setup(props, { emit }) {
     const fileInput = Vue.ref(null);
+    const fileNameInput = Vue.ref(null);
+    const refreshInputs = Vue.ref([]);
     const socketRegistry = new Map();
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
+    const editingIndex = Vue.ref(-1);
+    const editingName = Vue.ref('');
+
+
+    
+    const triggerRefreshFile = (index) => {
+      if (refreshInputs.value[index]) {
+        refreshInputs.value[index].click();
+      }
+    };
+
+    const handleRefreshFile = async (event, index) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      if (isProcessing.value) return;
+      isProcessing.value = true;
+
+      try {
+        const fileData = await readFileContent(file);
+        
+        // Update the file data
+        localCardData.value.filesData[index] = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified
+        };
+
+        // Update the socket with new file data
+        if (localCardData.value.sockets.outputs[index]) {
+          const updatedSocket = {
+            ...localCardData.value.sockets.outputs[index],
+            value: fileData,
+            name: file.name
+          };
+
+          // Create new sockets array with the updated socket
+          const newSockets = [...localCardData.value.sockets.outputs];
+          newSockets[index] = updatedSocket;
+
+          // Remap the sockets
+          const { reindexedSockets } = updateSocketArray({
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets,
+            type: 'output',
+            deletedSocketIds: [],
+            socketRegistry,
+            connections: connections.value
+          });
+
+          localCardData.value.sockets.outputs = reindexedSockets;
+
+          // Emit socket update event
+          emit('sockets-updated', createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets: reindexedSockets,
+            reindexMap: new Map(),
+            deletedSocketIds: [],
+            type: 'output'
+          }));
+        }
+
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
+        // Clear the input value so the same file can be selected again
+        event.target.value = '';
+      }
+    };
+
+
+    // File name editing functions
+    const startEditing = (index, name) => {
+      editingIndex.value = index;
+      editingName.value = name;
+      Vue.nextTick(() => {
+        if (fileNameInput.value) {
+          fileNameInput.value.focus();
+          fileNameInput.value.select();
+        }
+      });
+    };
+
+    const saveFileName = (index) => {
+      if (editingName.value.trim()) {
+        const newName = editingName.value.trim();
+        localCardData.value.filesData[index].name = newName;
+        // Update the socket name as well
+        if (localCardData.value.sockets.outputs[index]) {
+          localCardData.value.sockets.outputs[index].name = newName;
+        }
+        handleCardUpdate();
+      }
+      cancelEdit();
+    };
+
+    const cancelEdit = () => {
+      editingIndex.value = -1;
+      editingName.value = '';
+    };
+
 
    
     const initializeCardData = (data) => {
@@ -170,6 +295,8 @@ export default {
         const reader = new FileReader();
         reader.onload = () => {
           let content = reader.result;
+          
+          // Only try to parse JSON for JSON files
           if (file.type.includes('json') || file.name.toLowerCase().endsWith('.json')) {
             try {
               content = JSON.parse(reader.result);
@@ -177,6 +304,7 @@ export default {
               console.warn('JSON parsing failed, using raw text content');
             }
           }
+          // For all other text files (including markdown), use raw content
           resolve({
             content,
             metadata: {
@@ -187,8 +315,13 @@ export default {
             }
           });
         };
-
-        if (file.type.startsWith('text/') || file.type.includes('json') || file.type.includes('javascript')) {
+    
+        // Determine how to read the file
+        if (file.type.startsWith('text/') || 
+            file.type.includes('json') || 
+            file.type.includes('javascript') ||
+            file.name.toLowerCase().endsWith('.md') ||  // Add explicit handling for .md files
+            file.name.toLowerCase().endsWith('.txt')) { // And .txt files
           reader.readAsText(file);
         } else if (file.type.startsWith('image/')) {
           reader.readAsDataURL(file);
@@ -197,7 +330,6 @@ export default {
         }
       });
     };
-
 
 
     const processFiles = async (files) => {
@@ -387,6 +519,7 @@ export default {
     return {
       fileInput,
       localCardData,
+      refreshInputs,
       getSocketConnections,
       handleSocketMount,
       emitWithCardId,
@@ -394,7 +527,16 @@ export default {
       handleFileDrop,
       removeFile,
       triggerFileInput,
-      handleCardUpdate
+      handleCardUpdate,
+
+      // File editing
+      editingIndex,
+      editingName,
+      startEditing,
+      saveFileName,
+      cancelEdit,
+      triggerRefreshFile,
+      handleRefreshFile
     };
   }
 };
