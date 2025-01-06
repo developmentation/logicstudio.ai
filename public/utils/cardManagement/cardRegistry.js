@@ -184,6 +184,9 @@ export const createCardRegistry = (props) => {
     const defaultConfigClone = JSON.parse(JSON.stringify(defaultConfig));
     const cardId = uuidv4();
 
+    //By card type, find the first available number in a sequence for that card to occupy
+    //Or if you like, find the next highest number, so the sequence keeps going
+
     const newCard = {
       uuid: cardId,
       type,

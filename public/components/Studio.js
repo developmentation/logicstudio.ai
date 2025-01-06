@@ -56,6 +56,21 @@ export default {
                   <i class="pi pi-chevron-right"></i>
               </button>
           </div>
+
+            <button 
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="importFromJSON"
+            >
+            <i class="pi pi-cloud-upload mt-1"></i>
+            </button>
+          <button 
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="exportToJSON"
+            >
+            <i class="pi pi-cloud-download mt-1"></i>
+            </button>
+
+
       </div>    
 
 

@@ -36,9 +36,13 @@ export default {
               
               <!-- Add Tools -->
               <button
+              :disabled = "item.disabled"
                 v-for="item in addTools"
                 :key="item.id"
-                class="w-full h-10 flex items-center text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                class="w-full h-10 flex items-center  focus:outline-none focus:ring-2 focus:ring-green-500"
+
+                :class="item.disabled ? 'text-gray-400' : 'text-white  hover:bg-gray-700'"
+
                 @click="handleToolClick(item)"
               >
                 <span class="w-10 flex items-center justify-center">
@@ -87,15 +91,17 @@ export default {
       const showText = Vue.ref(false);
   
       const addTools = [
+        { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model', disabled:true },
         { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
-        { id: 'text', label: 'Text', icon: 'pi pi-align-left', type: 'text' },
+        { id: 'text', label: 'Text', icon: 'pi pi-align-left', type: 'text' , disabled:true },
         { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
-        { id: 'transcribe', label: 'Audio to Text', icon: 'pi pi-microphone', type: 'tool' },
-        { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'tool' },
-        { id: 'join', label: 'Logic / Join', icon: 'pi pi-plus', type: 'tool' },
-        { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
-        { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
+        { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'tool', disabled:true},
+        { id: 'transcribe', label: 'Audio to Text (Pending)', icon: 'pi pi-microphone', type: 'tool', disabled:true },
+        { id: 'web', label: 'Web Content (Pending)', icon: 'pi pi-globe', type: 'tool', disabled:true },
+        { id: 'label', label: 'Label (Pending)', icon: 'pi pi-tag', type: 'tool', disabled:true },
+        // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
+        // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
         // { id: 'tool', label: 'Tool', icon: 'pi pi-cog', type: 'tool' },
         { id: 'template', label: 'Template (Tester)', icon: 'pi pi-circle', type: 'template' },
 
@@ -103,8 +109,8 @@ export default {
   
       const exportTools = [
         { id: 'exportPNG', label: 'Export PNG', icon: 'pi pi-image', action: 'export-png' },
-        { id: 'exportJSON', label: 'Export JSON', icon: 'pi pi-cloud-download', action: 'export-json' },
-        { id: 'importJSON', label: 'Import JSON', icon: 'pi pi-cloud-upload', action: 'import-json' }
+        // { id: 'exportJSON', label: 'Export JSON', icon: 'pi pi-cloud-download', action: 'export-json' },
+        // { id: 'importJSON', label: 'Import JSON', icon: 'pi pi-cloud-upload', action: 'import-json' }
       ];
   
       const toggleExpanded = () => {
