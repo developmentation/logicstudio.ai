@@ -138,13 +138,15 @@ export default {
         </div>
 
 
-        <!-- Output Display -->
-        <div class="space-y-1">
-          <label class="text-xs text-gray-400 font-medium">Output</label>
-          <div class="w-full min-h-[60px] bg-gray-900 text-xs text-gray-200 p-2 rounded">
-            {{ localCardData.output || 'No output yet...' }}
-          </div>
+      <!-- Output Display -->
+      <div class="space-y-1">
+        <label class="text-xs text-gray-400 font-medium">Output</label>
+        <div class="w-full min-h-[60px] max-h-[100px] overflow-y-auto bg-gray-900 text-xs text-gray-200 p-2 rounded"
+        @mousedown.stop
+        >
+          {{ localCardData.output || 'No output yet...' }}
         </div>
+      </div>
 
  <div class="mt-4">
           <div class="flex items-center justify-between">
@@ -210,7 +212,7 @@ export default {
         y: data.y || 0,
 
         //Sockets
-        sockets: data.sockets/*{
+        sockets: data.sockets /*{
           inputs:
             data.sockets?.inputs?.map((socket, index) => ({
               ...createSocket({
@@ -230,7 +232,7 @@ export default {
               value: data.sockets?.outputs?.[0]?.value,
             }),
           ],
-        },*/
+        },*/,
       };
     };
 
@@ -238,7 +240,9 @@ export default {
     const localCardData = Vue.ref(initializeCardData(props.cardData));
 
     // Computed properties
-    const outputSocket = Vue.computed(() => localCardData.value.sockets.outputs[0]);
+    const outputSocket = Vue.computed(
+      () => localCardData.value.sockets.outputs[0]
+    );
     const inputSockets = Vue.computed(() => localCardData.value.sockets.inputs);
 
     // Socket connection tracking
@@ -403,14 +407,14 @@ export default {
     // Socket value management
     const getSocketValue = (socketId) => {
       // First check the socket in localCardData
-      const socket = localCardData.value.sockets.inputs.find(s => s.id === socketId) ||
-                    localCardData.value.sockets.outputs.find(s => s.id === socketId);
+      const socket =
+        localCardData.value.sockets.inputs.find((s) => s.id === socketId) ||
+        localCardData.value.sockets.outputs.find((s) => s.id === socketId);
       if (socket) return socket.value;
-      
+
       // Fallback to socketMap
       return socketMap.value.get(socketId)?.value;
     };
-
 
     // Card update handler
     const handleCardUpdate = () => {
@@ -422,8 +426,13 @@ export default {
     //Agent management
 
     const triggerAgent = () => {
-      // Resolve HTML content with socket values
-
+      // Don't allow triggering if already starting/partial and no pending request
+      if (localCardData.value.status !== 'idle') {
+        triggerPending.value = true;
+        return;
+      }
+    
+      // We're idle, so clear any pending flag and proceed
       triggerPending.value = false;
       localCardData.value.status = "starting";
 
@@ -455,8 +464,8 @@ export default {
       //Set the output to null
       Vue.nextTick(() => {
         if (localCardData.value.sockets?.outputs?.length)
-          localCardData.value.sockets.outputs[0].value = null;
-        emit("update-card", Vue.toRaw(localCardData.value));
+          // localCardData.value.sockets.outputs[0].value = null;
+          emit("update-card", Vue.toRaw(localCardData.value));
       });
 
       sendToServer(
@@ -505,14 +514,14 @@ export default {
     Vue.watch(completedMessage, (newValue, oldValue) => {
       localCardData.value.output = newValue;
       localCardData.value.status = "idle";
-      //Set the socket output value
-      if (localCardData.value.sockets?.outputs?.length)
+      
+      if (localCardData.value.sockets?.outputs?.length) {
         localCardData.value.sockets.outputs[0].value = newValue;
+      }
       emit("update-card", Vue.toRaw(localCardData.value));
-
-      // Check for pending trigger
+    
+      // Process pending request if exists
       if (triggerPending.value) {
-        triggerPending.value = false;
         Vue.nextTick(() => {
           triggerAgent();
         });
@@ -590,6 +599,38 @@ export default {
         return html; // Return original content on error
       }
     };
+
+    // Add this computed property before initializing localCardData
+    const inputSocketValues = Vue.computed(
+      () =>
+        localCardData.value.sockets?.inputs?.map((socket) => ({
+          id: socket.id,
+          value: socket.value,
+          momentUpdated: socket.momentUpdated,
+        })) || []
+    );
+
+    // Add this watcher after the other watchers but before onUnmounted
+    Vue.watch(inputSocketValues, (newValues, oldValues) => {
+      // Skip if triggerOnInput is disabled or no old values to compare
+      if (!localCardData.value.triggerOnInput || !oldValues) return;
+    
+      // Find any socket that has a real value update
+      const hasRealUpdate = newValues.some((newSocket, index) => {
+        const oldSocket = oldValues[index];
+        return oldSocket && newSocket.momentUpdated !== oldSocket.momentUpdated;
+      });
+    
+      if (hasRealUpdate) {
+        if (localCardData.value.status !== 'idle') {
+          triggerPending.value = true;
+        } else {
+          triggerAgent();
+        }
+      }
+    }, { deep: true });
+
+
 
     // Watch for card data changes
     Vue.watch(
