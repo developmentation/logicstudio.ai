@@ -34,8 +34,8 @@ export const createCardRegistry = (props) => {
       width: 300,
       height: 200,
       model:null,
-      systemPrompt: '<socket name = "b"/>',
-      userPrompt: '<socket name = "c"/>',
+      systemPrompt: '<socket name = "System Socket"/>',
+      userPrompt: '<socket name = "User Socket"/>',
       messageHistory: [],
       pendingMessage: "",
       completedMessage: "",
@@ -50,7 +50,7 @@ export const createCardRegistry = (props) => {
         outputs: [
           {
             id: uuidv4(),
-            name: "output",
+            name: "Output",
             type: SOCKET_TYPES.OUTPUT,
             value: null,
             momentUpdated: Date.now(),

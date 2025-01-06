@@ -191,6 +191,13 @@ export const useCanvases = () => {
     deserializeConnectionState: (state) => {
       if (!activeCanvas.value) return;
       activeCanvas.value.connections = state.connections;
+
+  // // Force an immediate propagation of all connection values
+  // state.connections.forEach(connection => {
+  //   propagateValueThroughConnection(connection, activeCanvas.value);
+  // });
+
+
     },
   });
 

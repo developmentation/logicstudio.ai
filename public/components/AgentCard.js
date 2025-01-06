@@ -75,7 +75,7 @@ export default {
             :socket-id="socket.id"
             :card-id="localCardData.uuid"
             :name="socket.name"
-            :value="socket?.value"  
+            :value="socket.value"   
             :is-connected="getSocketConnections(socket.id)"
             :has-error="hasSocketError(socket.id)"
             :zoom-level="zoomLevel"
@@ -137,7 +137,6 @@ export default {
           />
         </div>
 
-        {{localCardData.userPrompt}}
 
         <!-- Output Display -->
         <div class="space-y-1">
@@ -171,6 +170,8 @@ export default {
     const socketRegistry = new Map();
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
+    const triggerPending = Vue.ref(false);
+
     const socketMap = Vue.ref(new Map());
 
     const { models } = useConfigs();
@@ -209,7 +210,7 @@ export default {
         y: data.y || 0,
 
         //Sockets
-        sockets: {
+        sockets: data.sockets/*{
           inputs:
             data.sockets?.inputs?.map((socket, index) => ({
               ...createSocket({
@@ -229,16 +230,16 @@ export default {
               value: data.sockets?.outputs?.[0]?.value,
             }),
           ],
-        },
+        },*/
       };
     };
 
     // Initialize local state
-    const localCardData = Vue.reactive(initializeCardData(props.cardData));
+    const localCardData = Vue.ref(initializeCardData(props.cardData));
 
     // Computed properties
-    const outputSocket = Vue.computed(() => localCardData.sockets.outputs[0]);
-    const inputSockets = Vue.computed(() => localCardData.sockets.inputs);
+    const outputSocket = Vue.computed(() => localCardData.value.sockets.outputs[0]);
+    const inputSockets = Vue.computed(() => localCardData.value.sockets.inputs);
 
     // Socket connection tracking
     const getSocketConnections = (socketId) => connections.value.has(socketId);
@@ -246,8 +247,8 @@ export default {
 
     Vue.onMounted(() => {
       //If no model is provided, then assign the first one automatically
-      if (models.value.length && !localCardData.model) {
-        localCardData.model = models.value[0];
+      if (models.value.length && !localCardData.value.model) {
+        localCardData.value.model = models.value[0];
       }
 
       //Register this agent into the websocket registry
@@ -264,7 +265,7 @@ export default {
 
     // Helper to emit events with card ID
     const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.uuid });
+      emit(eventName, { ...event, cardId: localCardData.value.uuid });
     };
 
     // Parse socket declarations from prompts
@@ -281,11 +282,11 @@ export default {
     // Get both prompt's socket declarations
     const getMergedSocketDeclarations = () => {
       const systemDeclarations = parseSocketDeclarations(
-        localCardData.systemPrompt,
+        localCardData.value.systemPrompt,
         "system"
       );
       const userDeclarations = parseSocketDeclarations(
-        localCardData.userPrompt,
+        localCardData.value.userPrompt,
         "user"
       );
       return systemDeclarations.concat(userDeclarations);
@@ -297,7 +298,7 @@ export default {
       isProcessing.value = true;
 
       try {
-        const oldSockets = [...localCardData.sockets.inputs];
+        const oldSockets = [...localCardData.value.sockets.inputs];
         const declarations = getMergedSocketDeclarations();
 
         // Create new sockets using IDs from SocketEditor when available
@@ -352,13 +353,13 @@ export default {
         });
 
         // Update local state with properly named sockets
-        localCardData.sockets.inputs = finalSockets;
+        localCardData.value.sockets.inputs = finalSockets;
 
         // Emit socket update event
         emit(
           "sockets-updated",
           createSocketUpdateEvent({
-            cardId: localCardData.uuid,
+            cardId: localCardData.value.uuid,
             oldSockets,
             newSockets: finalSockets,
             reindexMap,
@@ -377,10 +378,10 @@ export default {
     // Add logging to handleHtmlUpdate
     const handleHtmlUpdate = (html, source) => {
       if (source == "systemPrompt") {
-        localCardData.systemPromptHtml = html;
+        localCardData.value.systemPromptHtml = html;
       }
       if (source == "userPrompt") {
-        localCardData.userPromptHtml = html;
+        localCardData.value.userPromptHtml = html;
       }
     };
 
@@ -389,9 +390,9 @@ export default {
       if (isProcessing.value) return;
 
       if (type === "system") {
-        localCardData.systemPrompt = text;
+        localCardData.value.systemPrompt = text;
       } else {
-        localCardData.userPrompt = text;
+        localCardData.value.userPrompt = text;
       }
 
       Vue.nextTick(() => {
@@ -401,13 +402,20 @@ export default {
 
     // Socket value management
     const getSocketValue = (socketId) => {
+      // First check the socket in localCardData
+      const socket = localCardData.value.sockets.inputs.find(s => s.id === socketId) ||
+                    localCardData.value.sockets.outputs.find(s => s.id === socketId);
+      if (socket) return socket.value;
+      
+      // Fallback to socketMap
       return socketMap.value.get(socketId)?.value;
     };
+
 
     // Card update handler
     const handleCardUpdate = () => {
       if (!isProcessing.value) {
-        emit("update-card", Vue.toRaw(localCardData));
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
@@ -416,33 +424,28 @@ export default {
     const triggerAgent = () => {
       // Resolve HTML content with socket values
 
-      console.log(
-        "Step 1 - Here is the systemPromptHtml",
-        localCardData.systemPromptHtml
-      );
-      const resolvedSystemPrompt = resolveSocketContent(
-        localCardData.systemPromptHtml,
-        localCardData.sockets.inputs
-      ); //|| localCardData.systemPrompt;
+      triggerPending.value = false;
+      localCardData.value.status = "starting";
 
-      console.log(
-        "Step 2 - Here is the userPromptHtml",
-        localCardData.userPromptHtml
-      );
+      const resolvedSystemPrompt = resolveSocketContent(
+        localCardData.value.systemPromptHtml,
+        localCardData.value.sockets.inputs
+      ); //|| localCardData.value.systemPrompt;
+
       const resolvedUserPrompt = resolveSocketContent(
-        localCardData.userPromptHtml,
-        localCardData.sockets.inputs
-      ); //|| localCardData.userPrompt;
+        localCardData.value.userPromptHtml,
+        localCardData.value.sockets.inputs
+      ); //|| localCardData.value.userPrompt;
 
       let messageHistory = [
         { role: "system", content: resolvedSystemPrompt },
         { role: "user", content: resolvedUserPrompt },
       ];
 
-      let temperature = localCardData.temperature;
+      let temperature = localCardData.value.temperature;
 
       //System prompts not yet supported by some models.
-      if (localCardData.model.model == "o1-mini-2024-09-12") {
+      if (localCardData.value.model.model == "o1-mini-2024-09-12") {
         messageHistory[0].role = "user";
         temperature = 1;
       }
@@ -450,16 +453,17 @@ export default {
       console.log("Calling LLM:", messageHistory);
 
       //Set the output to null
-      Vue.nextTick(()=>{
-        if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = null;
-        emit("update-card", Vue.toRaw(localCardData));
-      })
+      Vue.nextTick(() => {
+        if (localCardData.value.sockets?.outputs?.length)
+          localCardData.value.sockets.outputs[0].value = null;
+        emit("update-card", Vue.toRaw(localCardData.value));
+      });
 
       sendToServer(
         wsUuid.value,
         websocketId.value,
-        localCardData.model.provider || "openAi",
-        localCardData.model.model || "gpt-4o",
+        localCardData.value.model.provider || "openAi",
+        localCardData.value.model.model || "gpt-4o",
         temperature,
         null,
         null,
@@ -491,27 +495,47 @@ export default {
     });
 
     Vue.watch(partialMessage, (newValue, oldValue) => {
-      localCardData.output = newValue;
-      localCardData.status = "partial";
+      if (newValue && newValue.length) {
+        localCardData.value.output = newValue;
+        localCardData.value.status = "partial";
+      }
     });
 
+    // Modify the completedMessage watcher to check for pending triggers
     Vue.watch(completedMessage, (newValue, oldValue) => {
-      localCardData.output = newValue;
-      localCardData.status = "completed";
+      localCardData.value.output = newValue;
+      localCardData.value.status = "idle";
       //Set the socket output value
-      if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = newValue;
-      emit("update-card", Vue.toRaw(localCardData));
-      //Emit a card update
+      if (localCardData.value.sockets?.outputs?.length)
+        localCardData.value.sockets.outputs[0].value = newValue;
+      emit("update-card", Vue.toRaw(localCardData.value));
+
+      // Check for pending trigger
+      if (triggerPending.value) {
+        triggerPending.value = false;
+        Vue.nextTick(() => {
+          triggerAgent();
+        });
+      }
     });
 
+    // Also modify the errorMessage watcher similarly
     Vue.watch(errorMessage, (newValue, oldValue) => {
       if (!oldValue?.length && newValue?.length) {
-        localCardData.output = null;
-        localCardData.status = "error";
-        if(localCardData.sockets?.outputs?.length) localCardData.sockets.outputs[0].value = null;
-        emit("update-card", Vue.toRaw(localCardData));
+        localCardData.value.output = null;
+        localCardData.value.status = "error";
+        if (localCardData.value.sockets?.outputs?.length)
+          localCardData.value.sockets.outputs[0].value = null;
+        emit("update-card", Vue.toRaw(localCardData.value));
+
+        // Check for pending trigger
+        if (triggerPending.value) {
+          triggerPending.value = false;
+          Vue.nextTick(() => {
+            triggerAgent();
+          });
+        }
       }
-      //Emit a card update
     });
 
     const isJSON = (str) => {
@@ -576,10 +600,10 @@ export default {
 
         try {
           // Update position and output only if changed
-          if (newData.x !== oldData.x) localCardData.x = newData.x;
-          if (newData.y !== oldData.y) localCardData.y = newData.y;
+          if (newData.x !== oldData.x) localCardData.value.x = newData.x;
+          if (newData.y !== oldData.y) localCardData.value.y = newData.y;
           if (newData.output !== oldData.output) {
-            localCardData.output = newData.output;
+            localCardData.value.output = newData.output;
           }
 
           // Update socket values
