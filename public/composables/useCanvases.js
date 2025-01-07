@@ -550,6 +550,7 @@ Vue.watch(
 
     // Card Operations
     createCard: cardRegistry.createCard,
+    cloneCard: cardRegistry.cloneCard,
     removeCard: cardRegistry.removeCard,
     updateCardPosition: cardPositioning.updateCardPosition,
     handleCardSelection: cardSelection.handleCardSelection,

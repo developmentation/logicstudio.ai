@@ -218,6 +218,43 @@ export const createCardRegistry = (props) => {
   };
 
 
+  
+  // In cardRegistry.js
+  const cloneCard = (type, position = null) => {
+    // console.log({type, position })
+    // console.log("cloneCard", selectedCardIds.value)
+    let clonedCards = [];
+
+    selectedCardIds.value.forEach((id) => {
+      const card = activeCards.value.find((c) => c.uuid === id);
+      if (card) {
+        let clonedCard = JSON.parse(JSON.stringify(card))
+        clonedCard.uuid = uuidv4(); //New UUID for the clone
+        clonedCard.x = clonedCard.x + 50; //Shift right a little
+        clonedCard.y = clonedCard.y + 50; //Shift down a little
+        clonedCard.zIndex = Z_INDEX_LAYERS.SELECTED,
+        clonedCards.push(clonedCard)
+      }
+    });
+  
+
+    //Reset the active cards
+    activeCards.value = activeCards.value.map(card => ({
+        ...card,
+        zIndex: Z_INDEX_LAYERS.DEFAULT
+      }));
+      selectedCardIds.value.clear();
+ 
+    //Set the cloned cards to be active
+    clonedCards.forEach((newCard)=>{
+      activeCards.value  = [...activeCards.value,newCard];
+      selectedCardIds.value.add(newCard.uuid);
+    })
+
+    return selectedCardIds.value;
+  };
+
+
 
 const removeCard = (cardId) => {
     // console.log("removeCard", cardId)
@@ -266,6 +303,7 @@ const removeCard = (cardId) => {
 
     // Card operations
     createCard,
+    cloneCard,
     removeCard,
 
     // State persistence

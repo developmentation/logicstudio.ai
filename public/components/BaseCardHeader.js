@@ -19,7 +19,13 @@ export default {
     >
         <div class="flex items-center gap-2">
           <div v-if="!isEditingTitle" class="flex items-center gap-1">
-            <h2 class="text-sm font-medium text-gray-200">{{ localTitle }}</h2>
+            
+          <button class="text-gray-400 hover:text-gray-200 clone-button" @click.stop="handleClone"> 
+            <i class = "pi pi-copy text-xs"> </i> 
+          </button>
+
+
+          <h2 class="text-sm font-medium text-gray-200">{{ localTitle }}</h2>
             <button 
               class="text-gray-400 hover:text-gray-200"
               @click.stop="startTitleEdit"
@@ -37,12 +43,14 @@ export default {
             @mousedown.stop
           />
         </div>
+
         <button 
           class="text-gray-400 hover:text-gray-200"
           @click.stop="$emit('close')"
         >×</button>
       </div>
     `,
+
   setup(props, { emit }) {
     const isEditingTitle = Vue.ref(false);
     const titleInput = Vue.ref(null);
@@ -74,6 +82,12 @@ export default {
         });
       };
 
+      const handleClone = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        emit('clone-card');
+      };
+
     const handleHeaderMouseDown = (event) => {
         // Preserve button and input interaction behavior
         if (
@@ -83,9 +97,13 @@ export default {
         ) {
           return;
         }
-        
+
+        if (event.target.closest('button')?.classList.contains('clone-button')) {
+          return; // Don't handle mousedown for clone button
+        }
+
         // Allow text selection in inputs while maintaining header behavior elsewhere
-        if (!event.target.matches('input, textarea, [contenteditable="true"]')) {
+        if (!event.target.matches('button, input, textarea, [contenteditable="true"]')) {
           event.preventDefault();
         }
         
@@ -118,7 +136,8 @@ export default {
       startTitleEdit,
       finishTitleEdit,
       handleHeaderClick,
-      handleHeaderMouseDown
+      handleHeaderMouseDown,
+      handleClone
     };
   },
 };

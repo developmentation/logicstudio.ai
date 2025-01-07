@@ -17,6 +17,7 @@ export default {
     isSelected: { type: Boolean, default: false },
   },
   template: `
+  <div>
     <BaseCard
       :card-data="localCardData"
       :zoom-level="zoomLevel"
@@ -25,6 +26,7 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
+      @clone-card="$emit('clone-card', $event)"
       @select-card="$emit('select-card', $event)"
     >
       <!-- Socket List Component - Reused for both inputs and outputs -->
@@ -114,6 +116,7 @@ export default {
         <slot name="content"></slot>
       </div>
     </BaseCard>
+    </div>
   `,
 
   setup(props, { emit }) {

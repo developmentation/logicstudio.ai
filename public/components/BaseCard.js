@@ -50,6 +50,7 @@ export default {
       :is-selected="isSelected"
       @update:title="updateTitle"
       @close="$emit('close-card', localCardData.uuid)"
+      @clone-card="$emit('clone-card', localCardData.uuid)"
       @header-click="handleHeaderClick"
       @header-mousedown="startDrag"  
     />
@@ -329,6 +330,7 @@ const startDrag = (event) => {
       isEditingDescription,
       descriptionInput,
       handleCardClick,
+      
       startDrag,
       updateTitle,
       startDescriptionEdit,

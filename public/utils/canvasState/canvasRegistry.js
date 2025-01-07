@@ -81,7 +81,7 @@ export const createCanvasRegistry = (props) => {
   const importCanvas = (canvasData) => {
     console.log("Import Data", canvasData)
     const canvas = {
-        id: canvasData.id || uuidv4(),
+        id:  uuidv4(), //Always assign an imported canvas a fresh UUID so they don't conflict if there are multiple instances canvasData.id ||
         name: canvasData.name || "Imported Canvas",
         cards: canvasData.cards || [],
         connections: canvasData.connections || [],

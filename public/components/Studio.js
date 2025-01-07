@@ -247,6 +247,7 @@ export default {
                                 @connection-drag="handleConnectionDrag"
                                 @connection-drag-end="handleConnectionDragEnd"
                                 @close-card="removeCard"
+                                @clone-card="cloneCard"
                                 @manual-trigger="handleManualTrigger"
                                 @sockets-updated="handleSocketsUpdated"
                                 @select-card="handleCardSelection"
@@ -290,6 +291,7 @@ export default {
       // Card management
       createCard,
       removeCard,
+      cloneCard,
       updateCardPosition,
 
       //Connections management
@@ -350,6 +352,7 @@ export default {
     const toolbarShowText = Vue.ref(true);
     const initialized = Vue.ref(false);
 
+    
     // Lifecycle hooks
     Vue.onMounted(() => {
       // Add keyboard event listener
@@ -754,6 +757,8 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       // Operations
       updateCardPosition,
       removeCard,
+      cloneCard,
+      
       drawSpline,
       updateSocketValue,
       panBackground,

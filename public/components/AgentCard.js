@@ -39,6 +39,7 @@ export default {
   },
 
   template: `
+  <div>
     <BaseCard
       :card-data="localCardData"
       :zoom-level="zoomLevel"
@@ -47,6 +48,7 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
+      @clone-card="$emit('clone-card', $event)"
       @select-card="$emit('select-card', $event)"
     >
 
@@ -166,6 +168,7 @@ export default {
         </div>
      </div>
     </BaseCard>
+    </div>
   `,
 
   setup(props, { emit }) {
