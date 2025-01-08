@@ -4,6 +4,7 @@ import { useCanvases } from "../composables/useCanvases.js";
 import AgentCard from "./AgentCard.js";
 import InputCard from "./InputCard.js";
 import OutputCard from "./OutputCard.js";
+import JoinCard from "./JoinCard.js";
 import TemplateCard from "./TemplateCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 
@@ -13,6 +14,7 @@ export default {
     AgentCard,
     InputCard,
     OutputCard,
+    JoinCard,
     TemplateCard,
     CanvasToolbar,
   },
@@ -384,15 +386,19 @@ export default {
     // Component utility functions
     const getCardComponent = (type) => {
       switch (type) {
-        case "template":
-          return "TemplateCard";
+        case "agent":
+        default:
+          return "AgentCard";
         case "input":
           return "InputCard";
         case "output":
           return "OutputCard";
-        case "agent":
-        default:
-          return "AgentCard";
+        case "join":
+          return "JoinCard";
+        case "template":
+          return "TemplateCard";
+  
+
       }
     };
 

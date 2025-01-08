@@ -96,7 +96,7 @@ export default {
         { id: 'text', label: 'Text', icon: 'pi pi-align-left', type: 'text' , disabled:true },
         { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
-        { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'tool', disabled:true},
+        { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
         { id: 'transcribe', label: 'Audio to Text (Pending)', icon: 'pi pi-microphone', type: 'tool', disabled:true },
         { id: 'web', label: 'Web Content (Pending)', icon: 'pi pi-globe', type: 'tool', disabled:true },
         { id: 'label', label: 'Label (Pending)', icon: 'pi pi-tag', type: 'tool', disabled:true },

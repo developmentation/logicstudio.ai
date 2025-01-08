@@ -64,14 +64,14 @@ export default {
               class="text-gray-400 hover:text-gray-200"
               @click.stop="toggleDisplay"
             >
-              <i class="pi pi-caret-down text-xs"></i>
+              <i class="pi pi-caret-up text-xs"></i>
             </button>
 
             <button v-else 
               class="text-gray-400 hover:text-gray-200"
               @click.stop="toggleDisplay"
             >
-              <i class="pi pi-caret-up text-xs"></i>
+              <i class="pi pi-caret-down text-xs"></i>
             </button>
 
 
@@ -338,7 +338,6 @@ export default {
         localCardData.display = "minimized";
       else localCardData.display = "default";
     
-      console.log(localCardData)
       emit("update-card", localCardData);
 
     };

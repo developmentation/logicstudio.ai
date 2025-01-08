@@ -16,6 +16,7 @@ export const createCardRegistry = (props) => {
     AGENT: "agent",
     INPUT: "input",
     OUTPUT: "output",
+    JOIN: "join",
     TEMPLATE: "template",
     DISPLAY: "display",
     TEXT: "text",
@@ -80,6 +81,26 @@ export const createCardRegistry = (props) => {
         outputs: [],
       },
     },
+
+    [CARD_TYPES.JOIN]: {
+      display:"default",
+      width: 300,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs:  [
+          {
+            id: uuidv4(),
+            name: "Output",
+            type: SOCKET_TYPES.OUTPUT,
+            value: null,
+            momentUpdated: Date.now(),
+          },
+        ],
+      },
+    },
+
+
     [CARD_TYPES.TEMPLATE]: {
       display:"default",
       width: 300,

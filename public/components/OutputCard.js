@@ -162,6 +162,7 @@ export default {
         uuid: data.uuid,
         name: data.name || "Output",
         description: data.description || "Output Node",
+        display: data.display || "default",
         x: data.x || 0,
         y: data.y || 0,
         outputs: data.outputs || [{ type: "markdown", id: generateSocketId() }],
