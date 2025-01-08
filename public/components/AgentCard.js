@@ -48,11 +48,11 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
-      @clone-card="$emit('clone-card', $event)"
+      @clone-card="uuid => $emit('clone-card', uuid )"
       @select-card="$emit('select-card', $event)"
     >
 
-    <div class = "w-full">
+    <div class = "w-full" v-show = "localCardData.display == 'default'">
         <select
         v-model="localCardData.model"
         class="flex-1 bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded cursor-pointer;" style = "border: 1px solid #374151; width:100%"
@@ -112,7 +112,7 @@ export default {
       <!-- Content -->
       <div class="space-y-4 text-gray-300">
         <!-- System Prompt -->
-        <div class="space-y-1">
+        <div class="space-y-1" v-show = "localCardData.display == 'default'">
           <label class="text-xs text-gray-400 font-medium">System Prompt</label>
           <SocketEditor
             v-model="localCardData.systemPrompt"
@@ -126,7 +126,7 @@ export default {
         </div>
 
         <!-- User Prompt -->
-        <div class="space-y-1">
+        <div class="space-y-1" v-show = "localCardData.display == 'default'">
           <label class="text-xs text-gray-400 font-medium">User Prompt</label>
           <SocketEditor
             v-model="localCardData.userPrompt"
@@ -141,7 +141,7 @@ export default {
 
 
       <!-- Output Display -->
-      <div class="space-y-1">
+      <div class="space-y-1" v-show = "localCardData.display == 'default'">
         <label class="text-xs text-gray-400 font-medium">Output</label>
         <div class="w-full min-h-[60px] max-h-[100px] overflow-y-auto bg-gray-900 text-xs text-gray-200 p-2 rounded"
         @mousedown.stop
@@ -150,23 +150,33 @@ export default {
         </div>
       </div>
 
- <div class="mt-4">
-          <div class="flex items-center justify-between">
-            <label class="flex items-center gap-2">
-              <input 
-                type="checkbox"
-                v-model="localCardData.triggerOnInput"
-                class="form-checkbox"
-              />
-              <span class="text-xs text-gray-400">Trigger on input</span>
-            </label>
-            <button
-              class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
-              @click="triggerAgent"
-            >Trigger</button>
+
+      <!--Trigger and status-->
+
+      <div class="mt-4">
+        <div class="flex items-center justify-between">
+          <label class="flex items-center gap-2">
+            <input type="checkbox" v-model="localCardData.triggerOnInput" class="form-checkbox" />
+            <span class="text-xs text-gray-400">Trigger on input</span>
+          </label>
+
+          <div class="flex items-center gap-2"> <!-- New container for button and dot -->
+            <button class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
+              @click="triggerAgent">Trigger</button>
+
+            <div class="status-dot" :class="{
+                'idle': localCardData.status === 'idle',
+                'complete': localCardData.status === 'complete',
+                'in-progress': localCardData.status === 'inProgress',
+                'error': localCardData.status === 'error'
+              }"></div>
           </div>
         </div>
+      </div>
+      
+
      </div>
+    
     </BaseCard>
     </div>
   `,
@@ -211,6 +221,7 @@ export default {
         status: data.status || "idle",
 
         //Display
+        display: data.display || "default",
         x: data.x || 0,
         y: data.y || 0,
 
@@ -420,7 +431,8 @@ export default {
     };
 
     // Card update handler
-    const handleCardUpdate = () => {
+    const handleCardUpdate = (data) => {
+      if(data) localCardData.value = data; 
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
@@ -488,6 +500,10 @@ export default {
       return sessions.value?.[websocketId.value]?.status || 'idle';
     });
 
+    Vue.watch(sessionStatus, (newValue, oldValue) => {
+      localCardData.value.status = newValue;
+    })
+    
     const partialMessage = Vue.computed(() => {
       if (sessions?.value) {
         const session = sessions.value[websocketId.value]; // Use the sessionId prop to access the correct session
@@ -619,12 +635,12 @@ export default {
 Vue.watch(inputSocketValues, (newValues, oldValues) => {
   if (!localCardData.value.triggerOnInput || !oldValues) return;
 
-  const hasRealUpdate = newValues.some((newSocket, index) => {
+  const hasValueChanged = newValues.some((newSocket, index) => {
     const oldSocket = oldValues[index];
-    return oldSocket && newSocket.momentUpdated !== oldSocket.momentUpdated;
+    return oldSocket && JSON.stringify(newSocket.value) !== JSON.stringify(oldSocket.value);
   });
 
-  if (hasRealUpdate) {
+  if (hasValueChanged) {
     if (sessionStatus.value === 'inProgress') {
       triggerPending.value = true;
     } else {

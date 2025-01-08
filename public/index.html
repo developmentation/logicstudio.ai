@@ -427,6 +427,48 @@
             }
         }
     </style>
+
+    <style>
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.status-dot.idle {
+  background-color: #9CA3AF;  /* gray-400 */
+}
+
+
+.status-dot.complete {
+  background-color: #00ffcc;  /* green-400 */
+}
+
+
+.status-dot.in-progress {
+  background-color: #ffdc19;  /* green-500 */
+  animation: pulse 2s infinite;
+}
+
+.status-dot.error {
+  background-color: #EF4444;  /* red-500 */
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+    </style>
 </head>
 
 <body>

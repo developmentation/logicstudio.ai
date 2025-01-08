@@ -59,7 +59,23 @@ export default {
         <!-- Description -->
         <div class="mb-4">
           <div v-if="!isEditingDescription" class="flex items-center gap-1">
-            <p class="text-xs text-gray-300">{{ localCardData.description }}</p>
+
+            <button v-if = "localCardData.display == 'default'"
+              class="text-gray-400 hover:text-gray-200"
+              @click.stop="toggleDisplay"
+            >
+              <i class="pi pi-caret-down text-xs"></i>
+            </button>
+
+            <button v-else 
+              class="text-gray-400 hover:text-gray-200"
+              @click.stop="toggleDisplay"
+            >
+              <i class="pi pi-caret-up text-xs"></i>
+            </button>
+
+
+          <p class="text-xs text-gray-300">{{ localCardData.description }}</p>
             <button 
               class="text-gray-400 hover:text-gray-200"
               @click.stop="startDescriptionEdit"
@@ -165,94 +181,95 @@ export default {
       document.removeEventListener("touchend", stopDrag);
     };
 
- 
-// In BaseCard.js - simplified drag handler
-const startDrag = (event) => {
-    const isTouch = event.type === "touchstart";
-    const isHeaderDrag = event.isHeader;
-  
-    if (
-      (!isHeaderDrag && event.target.classList.contains("socket")) ||
-      (!isHeaderDrag && event.target.closest(".socket")) ||
-      (!isHeaderDrag && event.target.matches('input, textarea, [contenteditable="true"]')) ||
-      (!isHeaderDrag && event.target.closest('input, textarea, [contenteditable="true"]')) ||
-      (!isHeaderDrag && event.target.closest("button"))
-    ) {
-      return;
-    }
-  
-    if (!isTouch && event.button !== 0) return;
-    
-    event.stopPropagation();
-    event.preventDefault();
-  
-    // Set dragging state immediately
-    isDragging.value = true;
-    
-    const clientX = isTouch ? event.touches[0].clientX : event.clientX;
-    const clientY = isTouch ? event.touches[0].clientY : event.clientY;
-    dragStart.x = clientX;
-    dragStart.y = clientY;
+    // In BaseCard.js - simplified drag handler
+    const startDrag = (event) => {
+      const isTouch = event.type === "touchstart";
+      const isHeaderDrag = event.isHeader;
 
-    // Only emit selection if the card isn't selected
-    if (!props.isSelected) {
-      emit("select-card", {
-        uuid: localCardData.uuid,
-        shiftKey: event.shiftKey
-      });
-    }
+      if (
+        (!isHeaderDrag && event.target.classList.contains("socket")) ||
+        (!isHeaderDrag && event.target.closest(".socket")) ||
+        (!isHeaderDrag &&
+          event.target.matches('input, textarea, [contenteditable="true"]')) ||
+        (!isHeaderDrag &&
+          event.target.closest('input, textarea, [contenteditable="true"]')) ||
+        (!isHeaderDrag && event.target.closest("button"))
+      ) {
+        return;
+      }
 
-    const handleMove = (e) => {
-      if (!isDragging.value) return;
-      
-      const currentX = isTouch ? e.touches[0].clientX : e.clientX;
-      const currentY = isTouch ? e.touches[0].clientY : e.clientY;
-      
-      const dx = (currentX - dragStart.x) / props.zoomLevel;
-      const dy = (currentY - dragStart.y) / props.zoomLevel;
+      if (!isTouch && event.button !== 0) return;
 
-      emit("update-position", {
-        uuid: localCardData.uuid,
-        x: localCardData.x + dx,
-        y: localCardData.y + dy
-      });
+      event.stopPropagation();
+      event.preventDefault();
 
-      dragStart.x = currentX;
-      dragStart.y = currentY;
-    };
+      // Set dragging state immediately
+      isDragging.value = true;
 
-    const handleEnd = (e) => {
-      if (!isDragging.value) return;
-      
-      const endX = isTouch ? e.changedTouches[0].clientX : e.clientX;
-      const endY = isTouch ? e.changedTouches[0].clientY : e.clientY;
-      
-      const dx = (endX - dragStart.x) / props.zoomLevel;
-      const dy = (endY - dragStart.y) / props.zoomLevel;
-      
-      emit("update-position", {
-        uuid: localCardData.uuid,
-        x: localCardData.x + dx,
-        y: localCardData.y + dy
-      });
-      
-      isDragging.value = false;
-      
-      // Don't allow this mouseup to become a click
-      e.stopPropagation();
-      e.preventDefault();
-      
+      const clientX = isTouch ? event.touches[0].clientX : event.clientX;
+      const clientY = isTouch ? event.touches[0].clientY : event.clientY;
+      dragStart.x = clientX;
+      dragStart.y = clientY;
+
+      // Only emit selection if the card isn't selected
+      if (!props.isSelected) {
+        emit("select-card", {
+          uuid: localCardData.uuid,
+          shiftKey: event.shiftKey,
+        });
+      }
+
+      const handleMove = (e) => {
+        if (!isDragging.value) return;
+
+        const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+        const currentY = isTouch ? e.touches[0].clientY : e.clientY;
+
+        const dx = (currentX - dragStart.x) / props.zoomLevel;
+        const dy = (currentY - dragStart.y) / props.zoomLevel;
+
+        emit("update-position", {
+          uuid: localCardData.uuid,
+          x: localCardData.x + dx,
+          y: localCardData.y + dy,
+        });
+
+        dragStart.x = currentX;
+        dragStart.y = currentY;
+      };
+
+      const handleEnd = (e) => {
+        if (!isDragging.value) return;
+
+        const endX = isTouch ? e.changedTouches[0].clientX : e.clientX;
+        const endY = isTouch ? e.changedTouches[0].clientY : e.clientY;
+
+        const dx = (endX - dragStart.x) / props.zoomLevel;
+        const dy = (endY - dragStart.y) / props.zoomLevel;
+
+        emit("update-position", {
+          uuid: localCardData.uuid,
+          x: localCardData.x + dx,
+          y: localCardData.y + dy,
+        });
+
+        isDragging.value = false;
+
+        // Don't allow this mouseup to become a click
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (!isTouch) {
+          document.removeEventListener("mousemove", handleMove);
+          document.removeEventListener("mouseup", handleEnd);
+        }
+      };
+
       if (!isTouch) {
-        document.removeEventListener("mousemove", handleMove);
-        document.removeEventListener("mouseup", handleEnd);
+        document.addEventListener("mousemove", handleMove);
+        document.addEventListener("mouseup", handleEnd);
       }
     };
-
-    if (!isTouch) {
-      document.addEventListener("mousemove", handleMove);
-      document.addEventListener("mouseup", handleEnd);
-    }
-};
 
     // In BaseCard.js
 
@@ -315,6 +332,17 @@ const startDrag = (event) => {
       });
     };
 
+    const toggleDisplay = () => {
+      
+      if (localCardData.display == "default")
+        localCardData.display = "minimized";
+      else localCardData.display = "default";
+    
+      console.log(localCardData)
+      emit("update-card", localCardData);
+
+    };
+
     // Watch for external changes to cardData
     Vue.watch(
       () => props.cardData,
@@ -330,7 +358,7 @@ const startDrag = (event) => {
       isEditingDescription,
       descriptionInput,
       handleCardClick,
-      
+
       startDrag,
       updateTitle,
       startDescriptionEdit,
@@ -339,6 +367,8 @@ const startDrag = (event) => {
       handleTouchMove,
       handleTouchEnd,
       startConnectionDrag,
+
+      toggleDisplay,
     };
   },
 };

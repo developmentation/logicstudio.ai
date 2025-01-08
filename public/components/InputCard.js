@@ -18,7 +18,7 @@ export default {
     isSelected: { type: Boolean, default: false }
   },
   template: `
-  <div>
+  <div >
     <BaseCard
       :card-data="localCardData"
       :zoom-level="zoomLevel"
@@ -27,8 +27,9 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
-      @clone-card="$emit('clone-card', $event)"
+      @clone-card="uuid => $emit('clone-card', uuid )"
       @select-card="$emit('select-card', $event)"
+       :style="{ minHeight: contentMinHeight + 'px' }"
     >
       <!-- Output Sockets -->
       <div class="absolute -right-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
@@ -55,7 +56,11 @@ export default {
       </div>
 
       <!-- Content -->
-      <div class="space-y-2 text-gray-300 p-4 select-none">
+      <div 
+      class="space-y-2 text-gray-300 p-4 select-none" 
+      v-show = "localCardData.display == 'default'"
+     
+      >
         <!-- File Upload Area -->
         <div 
           class="flex justify-center items-center border-2 border-dashed border-gray-600 rounded-lg p-4 cursor-pointer"
@@ -146,6 +151,7 @@ export default {
     const isProcessing = Vue.ref(false);
     const editingIndex = Vue.ref(-1);
     const editingName = Vue.ref('');
+    const contentMinHeight = Vue.ref(0);
 
 
     
@@ -175,9 +181,16 @@ export default {
 
         // Update the socket with new file data
         if (localCardData.value.sockets.outputs[index]) {
+
+
+
           const updatedSocket = {
-            ...localCardData.value.sockets.outputs[index],
-            value: fileData,
+            ...createSocket({
+              type: 'output',
+              index,
+              existingId: localCardData.value.sockets.outputs[index].id, // Preserve the existing ID
+              value: fileData
+            }),
             name: file.name
           };
 
@@ -186,7 +199,7 @@ export default {
           newSockets[index] = updatedSocket;
 
           // Remap the sockets
-          const { reindexedSockets } = updateSocketArray({
+          const { reindexedSockets, reindexMap } = updateSocketArray({
             oldSockets: localCardData.value.sockets.outputs,
             newSockets,
             type: 'output',
@@ -202,7 +215,7 @@ export default {
             cardId: localCardData.value.uuid,
             oldSockets: localCardData.value.sockets.outputs,
             newSockets: reindexedSockets,
-            reindexMap: new Map(),
+            reindexMap,  // Use the actual reindexMap
             deletedSocketIds: [],
             type: 'output'
           }));
@@ -262,6 +275,7 @@ export default {
         uuid: data.uuid,
         name: data.name || "Input Card",
         description: data.description || "File Input Node",
+        display: data.display || "default",
         x: data.x || 0,
         y: data.y || 0,
         filesData: filesData,
@@ -459,7 +473,8 @@ export default {
       fileInput.value?.click();
     };
 
-    const handleCardUpdate = () => {
+    const handleCardUpdate = (data) => {
+      if(data) localCardData.value = data; 
       if (!isProcessing.value) {
         emit('update-card', Vue.toRaw(localCardData.value));
       }
@@ -511,6 +526,15 @@ export default {
         isProcessing.value = false;
       }
     }, { deep: true });
+    
+    Vue.watch(
+      () => localCardData.value.sockets.outputs.length,
+      (newSocketCount) => {
+        console.log("newSocketCount", newSocketCount)
+        contentMinHeight.value = 30+ newSocketCount * 36;
+      },
+      { immediate: true }
+    );
 
     // Cleanup on unmount
     Vue.onUnmounted(() => {
@@ -539,7 +563,9 @@ export default {
       saveFileName,
       cancelEdit,
       triggerRefreshFile,
-      handleRefreshFile
+      handleRefreshFile,
+
+      contentMinHeight,
     };
   }
 };

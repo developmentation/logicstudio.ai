@@ -28,7 +28,7 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
-      @clone-card="$emit('clone-card', $event)"
+      @clone-card="uuid => $emit('clone-card', uuid )"
       @select-card="$emit('select-card', $event)"
     >
       <!-- Input Sockets -->
@@ -80,7 +80,7 @@ export default {
       </div>
 
       <!-- Content -->
-      <div class="space-y-2 text-gray-300">
+      <div class="space-y-2 text-gray-300" v-show = "localCardData.display == 'default'">
         <div class="mt-4">
           <div class="flex justify-between items-center mb-2">
             <label class="text-xs font-medium text-gray-400">Save Input as:</label>
@@ -327,7 +327,8 @@ export default {
     };
 
     // Handle card updates
-    const handleCardUpdate = () => {
+    const handleCardUpdate = (data) => {
+      if(data) localCardData.value = data; 
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
