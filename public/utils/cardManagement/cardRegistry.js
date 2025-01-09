@@ -18,7 +18,7 @@ export const createCardRegistry = (props) => {
     OUTPUT: "output",
     JOIN: "join",
     TEMPLATE: "template",
-    DISPLAY: "display",
+    VIEW: "view",
     TEXT: "text",
     TOOL: "tool",
   };
@@ -99,7 +99,24 @@ export const createCardRegistry = (props) => {
         ],
       },
     },
-
+    [CARD_TYPES.TEXT]: {
+      display:"default",
+      width: 300,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs:  [],
+      },
+    },
+    [CARD_TYPES.VIEW]: {
+      display:"default",
+      width: 600,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs:  [],
+      },
+    },
 
     [CARD_TYPES.TEMPLATE]: {
       display:"default",
@@ -212,6 +229,7 @@ export const createCardRegistry = (props) => {
     const newCard = {
       uuid: cardId,
       type,
+      display:"default",
       x: position?.x ?? 0,
       y: position?.y ?? 0,
       zIndex: Z_INDEX_LAYERS.SELECTED,
@@ -288,7 +306,7 @@ export const createCardRegistry = (props) => {
           const doc = parser.parseFromString(html, "text/html");
 
           // Update all socket tags
-          doc.querySelectorAll(".socket-tag").forEach((tag) => {
+          doc.querySelectorAll(".text-editor-tag").forEach((tag) => {
             const oldSocketId = tag.getAttribute("data-socket-id");
             const newSocketId = socketIdMap.get(oldSocketId);
 

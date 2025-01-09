@@ -589,7 +589,7 @@ export default {
         const doc = parser.parseFromString(html, "text/html");
 
         // Find all socket tags
-        const socketTags = doc.querySelectorAll("span.socket-tag");
+        const socketTags = doc.querySelectorAll("span.text-editor-tag");
 
         // Replace each socket tag with its corresponding value
         socketTags.forEach((tag) => {

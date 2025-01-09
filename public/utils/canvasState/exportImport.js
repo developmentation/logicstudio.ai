@@ -218,7 +218,7 @@ export const createExportImport = (props) => {
                     cardCount: data.cards.length,
                     connectionCount: data.connections.length,
                     socketCount: data.cards.reduce((count, card) => 
-                        count + card.sockets.inputs.length + card.sockets.outputs.length, 0
+                        count + (card?.sockets?.inputs?.length ? card?.sockets?.inputs?.length: 0) + (card?.sockets?.outputs?.length ? card?.sockets?.outputs?.length : 0), 0
                     )
                 }
             };

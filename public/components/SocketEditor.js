@@ -26,7 +26,7 @@ export default {
   <div class="relative flex flex-col">
     <div
       ref="editor"
-      class="socket-editor"
+      class="text-editor"
       contenteditable="true"
       :data-placeholder="placeholder"
       @input="handleInput"
@@ -49,7 +49,7 @@ export default {
       @wheel.stop="handleWheel"
       spellcheck="false"
     ></div>
-   <div class="socket-input-container">
+   <div class="text-editor-input-container">
 <input 
   ref="inputRef"  
   type="text"
@@ -58,7 +58,7 @@ export default {
   @keyup.enter="addSocketAtCursor"
   @blur="handleInputBlur"
   @mousedown.stop.prevent="handleInputMouseDown"  
-  class="socket-editor-input"   
+  class="text-editor-input"   
 />
   <button 
     @click.stop="addSocketAtCursor"
@@ -214,14 +214,14 @@ const addSocketAtCursor = () => {
         const range = selection.getRangeAt(0);
         
         // Clear existing selections first
-        editor.value.querySelectorAll(".socket-tag.selected").forEach((tag) => {
+        editor.value.querySelectorAll(".text-editor-tag.selected").forEach((tag) => {
           tag.classList.remove("selected");
         });
       
         // Only process selection if there's actually a selection (not just a cursor)
         if (!selection.isCollapsed) {
           // Find all tags in editor
-          const tags = Array.from(editor.value.querySelectorAll(".socket-tag"));
+          const tags = Array.from(editor.value.querySelectorAll(".text-editor-tag"));
       
           // Check each tag against selection
           tags.forEach((tag) => {
@@ -319,7 +319,7 @@ const cleanHtml = (html) => {
         const socketId = getOrCreateSocketId(socketName, false);
         // Add a space wrapper that preserves whitespace
         return `<span 
-          class="socket-tag"
+          class="text-editor-tag"
           contenteditable="false"
           data-socket-id="${socketId}"
           data-socket-name="${socketName}"
@@ -334,7 +334,7 @@ const cleanHtml = (html) => {
       const temp = document.createElement("div");
       temp.innerHTML = cleanHtml(html);
 
-      temp.querySelectorAll(".socket-tag").forEach((span) => {
+      temp.querySelectorAll(".text-editor-tag").forEach((span) => {
         const socketName = span.getAttribute("data-socket-name");
         const socketTag = document.createTextNode(
           `<socket name="${socketName}"/>`
@@ -395,7 +395,7 @@ const cleanHtml = (html) => {
             lastCreatedId = socketId;
 
             const replacement = `<span 
-                  class="socket-tag"
+                  class="text-editor-tag"
                   contenteditable="false"
                   draggable="true"
                   data-socket-id="${socketId}"
@@ -463,7 +463,7 @@ const cleanHtml = (html) => {
           emit("html-update", editor.value.innerHTML);
 
           const sockets = Array.from(
-            editor.value.querySelectorAll(".socket-tag")
+            editor.value.querySelectorAll(".text-editor-tag")
           ).map((tag) => ({
             id: tag.dataset.socketId,
             name: tag.dataset.socketName,
@@ -513,8 +513,8 @@ const cleanHtml = (html) => {
 
         const range = selection.getRangeAt(0);
         const socketTag =
-          range.startContainer.parentElement?.closest(".socket-tag") ||
-          range.endContainer.parentElement?.closest(".socket-tag");
+          range.startContainer.parentElement?.closest(".text-editor-tag") ||
+          range.endContainer.parentElement?.closest(".text-editor-tag");
 
         if (socketTag) {
           event.preventDefault();
@@ -534,7 +534,7 @@ const cleanHtml = (html) => {
       container.appendChild(range.cloneContents());
 
       // Convert the content to a format that preserves structure
-      const socketTags = Array.from(container.querySelectorAll(".socket-tag"));
+      const socketTags = Array.from(container.querySelectorAll(".text-editor-tag"));
       const content = htmlToText(container.innerHTML);
 
       event.preventDefault();
@@ -555,7 +555,7 @@ const cleanHtml = (html) => {
 
       // Remove selection styling after a brief delay
       setTimeout(() => {
-        editor.value.querySelectorAll(".socket-tag.selected").forEach((tag) => {
+        editor.value.querySelectorAll(".text-editor-tag.selected").forEach((tag) => {
           tag.classList.remove("selected");
         });
       }, 200);
@@ -570,7 +570,7 @@ const cleanHtml = (html) => {
       container.appendChild(range.cloneContents());
 
       // Convert the content to a format that preserves structure
-      const socketTags = Array.from(container.querySelectorAll(".socket-tag"));
+      const socketTags = Array.from(container.querySelectorAll(".text-editor-tag"));
       const content = htmlToText(container.innerHTML);
 
       event.preventDefault();
@@ -662,7 +662,7 @@ const cleanHtml = (html) => {
 
     // Only prevent drag if it's a socket tag
     const handleDragStart = (event) => {
-      const socketTag = event.target.closest(".socket-tag");
+      const socketTag = event.target.closest(".text-editor-tag");
       if (socketTag) {
         event.preventDefault();
         event.stopPropagation();
@@ -677,7 +677,7 @@ const cleanHtml = (html) => {
 
     const handleDrop = (event) => {
       // Only handle drops if they're text content
-      const socketTag = event.target.closest(".socket-tag");
+      const socketTag = event.target.closest(".text-editor-tag");
       if (socketTag) {
         event.preventDefault();
         event.stopPropagation();
@@ -701,7 +701,7 @@ const cleanHtml = (html) => {
     };
 
     const handleDragEnd = (event) => {
-      const socketTag = event.target.closest(".socket-tag");
+      const socketTag = event.target.closest(".text-editor-tag");
       if (socketTag) {
         event.preventDefault();
         event.stopPropagation();

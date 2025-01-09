@@ -93,10 +93,11 @@ export default {
       const addTools = [
         { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model', disabled:true },
         { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
-        { id: 'text', label: 'Text', icon: 'pi pi-align-left', type: 'text' , disabled:true },
+        { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },
         { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
         { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
+        { id: 'view', label: 'View', icon: 'pi pi-desktop', type: 'view'},
         { id: 'transcribe', label: 'Audio to Text (Pending)', icon: 'pi pi-microphone', type: 'tool', disabled:true },
         { id: 'web', label: 'Web Content (Pending)', icon: 'pi pi-globe', type: 'tool', disabled:true },
         { id: 'label', label: 'Label (Pending)', icon: 'pi pi-tag', type: 'tool', disabled:true },

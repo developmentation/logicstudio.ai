@@ -2,9 +2,11 @@
 
 import { useCanvases } from "../composables/useCanvases.js";
 import AgentCard from "./AgentCard.js";
+import TextCard from "./TextCard.js";
 import InputCard from "./InputCard.js";
 import OutputCard from "./OutputCard.js";
 import JoinCard from "./JoinCard.js";
+import ViewCard from "./ViewCard.js";
 import TemplateCard from "./TemplateCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 
@@ -12,9 +14,11 @@ export default {
   name: "Studio",
   components: {
     AgentCard,
+    TextCard,
     InputCard,
     OutputCard,
     JoinCard,
+    ViewCard,
     TemplateCard,
     CanvasToolbar,
   },
@@ -389,13 +393,21 @@ export default {
         case "agent":
         default:
           return "AgentCard";
-        case "input":
+
+          case "text":
+            return "TextCard";
+  
+          case "input":
           return "InputCard";
         case "output":
           return "OutputCard";
         case "join":
           return "JoinCard";
-        case "template":
+          case "view":
+            return "ViewCard";
+  
+
+          case "template":
           return "TemplateCard";
   
 

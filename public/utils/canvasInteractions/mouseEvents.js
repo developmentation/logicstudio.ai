@@ -104,7 +104,7 @@ completeConnection,
 
         // Check if we're clicking on any other interactive elements
         const isInteractiveElement = event.target.closest(
-            'select, input[type="file"],input[type="text"], .socket-editor-input, button, .form-control, select, .p-select, path, .card, .socket, .p-inputtext, .p-button'
+            'select, input[type="file"],input[type="text"], .text-editor-input, button, .form-control, select, .p-select, path, .card, .socket, .p-inputtext, .p-button'
         );
     
         // Only prevent default and stop propagation if we're not on an interactive element
