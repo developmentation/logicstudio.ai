@@ -30,6 +30,9 @@
 
 ## Features
 
+![Screenshot](./readmeimg.png)
+- **This readme.md was created using LogicStudio.ai**
+
 - **Visual Canvas:** Drag-and-drop interface to design your logic flows effortlessly.
 - **Dynamic Components:** A variety of components (cards) like Agents, Inputs, Outputs, Joins, Texts, Labels, and Views to construct complex workflows.
 - **Real-Time Connections:** Establish and manage connections between components with ease.
