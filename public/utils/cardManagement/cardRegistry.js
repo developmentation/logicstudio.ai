@@ -19,6 +19,7 @@ export const createCardRegistry = (props) => {
     JOIN: "join",
     TEMPLATE: "template",
     VIEW: "view",
+    LABEL: "label",
     TEXT: "text",
     TOOL: "tool",
   };
@@ -117,6 +118,17 @@ export const createCardRegistry = (props) => {
         outputs:  [],
       },
     },
+
+    [CARD_TYPES.LABEL]: {
+      display:"default",
+      width: 450,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs:  [],
+      },
+    },
+
 
     [CARD_TYPES.TEMPLATE]: {
       display:"default",

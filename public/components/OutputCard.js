@@ -110,7 +110,7 @@ export default {
 
               <button 
                 class="text-gray-400 hover:text-gray-200"
-                @click.stop="downloadFile(index)"
+                @click.stop="processFileDownload(index)"
                 @mousedown.stop
                 @touchstart.stop
               > <i class="pi pi-download text-xs"></i></button>
@@ -138,9 +138,9 @@ export default {
               <span class="text-xs text-gray-400">Auto Download</span>
             </label>
             -->
-            <button
+            <button v-if = "localCardData?.outputs?.length > 1"
               class="px-3 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded"
-              @click="handleDownload"
+              @click.stop="processFileDownload(null)"
             >Download All</button>
           </div>
         </div>
@@ -335,67 +335,60 @@ export default {
       }
     };
 
-    // Handle downloads
-    const handleDownload = () => {
-      // const outputSocket = localCardData.value.sockets.outputs[0];
-      // if (outputSocket?.value) {
-      //   console.log("Download triggered for:", outputSocket.value);
-      // }
-    };
+ 
 
 
-    // Helper function to convert HTML elements to docx elements with improved formatting
-    const convertHtmlToDocxElements = (html, filename) => {
-      const elements = [];
-      const lines = html.split("\n");
-    
-      lines.forEach((line) => {
-        const cleanText = line.replace(/<[^>]*>/g, "").trim();
-        if (!cleanText) return;
-    
-        if (line.startsWith("<h1>")) {
-          elements.push(
-            new docx.Paragraph({
+// Helper function to convert HTML elements to docx elements with improved formatting
+const convertHtmlToDocxElements = (html, filename) => {
+  const elements = [];
+  const lines = html.split("\n");
+
+  lines.forEach((line) => {
+    const cleanText = line.replace(/<[^>]*>/g, "").trim();
+    if (!cleanText) return;
+
+    if (line.startsWith("<h1>")) {
+      elements.push(
+        new docx.Paragraph({
+          text: cleanText,
+          heading: docx.HeadingLevel.HEADING_1,
+          spacing: { before: 240, after: 120 },
+          run: {
+            font: "Calibri",
+            size: 32,
+          },
+        })
+      );
+    } else if (line.startsWith("<h2>")) {
+      elements.push(
+        new docx.Paragraph({
+          text: cleanText,
+          heading: docx.HeadingLevel.HEADING_2,
+          spacing: { before: 240, after: 120 },
+          run: {
+            font: "Calibri",
+            size: 28,
+          },
+        })
+      );
+    } else {
+      elements.push(
+        new docx.Paragraph({
+          children: [
+            new docx.TextRun({
               text: cleanText,
-              heading: docx.HeadingLevel.HEADING_1,
-              spacing: { before: 240, after: 120 },
-              run: {
-                font: "Calibri",
-                size: 32,
-              },
-            })
-          );
-        } else if (line.startsWith("<h2>")) {
-          elements.push(
-            new docx.Paragraph({
-              text: cleanText,
-              heading: docx.HeadingLevel.HEADING_2,
-              spacing: { before: 240, after: 120 },
-              run: {
-                font: "Calibri",
-                size: 28,
-              },
-            })
-          );
-        } else {
-          elements.push(
-            new docx.Paragraph({
-              children: [
-                new docx.TextRun({
-                  text: cleanText,
-                  font: "Calibri",
-                  size: 24,
-                }),
-              ],
-              spacing: { before: 120, after: 120, line: 360 },
-            })
-          );
-        }
-      });
-    
-      return elements;
-    };
-    
+              font: "Calibri",
+              size: 24,
+            }),
+          ],
+          spacing: { before: 120, after: 120, line: 360 },
+        })
+      );
+    }
+  });
+
+  return elements;
+};
 
 // Function to create styled PDF content
 const createStyledPdf = (pdf, content, filename) => {
@@ -547,195 +540,267 @@ const createStyledPdf = (pdf, content, filename) => {
   }
 };
 
-// Main download file function
-const downloadFile = async (index) => {
-  if (isProcessing.value) return;
+// Unified download handling function
+const processFileDownload = async (index = null) => {
+  if (isProcessing.value) {
+    console.warn('Download already in progress');
+    return;
+  }
+  
   isProcessing.value = true;
+  const timestamp = Date.now();
+
+  // Validate inputs before processing
+  const outputs = localCardData.value.outputs;
+  if (!outputs || !outputs.length) {
+    console.warn('No outputs configured');
+    isProcessing.value = false;
+    return;
+  }
 
   try {
-    const inputSocket = localCardData.value.sockets.inputs[index];
-    const outputType = localCardData.value.outputs[index].type;
-    let socketValue = inputSocket?.value;
+    const indices = index !== null ? [index] : [...Array(localCardData.value.outputs.length).keys()];
+    
+     
+    // If only downloading one file, process it directly without zip
+    if (indices.length === 1) {
+      const idx = indices[0];
+      const inputSocket = localCardData.value.sockets.inputs[idx];
+      const outputType = localCardData.value.outputs[idx].type;
+      const socketValue = inputSocket?.value;
 
-    if (!socketValue) {
-      console.warn("No content to download");
+      if (!socketValue) {
+        console.warn("No content to download");
+        return;
+      }
+
+      await createAndDownloadFile(socketValue, outputType, `File${idx + 1}_${timestamp}`);
       return;
     }
 
-    // Extract the actual content from socket value
-    let content;
-    if (typeof socketValue === "string") {
-      content = socketValue;
-    } else if (typeof socketValue === "object") {
-      content = socketValue.content !== undefined ? socketValue.content : socketValue;
-    }
+    // Multiple files - create zip
+    const zip = new JSZip();
+    const promises = [];
 
-    const timestamp = Date.now();
-    const baseFilename = `File${index + 1}_${timestamp}`;
+    for (const idx of indices) {
+      const inputSocket = localCardData.value.sockets.inputs[idx];
+      const outputType = localCardData.value.outputs[idx].type;
+      const socketValue = inputSocket?.value;
 
-    // Helper function to trigger download
-    const downloadBlob = (blob, filename) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    };
+      if (!socketValue) continue;
 
-    // Try to parse as JSON if it's a string that looks like JSON
-    if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
-      try {
-        content = JSON.parse(content);
-      } catch (e) {
-        console.log("Not valid JSON, keeping as string");
-      }
-    }
-
-    switch (outputType) {
-      case "markdown": {
-        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
-        const blob = new Blob([markdownContent], { type: "text/markdown" });
-        downloadBlob(blob, `${baseFilename}.md`);
-        break;
-      }
-
-      case "txt": {
-        const textContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
-        const blob = new Blob([textContent], { type: "text/plain" });
-        downloadBlob(blob, `${baseFilename}.txt`);
-        break;
-      }
-
-      case "json": {
-        const jsonContent = typeof content === "object" ? content : { content: content };
-        const blob = new Blob([JSON.stringify(jsonContent, null, 2)], { type: "application/json" });
-        downloadBlob(blob, `${baseFilename}.json`);
-        break;
-      }
-
-      case "docx": {
-        // Convert to markdown first if it's an object
-        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
-        const md = markdownit();
-        const htmlContent = md.render(markdownContent);
-
-        // Create document with proper sections and styles
-        const doc = new docx.Document({
-          sections: [
-            {
-              properties: {
-                page: {
-                  margin: {
-                    top: 1440, // 1 inch
-                    right: 1440,
-                    bottom: 1440,
-                    left: 1440,
-                  },
-                },
-                type: docx.SectionType.CONTINUOUS,
-              },
-              headers: {
-                default: new docx.Header({
-                  children: [
-                    new docx.Paragraph({
-                      children: [
-                        new docx.TextRun({
-                          text: baseFilename,
-                          font: "Calibri",
-                          size: 20,
-                        }),
-                        new docx.TextRun({
-                          text: "\t\tGenerated by LogicStudio.ai",
-                          font: "Calibri",
-                          size: 20,
-                          color: "808080",
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              },
-              footers: {
-                default: new docx.Footer({
-                  children: [
-                    new docx.Paragraph({
-                      alignment: docx.AlignmentType.CENTER,
-                      children: [
-                        new docx.TextRun({
-                          children: ["Page ", docx.PageNumber.CURRENT, " of ", docx.PageNumber.TOTAL_PAGES],
-                          font: "Calibri",
-                          size: 20,
-                        }),
-                      ],
-                    }),
-                  ],
-                }),
-              },
-              children: convertHtmlToDocxElements(htmlContent, baseFilename),
-            },
-          ],
-          styles: {
-            default: {
-              document: {
-                run: {
-                  font: "Calibri",
-                  size: 24,
-                },
-              },
-            },
-          },
+      const baseFilename = `File${idx + 1}_${timestamp}`;
+      const filePromise = createFile(socketValue, outputType, baseFilename)
+        .then(({ content, extension }) => {
+          zip.file(`${baseFilename}.${extension}`, content);
         });
-
-        const buffer = await docx.Packer.toBlob(doc);
-        downloadBlob(buffer, `${baseFilename}.docx`);
-        break;
-      }
-
-
-      case "pdf": {
-        // Convert to markdown first if it's an object
-        const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
-        
-        // First use markdownit to parse the markdown
-        const md = markdownit();
-        const htmlContent = md.render(markdownContent);
-        
-        // Process the HTML content back to clean text with markdown indicators
-        const processedContent = htmlContent
-          .replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1')
-          .replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1')
-          .replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1')
-          .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```')
-          .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1')
-          .replace(/<p[^>]*>(.*?)<\/p>/g, '$1')
-          .replace(/<[^>]*>/g, '')
-          .replace(/&nbsp;/g, ' ')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&amp;/g, '&')
-          .replace(/\n\s*\n/g, '\n\n'); // Clean up multiple newlines
       
-        // Create new PDF document
-        const pdf = new jspdf.jsPDF();
-        
-        // Apply styling and create PDF
-        createStyledPdf(pdf, processedContent, baseFilename);
-      
-        // Download the PDF
-        pdf.save(`${baseFilename}.pdf`);
-        break;
-      }
-
+      promises.push(filePromise);
     }
+
+    await Promise.all(promises);
+
+    // Generate and download zip
+    const zipBlob = await zip.generateAsync({
+      type: "blob",
+      compression: "DEFLATE",
+      compressionOptions: { level: 9 }
+    });
+
+    downloadBlob(zipBlob, `AllFiles_${timestamp}.zip`);
+
   } catch (error) {
-    console.error("Error downloading file:", error);
+    console.error("Error processing download:", error);
   } finally {
     isProcessing.value = false;
   }
 };
+
+// Helper function to create file content
+const createFile = async (socketValue, outputType, baseFilename) => {
+  let content = extractContent(socketValue);
+  
+  switch (outputType) {
+    case "markdown": {
+      const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      return {
+        content: markdownContent,
+        extension: 'md'
+      };
+    }
+
+    case "txt": {
+      const textContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      return {
+        content: textContent,
+        extension: 'txt'
+      };
+    }
+
+    case "json": {
+      const jsonContent = typeof content === "object" ? content : { content };
+      return {
+        content: JSON.stringify(jsonContent, null, 2),
+        extension: 'json'
+      };
+    }
+
+    case "docx": {
+      const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      const md = markdownit();
+      const htmlContent = md.render(markdownContent);
+
+      const doc = new docx.Document({
+        sections: [{
+          properties: {
+            page: {
+              margin: {
+                top: 1440,
+                right: 1440,
+                bottom: 1440,
+                left: 1440,
+              },
+            },
+            type: docx.SectionType.CONTINUOUS,
+          },
+          headers: {
+            default: new docx.Header({
+              children: [
+                new docx.Paragraph({
+                  children: [
+                    new docx.TextRun({
+                      text: baseFilename,
+                      font: "Calibri",
+                      size: 20,
+                    }),
+                    new docx.TextRun({
+                      text: "\t\tGenerated by LogicStudio.ai",
+                      font: "Calibri",
+                      size: 20,
+                      color: "808080",
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          },
+          footers: {
+            default: new docx.Footer({
+              children: [
+                new docx.Paragraph({
+                  alignment: docx.AlignmentType.CENTER,
+                  children: [
+                    new docx.TextRun({
+                      children: ["Page ", docx.PageNumber.CURRENT, " of ", docx.PageNumber.TOTAL_PAGES],
+                      font: "Calibri",
+                      size: 20,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          },
+          children: convertHtmlToDocxElements(htmlContent, baseFilename),
+        }],
+      });
+
+      const blob = await docx.Packer.toBlob(doc);
+      return {
+        content: blob,
+        extension: 'docx'
+      };
+    }
+
+    case "pdf": {
+      const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      const md = markdownit();
+      const htmlContent = md.render(markdownContent);
+      
+      const processedContent = htmlContent
+        .replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1')
+        .replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1')
+        .replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1')
+        .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```')
+        .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1')
+        .replace(/<p[^>]*>(.*?)<\/p>/g, '$1')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&amp;/g, '&')
+        .replace(/\n\s*\n/g, '\n\n');
+      
+      const pdf = new jspdf.jsPDF();
+      createStyledPdf(pdf, processedContent, baseFilename);
+      
+      return {
+        content: pdf.output('blob'),
+        extension: 'pdf'
+      };
+    }
+
+    default:
+      throw new Error(`Unsupported file type: ${outputType}`);
+  }
+};
+
+// Helper function to extract content from socket value
+const extractContent = (socketValue) => {
+  let content = typeof socketValue === "string" ? socketValue : 
+                socketValue.content !== undefined ? socketValue.content : socketValue;
+
+  // Try to parse JSON if it looks like JSON
+  if (typeof content === "string" && (content.trim().startsWith("{") || content.trim().startsWith("["))) {
+    try {
+      content = JSON.parse(content);
+    } catch (e) {
+      console.log("Not valid JSON, keeping as string");
+    }
+  }
+
+  return content;
+};
+
+// Helper function to download a blob
+const downloadBlob = async (blob, filename) => {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 100)); // Ensure browser has time to register the blob
+    a.click();
+  } finally {
+    // Ensure cleanup happens even if download fails
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+};
+
+// Helper function to create and download a single file
+const createAndDownloadFile = async (socketValue, outputType, baseFilename) => {
+  const { content, extension } = await createFile(socketValue, outputType, baseFilename);
+  const blob = content instanceof Blob ? content : new Blob([content], { 
+    type: getContentType(outputType) 
+  });
+  downloadBlob(blob, `${baseFilename}.${extension}`);
+};
+
+// Helper function to get content type
+const getContentType = (outputType) => {
+  const contentTypes = {
+    markdown: 'text/markdown',
+    txt: 'text/plain',
+    json: 'application/json',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    pdf: 'application/pdf'
+  };
+  return contentTypes[outputType] || 'application/octet-stream';
+};
+
+
 
     
     // Watch for card data changes
@@ -824,11 +889,11 @@ const downloadFile = async (index) => {
       emitWithCardId,
       addInput,
       removeInput,
-      downloadFile,
-      handleDownload,
       handleCardUpdate,
       updateOutputType,
       handleSocketMount,
+      processFileDownload
+
     };
   },
 };
