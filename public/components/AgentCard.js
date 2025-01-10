@@ -432,7 +432,8 @@ export default {
 
     // Card update handler
     const handleCardUpdate = (data) => {
-      if(data) localCardData.value = data; 
+      // console.log("handleCardUpdate", data)
+      if(data?.uuid) localCardData.value = data; 
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
