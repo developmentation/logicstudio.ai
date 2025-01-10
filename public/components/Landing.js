@@ -44,27 +44,36 @@ export default {
           </div>
         </div>
       </header>
+          
+      <!-- Preview 1-->
+      <section class="py-24 bg-gray-900">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 class="text-3xl font-bold text-center text-white mb-4">Visual Agent Composition</h2>
+          <p class="text-gray-400 text-center mb-16 text-lg max-w-3xl mx-auto">
+            Intuitive node-based compositor for building agentic workflows which are clear, consistent, and auditable. Connect agents, manage data flow, and create powerful automation through an intuitive drag-and-drop interface.
+          </p>
+          
+          <!-- Preview Image -->
+          <div class="mb-16 rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
+            <img 
+              :src="preview1" 
+              alt="LogicStudio Node Compositor Interface" 
+              class="w-full h-auto object-cover"
+            />
+          </div>
 
-  
-        <!-- Features Grid -->
-        <section id="features" class="py-24 bg-gray-800">
-          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h2 class="text-3xl font-bold text-center text-white mb-4">Visual Programming for the AI Age</h2>
-            <p class="text-gray-400 text-center mb-16 text-lg max-w-3xl mx-auto">
-              Design intricate AI workflows without writing code. Connect agents, manage data flow, and create powerful automation through an intuitive drag-and-drop interface.
-            </p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div v-for="feature in features" :key="feature.title" 
-                   class="bg-gray-900/50 rounded-xl p-6 backdrop-blur border border-gray-800 hover:border-emerald-500/30 transition-all">
-                <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-4">
-                  <i :class="feature.icon" class="text-emerald-500 text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-white mb-3">{{ feature.title }}</h3>
-                <p class="text-gray-400 leading-relaxed">{{ feature.description }}</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div v-for="feature in compositorFeatures" :key="feature.title" 
+                class="bg-gray-900/50 rounded-xl p-6 backdrop-blur border border-gray-800 hover:border-emerald-500/30 transition-all">
+              <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-4">
+                <i :class="feature.icon" class="text-emerald-500 text-2xl"></i>
               </div>
+              <h3 class="text-xl font-semibold text-white mb-3">{{ feature.title }}</h3>
+              <p class="text-gray-400 leading-relaxed">{{ feature.description }}</p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
        <section class="py-24 bg-gray-800">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
@@ -79,6 +88,8 @@ export default {
             </div>
           </div>
         </section>
+
+
         <section class="py-24 bg-gray-900">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
       <h2 class="text-3xl font-bold text-white mb-4">Supported AI Models</h2>
@@ -126,6 +137,8 @@ export default {
   </div>
 </section>
   
+
+
         <!-- Technical Highlights -->
         <section class="py-24 bg-gray-900">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -198,6 +211,7 @@ export default {
       () => `../assets/video${Math.floor(Math.random() * 5) + 1}.mp4`
     );
     const albertaLogoRef = Vue.computed(() => `../assets/albertaLogo.svg`);
+    const preview1 = Vue.computed(() => `../assets/preview1.png`);
     
     
     Vue.onMounted(() => {
@@ -220,6 +234,42 @@ export default {
       document.body.classList.remove("landing-page");
       document.getElementById("app").classList.remove("landing-page");
     });
+
+
+    const compositorFeatures = Vue.ref([
+      {
+        title: "Visual Workflow Design",
+        icon: "pi pi-sitemap",
+        description: "Integrate the power of AI with the structure of reusable drag and drop architectures. Create complex agent interactions through intuitive visual connections."
+      },
+      {
+        title: "Collaborative Agent Building",
+        icon: "pi pi-share-alt",
+        description: "Create and share your own agents with colleagues. Build a library of reusable components that can be easily integrated into any workflow."
+      },
+      {
+        title: "Auditable Decision Paths",
+        icon: "pi pi-check-circle",
+        description: "Track every step of your AI workflow with clear visual pathways. Ensure transparency and accountability in your agent interactions."
+      },
+      {
+        title: "Flexible Integration",
+        icon: "pi pi-cog",
+        description: "Connect multiple AI services and data sources seamlessly. Build complex workflows that leverage the full power of your AI infrastructure."
+      },
+      {
+        title: "Real-time Monitoring",
+        icon: "pi pi-sync",
+        description: "Observe your AI workflows in action with real-time visualization of data flow and agent interactions. Debug and optimize with ease."
+      },
+      {
+        title: "Open Source",
+        icon: "pi pi-github", // This one exists, no change needed
+        description:
+          "Built with transparency and collaboration in mind. MIT licensed and free forever. Fork, modify, and deploy without restrictions.",
+      },
+
+    ]);
 
     const features = Vue.ref([
       {
@@ -251,12 +301,6 @@ export default {
         icon: "pi pi-chart-bar", // This one exists, no change needed
         description:
           "Inspect and analyze data flow in real-time with built-in visualizers for text, JSON, arrays, and matrices.",
-      },
-      {
-        title: "Open Source",
-        icon: "pi pi-github", // This one exists, no change needed
-        description:
-          "Built with transparency and collaboration in mind. MIT licensed and free forever. Fork, modify, and deploy without restrictions.",
       },
     ]);
 
@@ -295,6 +339,8 @@ export default {
       stack,
       videoEl,
       videoUrl,
+      preview1,
+      compositorFeatures,
     };
   },
 };
