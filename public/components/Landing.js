@@ -188,7 +188,7 @@ export default {
                 <p class="text-gray-400 text-sm mt-2">Join the discussion</p>
               </a>
           -->
-              <a href="https://github.com/" target="_blank" 
+              <a href="https://github.com/developmentation/logicstudio.ai" target="_blank" 
                  class="flex flex-col items-center p-6 bg-gray-900 rounded-xl border border-gray-800 hover:border-emerald-500/30 transition-all">
                 <i class="pi pi-github text-3xl text-emerald-500 mb-4"></i>
                 <h3 class="text-white font-semibold">GitHub</h3>
