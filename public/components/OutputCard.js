@@ -151,7 +151,7 @@ export default {
 
   setup(props, { emit }) {
     // Constants
-    const outputTypes = ["markdown", "docx", "pdf", "json", "txt"];
+    const outputTypes = ["markdown", "docx", "pdf", "json", "txt", "js", "html"];
     const socketRegistry = new Map();
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
@@ -636,6 +636,23 @@ const createFile = async (socketValue, outputType, baseFilename) => {
         extension: 'txt'
       };
     }
+
+    case "js": {
+      const textContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      return {
+        content: textContent,
+        extension: 'js'
+      };
+    }
+
+    case "html": {
+      const textContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
+      return {
+        content: textContent,
+        extension: 'html'
+      };
+    }
+
 
     case "json": {
       const jsonContent = typeof content === "object" ? content : { content };

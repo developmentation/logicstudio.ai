@@ -11,7 +11,7 @@ export default {
           :class="{ 'w-52': showText, 'w-10': !showText }"
         >
           <!-- Close Button -->
-          <button
+          <button v-tooltip="'Close'"
             class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleExpanded"
           >
@@ -19,7 +19,7 @@ export default {
           </button>
   
           <!-- Text Toggle Button -->
-          <button
+          <button  v-tooltip="'Toggle Text'"
             class="w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleText"
           >
@@ -35,7 +35,7 @@ export default {
               </div>
               
               <!-- Add Tools -->
-              <button
+              <button v-tooltip="showText ? null : item.label"
               :disabled = "item.disabled"
                 v-for="item in addTools"
                 :key="item.id"
@@ -77,7 +77,7 @@ export default {
   
       <!-- Collapsed State - Just the menu button -->
       <template v-else>
-        <button
+        <button  v-tooltip="'Toggle Menu'"
           class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           @click="toggleExpanded"
         >
@@ -92,6 +92,7 @@ export default {
   
       const addTools = [
         { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model', disabled:true },
+        { id: 'trigger', label: 'Trigger', icon: 'pi pi-play-circle', type: 'trigger' },
         { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
         { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },
         { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },

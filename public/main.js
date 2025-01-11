@@ -8,6 +8,7 @@ console.log(Vue.version);
 const app = Vue.createApp(App);
 
 
+app.directive('tooltip', PrimeVue.Tooltip);
 
 app.use(PrimeVue.Config, {
     theme: {

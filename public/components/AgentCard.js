@@ -219,6 +219,7 @@ export default {
         userPromptHtml: data.userPromptHtml || "",
         output: data.output || "",
         status: data.status || "idle",
+        trigger: data.trigger || null,
 
         //Display
         display: data.display || "default",
@@ -433,7 +434,7 @@ export default {
     // Card update handler
     const handleCardUpdate = (data) => {
       // console.log("handleCardUpdate", data)
-      if(data?.uuid) localCardData.value = data; 
+      if (data?.uuid) localCardData.value = data;
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
@@ -443,11 +444,11 @@ export default {
 
     const triggerAgent = () => {
       // Don't allow triggering if already starting/partial and no pending request
-      if (sessionStatus.value === 'inProgress') {
+      if (sessionStatus.value === "inProgress") {
         triggerPending.value = true;
         return;
       }
-    
+
       // We're idle, so clear any pending flag and proceed
       triggerPending.value = false;
 
@@ -498,13 +499,14 @@ export default {
     };
 
     const sessionStatus = Vue.computed(() => {
-      return sessions.value?.[websocketId.value]?.status || 'idle';
+      return sessions.value?.[websocketId.value]?.status || "idle";
     });
 
     Vue.watch(sessionStatus, (newValue, oldValue) => {
       localCardData.value.status = newValue;
-    })
-    
+      console.log("Session Value changed", sessionStatus)
+    });
+
     const partialMessage = Vue.computed(() => {
       if (sessions?.value) {
         const session = sessions.value[websocketId.value]; // Use the sessionId prop to access the correct session
@@ -528,6 +530,7 @@ export default {
 
     Vue.watch(partialMessage, (newValue, oldValue) => {
       if (newValue && newValue.length) {
+        localCardData.value.status = 'inProgress'
         localCardData.value.output = newValue;
       }
     });
@@ -535,32 +538,34 @@ export default {
     Vue.watch(completedMessage, (newValue, oldValue) => {
       if (newValue) {
         localCardData.value.output = newValue;
-        
+
         if (localCardData.value.sockets?.outputs?.length) {
           localCardData.value.sockets.outputs[0].value = newValue;
         }
+        localCardData.value.status = 'complete'
         emit("update-card", Vue.toRaw(localCardData.value));
-    
+
         // Only trigger pending if session is actually complete
-        if (triggerPending.value && sessionStatus.value === 'complete') {
+        if (triggerPending.value && sessionStatus.value === "complete") {
           Vue.nextTick(() => {
             triggerAgent();
           });
         }
       }
     });
-    
+
     Vue.watch(errorMessage, (newValue, oldValue) => {
       if (!oldValue?.length && newValue?.length) {
         localCardData.value.output = null;
-        
+
         if (localCardData.value.sockets?.outputs?.length) {
           localCardData.value.sockets.outputs[0].value = null;
         }
+        localCardData.value.status = 'error'
         emit("update-card", Vue.toRaw(localCardData.value));
-    
+
         // Handle pending trigger if session is in waiting/error state
-        if (triggerPending.value && sessionStatus.value === 'waiting') {
+        if (triggerPending.value && sessionStatus.value === "waiting") {
           Vue.nextTick(() => {
             triggerAgent();
           });
@@ -632,24 +637,30 @@ export default {
     );
 
     // Add this watcher after the other watchers but before onUnmounted
-// Update socket watcher to use session status
-Vue.watch(inputSocketValues, (newValues, oldValues) => {
-  if (!localCardData.value.triggerOnInput || !oldValues) return;
+    // Update socket watcher to use session status
+    Vue.watch(
+      inputSocketValues,
+      (newValues, oldValues) => {
+        if (!localCardData.value.triggerOnInput || !oldValues) return;
 
-  const hasValueChanged = newValues.some((newSocket, index) => {
-    const oldSocket = oldValues[index];
-    return oldSocket && JSON.stringify(newSocket.value) !== JSON.stringify(oldSocket.value);
-  });
+        const hasValueChanged = newValues.some((newSocket, index) => {
+          const oldSocket = oldValues[index];
+          return (
+            oldSocket &&
+            JSON.stringify(newSocket.value) !== JSON.stringify(oldSocket.value)
+          );
+        });
 
-  if (hasValueChanged) {
-    if (sessionStatus.value === 'inProgress') {
-      triggerPending.value = true;
-    } else {
-      triggerAgent();
-    }
-  }
-}, { deep: true });
-
+        if (hasValueChanged) {
+          if (sessionStatus.value === "inProgress") {
+            triggerPending.value = true;
+          } else {
+            triggerAgent();
+          }
+        }
+      },
+      { deep: true }
+    );
 
     // Watch for card data changes
     Vue.watch(
@@ -675,6 +686,15 @@ Vue.watch(inputSocketValues, (newValues, oldValues) => {
               }
             });
           }
+
+          //Check to see if the trigger changed, and if so then trigger it
+          if (newData.trigger !== oldData.trigger && newData.trigger !== null) {
+            localCardData.value.trigger = newData.trigger;
+            Vue.nextTick(() => {
+              triggerAgent();
+            });
+          }
+
         } finally {
           isProcessing.value = false;
         }

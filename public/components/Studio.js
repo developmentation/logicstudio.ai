@@ -1,6 +1,7 @@
 // components/Studio.js
 
 import { useCanvases } from "../composables/useCanvases.js";
+import TriggerCard from "./TriggerCard.js";
 import AgentCard from "./AgentCard.js";
 import TextCard from "./TextCard.js";
 import InputCard from "./InputCard.js";
@@ -14,6 +15,7 @@ import CanvasToolbar from "./CanvasToolbar.js";
 export default {
   name: "Studio",
   components: {
+    TriggerCard,
     AgentCard,
     TextCard,
     InputCard,
@@ -31,7 +33,7 @@ export default {
         <div class="flex items-center gap-2">
           <button 
                 class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="addCanvas"
+                @click="createCanvas"
             >
             <i class="pi pi-plus mt-1"></i>
             </button>
@@ -64,6 +66,13 @@ export default {
                   <i class="pi pi-chevron-right"></i>
               </button>
           </div>
+
+            <button 
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="cloneCanvas"
+            >
+            <i class="pi pi-copy mt-1"></i>
+            </button>
 
             <button 
                 class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -295,6 +304,7 @@ export default {
       // Canvas management
       createCanvas,
       removeCanvas,
+      cloneCanvas,
 
       // Card management
       createCard,
@@ -378,13 +388,8 @@ export default {
       initialized.value = false;
     });
 
-    const addCanvas = () => {
-      createCanvas();
-    };
-
     const closeCanvas = () => {
       removeCanvas(activeCanvasId.value);
-      // createCanvas();
     };
 
     // Component utility functions
@@ -393,6 +398,8 @@ export default {
         case "agent":
         default:
           return "AgentCard";
+        case "trigger":
+          return "TriggerCard";
         case "text":
           return "TextCard";
         case "input":
@@ -405,7 +412,7 @@ export default {
           return "ViewCard";
         case "label":
           return "LabelCard";
-       case "template":
+        case "template":
           return "TemplateCard";
       }
     };
@@ -742,10 +749,11 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
 
       activeCanvasIndex,
       activeCanvasId,
-      addCanvas,
       closeCanvas,
       moveCanvasLeft,
       moveCanvasRight,
+      createCanvas,
+      cloneCanvas,
 
       // Functions
       getCardComponent,

@@ -77,6 +77,15 @@ export const createCanvasRegistry = (props) => {
     };
   };
 
+  //Clone and append the current active canvas.
+  const cloneCanvas = ()=>{
+    let newCanvas = JSON.parse(JSON.stringify(activeCanvas.value))
+    newCanvas.id = uuidv4()
+
+    const newCanvasesArray = [...canvases.value, newCanvas];
+    canvases.value = newCanvasesArray;
+    activeCanvasId.value = newCanvas.id;
+  }
 
   const importCanvas = (canvasData) => {
     console.log("Import Data", canvasData)
@@ -106,7 +115,7 @@ export const createCanvasRegistry = (props) => {
     // Core functionality
     createCanvas,
     removeCanvas,
-
+    cloneCanvas,
     exportCanvas,
     importCanvas,
   };

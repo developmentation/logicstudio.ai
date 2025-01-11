@@ -236,7 +236,7 @@ const updateOutput = () => {
         console.log("inputValues", inputValues)
       const oldSocket = localCardData.value.sockets.outputs?.[0];
       if (oldSocket) {
-        const separator = localCardData.value.separator || " ";
+        const separator = localCardData.value.separator + "\n\n" || "\n\n";
         const joinedValue = inputValues.length > 0 ? inputValues.join(separator) : null;
 
           oldSocket.value = joinedValue;

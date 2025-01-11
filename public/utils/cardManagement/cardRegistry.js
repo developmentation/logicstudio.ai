@@ -13,6 +13,7 @@ export const createCardRegistry = (props) => {
 
   // Enhanced card type definitions
   const CARD_TYPES = {
+    TRIGGER: "trigger",
     AGENT: "agent",
     INPUT: "input",
     OUTPUT: "output",
@@ -123,6 +124,16 @@ export const createCardRegistry = (props) => {
       display:"default",
       width: 450,
       height: 250,
+      sockets: {
+        inputs: [],
+        outputs:  [],
+      },
+    },
+
+    [CARD_TYPES.TRIGGER]: {
+      display:"default",
+      width: 300,
+      height: 150,
       sockets: {
         inputs: [],
         outputs:  [],
