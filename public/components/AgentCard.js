@@ -272,6 +272,8 @@ export default {
 
       //Register this agent into the websocket registry
       registerSession(websocketId.value, null);
+      localCardData.value.status = sessionStatus.value;
+
     });
 
     const handleSocketMount = (event) => {
@@ -504,7 +506,6 @@ export default {
 
     Vue.watch(sessionStatus, (newValue, oldValue) => {
       localCardData.value.status = newValue;
-      console.log("Session Value changed", sessionStatus)
     });
 
     const partialMessage = Vue.computed(() => {
@@ -734,6 +735,8 @@ export default {
       models,
       partialMessage,
       completedMessage,
+
+      sessionStatus
     };
   },
 };

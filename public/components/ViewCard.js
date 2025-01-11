@@ -3,10 +3,10 @@ import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 
 import {
-    updateSocketArray,
-    createSocketUpdateEvent,
-    createSocket,
-    generateSocketId,
+  updateSocketArray,
+  createSocketUpdateEvent,
+  createSocket,
+  generateSocketId,
 } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
@@ -106,7 +106,7 @@ export default {
         type: "input",
         index: 0,
         existingId: data.sockets?.inputs?.[0]?.id,
-        value: data.sockets?.inputs?.[0]?.value
+        value: data.sockets?.inputs?.[0]?.value,
       });
 
       const baseData = {
@@ -118,8 +118,8 @@ export default {
         y: data.y || 0,
         sockets: {
           inputs: [initialSocket],
-          outputs: []
-        }
+          outputs: [],
+        },
       };
 
       emit(
@@ -143,16 +143,18 @@ export default {
     const isJsonContent = Vue.computed(() => {
       const value = localCardData.value.sockets.inputs[0]?.value;
       if (!value) return false;
-      
-      if (typeof value === 'object') {
+
+      if (typeof value === "object") {
         return true;
       }
 
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         try {
           const trimmed = value.trim();
-          return (trimmed.startsWith('{') && trimmed.endsWith('}')) || 
-                 (trimmed.startsWith('[') && trimmed.endsWith(']'));
+          return (
+            (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+            (trimmed.startsWith("[") && trimmed.endsWith("]"))
+          );
         } catch {
           return false;
         }
@@ -163,29 +165,40 @@ export default {
 
     const formattedJson = Vue.computed(() => {
       const value = localCardData.value.sockets.inputs[0]?.value;
-      if (!value) return '';
+      if (!value) return "";
 
       try {
-        const content = typeof value === 'string' ? JSON.parse(value) : value;
+        const content = typeof value === "string" ? JSON.parse(value) : value;
         return JSON.stringify(content, null, 2);
       } catch {
-        return '';
+        return "";
       }
     });
 
     const renderedContent = Vue.computed(() => {
       const value = localCardData.value.sockets.inputs[0]?.value;
-      if (!value) return '';
+      if (!value && value !== 0) return ""; // Allow 0 as a valid value
 
       try {
-        if (typeof value === 'object') {
+        // If it's an object (including arrays), stringify it
+        if (typeof value === "object") {
           return markdownit().render(JSON.stringify(value, null, 2));
         }
 
-        const content = typeof value.content === 'string' ? value.content : value;
+        // If it's any other type (number, boolean, etc), convert to string
+        let content = value;
+        if (typeof value !== "string") {
+          content = String(value);
+        }
+
+        // Handle potential value.content structure
+        if (value && typeof value === "object" && "content" in value) {
+          content = String(value.content);
+        }
+
         return markdownit().render(content);
       } catch (error) {
-        console.error('Error rendering content:', error);
+        console.error("Error rendering content:", error);
         return '<p class="text-red-500">Error rendering content</p>';
       }
     });
@@ -205,32 +218,33 @@ export default {
             plainText = JSON.stringify(jsonObj, null, 2);
           } catch (e) {
             // If parsing fails, use the plain text as is
-            console.warn('Failed to parse JSON for formatting:', e);
+            console.warn("Failed to parse JSON for formatting:", e);
           }
         }
 
         // Create the clipboard data
         const clipData = new ClipboardItem({
-          'text/html': new Blob([currentContent], { type: 'text/html' }),
-          'text/plain': new Blob([plainText], { type: 'text/plain' })
+          "text/html": new Blob([currentContent], { type: "text/html" }),
+          "text/plain": new Blob([plainText], { type: "text/plain" }),
         });
 
         await navigator.clipboard.write([clipData]);
 
         // Show success notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
-        notification.textContent = 'Copied to clipboard!';
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50";
+        notification.textContent = "Copied to clipboard!";
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 2000);
-
       } catch (error) {
-        console.error('Error copying to clipboard:', error);
-        
+        console.error("Error copying to clipboard:", error);
+
         // Show error notification
-        const notification = document.createElement('div');
-        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50';
-        notification.textContent = 'Failed to copy to clipboard';
+        const notification = document.createElement("div");
+        notification.className =
+          "fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50";
+        notification.textContent = "Failed to copy to clipboard";
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 2000);
       }
@@ -280,8 +294,12 @@ export default {
           // Update socket value and force re-render
           const newValue = newData.sockets?.inputs?.[0]?.value;
           const currentSocket = localCardData.value.sockets.inputs[0];
-          
-          if (currentSocket && newValue !== undefined && currentSocket.value !== newValue) {
+
+          if (
+            currentSocket &&
+            newValue !== undefined &&
+            currentSocket.value !== newValue
+          ) {
             currentSocket.value = newValue;
             currentSocket.momentUpdated = Date.now();
             inputKey.value++; // Force re-render of content

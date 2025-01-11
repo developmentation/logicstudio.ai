@@ -46,7 +46,7 @@ export default {
             v-text="localCardData.subtitle"
           ></div>
         </div>
-      </BaseCard>
+      </BaseCardTransparent>
     </div>
   `,
 
