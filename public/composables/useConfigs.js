@@ -1,5 +1,4 @@
 // composables/useConfigs.js
-
 const env = Vue.ref({});
 
 //If you don't want to change the backend code, you can add models here too

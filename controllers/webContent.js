@@ -1,6 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const { ApiError } = require('../errors/ApiError');
+const { ApiError } = require('../error/ApiError');
 const packageInfo = require('../package.json');
 
 // Legacy User-Agent strings for fallback
@@ -89,6 +89,7 @@ const smartFetch = async (url, options, retryCount = 0) => {
 // Function to process a single URL
 const processSingleUrl = async (url, options = {}) => {
     try {
+        
         const response = await smartFetch(url, options);
 
         if (response.status !== 200) {
@@ -183,6 +184,8 @@ exports.processUrls = async function (req, res, next) {
         const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
         const version = packageInfo.version;
 
+
+
         if (!urls || !Array.isArray(urls)) {
             throw ApiError.badRequest('URLs must be provided as an array');
         }
@@ -214,11 +217,13 @@ exports.processUrls = async function (req, res, next) {
             }
         });
     } catch (error) {
-        if (error instanceof ApiError) {
-            next(error);
-        } else {
-            next(ApiError.internal("An error occurred while scraping URLs"));
-        }
+        console.log("Error", error)
+        res.status(500).json({payload:error});
+        // if (error instanceof ApiError) {
+        //     next(error);
+        // } else {
+        //     next(ApiError.internal("An error occurred while scraping URLs"));
+        // }
     }
 };
 
@@ -228,6 +233,8 @@ exports.processSingleUrl = async function (req, res, next) {
         const { url, options } = typeof req.body === 'string' ? { url: req.body, options: {} } : req.body;
         const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
         const version = packageInfo.version;
+
+        console.log("url", url)
 
         if (!url || typeof url !== 'string') {
             throw ApiError.badRequest('A valid URL must be provided');
@@ -250,10 +257,13 @@ exports.processSingleUrl = async function (req, res, next) {
             }
         });
     } catch (error) {
-        if (error instanceof ApiError) {
-            next(error);
-        } else {
-            next(ApiError.internal("An error occurred while scraping the URL"));
-        }
+        res.status(500).json({payload:error});
+
+
+        // if (error instanceof ApiError) {
+        //     next(error);
+        // } else {
+        //     next(ApiError.internal("An error occurred while scraping the URL"));
+        // }
     }
 };

@@ -29,7 +29,8 @@ app.use((req, res, next) => {
 // We are only assuming endpoints stating with /api/ 
 app.use("/api/healthcheck", require("./routes/healthcheck")); // Healthcheck route
 app.use("/api/configs", require("./routes/configs")); // Configuration values
-app.use("/api/transcribe", require("./routes/transcribe")); // Configuration values
+app.use("/api/transcribe", require("./routes/transcribe")); // Perform transcripts
+app.use("/api/webContent", require("./routes/webContent")); // Load web content (web processing)
 
 // SPA Fallback: Serve `index.html` for any non-API routes
 app.get("*", (req, res) => {

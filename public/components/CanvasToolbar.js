@@ -100,7 +100,7 @@ export default {
         { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
         { id: 'view', label: 'View', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
-        { id: 'web', label: 'Web Content (Pending)', icon: 'pi pi-globe', type: 'tool', disabled:true },
+        { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
         { id: 'transcribe', label: 'Audio to Text (Pending)', icon: 'pi pi-microphone', type: 'tool', disabled:true },
         // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
         // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },

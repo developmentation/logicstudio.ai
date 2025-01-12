@@ -10,6 +10,7 @@ import JoinCard from "./JoinCard.js";
 import ViewCard from "./ViewCard.js";
 import LabelCard from "./LabelCard.js";
 import TemplateCard from "./TemplateCard.js";
+import WebCard from "./WebCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 
 export default {
@@ -24,6 +25,7 @@ export default {
     ViewCard,
     LabelCard,
     TemplateCard,
+    WebCard,
     CanvasToolbar,
   },
   template: `
@@ -412,6 +414,8 @@ export default {
           return "ViewCard";
         case "label":
           return "LabelCard";
+        case "web":
+          return "WebCard";
         case "template":
           return "TemplateCard";
       }

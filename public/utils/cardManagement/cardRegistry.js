@@ -22,6 +22,7 @@ export const createCardRegistry = (props) => {
     VIEW: "view",
     LABEL: "label",
     TEXT: "text",
+    WEB: "web",
     TOOL: "tool",
   };
 
@@ -139,6 +140,18 @@ export const createCardRegistry = (props) => {
         outputs:  [],
       },
     },
+
+    
+    [CARD_TYPES.WEB]: {
+      display:"default",
+      width: 450,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs:  [],
+      },
+    },
+
 
 
     [CARD_TYPES.TEMPLATE]: {
