@@ -235,7 +235,6 @@ export default {
     const { models } = useConfigs();
     const chatContainer = Vue.ref(null);
 
-
     const {
       wsUuid,
       sessions,
@@ -246,63 +245,60 @@ export default {
 
     let websocketId = Vue.ref(uuidv4());
 
-
     const initializeCardData = (data) => {
-        const outputs = [
-          createSocket({ 
-            type: "output", 
-            index: 0,
-            existingId: data.sockets?.outputs?.[0]?.id,
-            value: data.messageHistory || []
-          }),
-          createSocket({ 
-            type: "output", 
-            index: 1,
-            existingId: data.sockets?.outputs?.[1]?.id,
-            value: ""
-          }),
-          createSocket({ 
-            type: "output", 
-            index: 2,
-            existingId: data.sockets?.outputs?.[2]?.id,
-            value: ""
-          })
-        ];
-      
-        outputs[0].name = "Entire History";
-        outputs[1].name = "System";
-        outputs[2].name = "User";
-      
-        // Updated emit to include proper oldSockets reference
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: data.uuid,
-            oldSockets: data.sockets?.outputs || [],  // Changed from empty array
-            newSockets: outputs,
-            reindexMap: new Map(outputs.map(s => [null, s.id])),
-            deletedSocketIds: [],
-            type: "output"
-          })
-        );
-      
-        return {
-          uuid: data.uuid,
-          name: data.name || "Chat",
-          description: data.description || "Chat Node",
-          model: data.model || "",
-          display: data.display || "default",
-          x: data.x || 0,
-          y: data.y || 0,
-          status: data.status || "idle",
-          messageHistory: data.messageHistory || [],
-          sockets: {
-            inputs: data.sockets?.inputs || [],
-            outputs: outputs
-          }
-        };
+      // First preserve any existing sockets
+      const existingSockets = data.sockets?.outputs || [];
+
+      // Create new sockets only if they don't exist
+      const outputs = existingSockets.length
+        ? existingSockets
+        : [
+            {
+              ...createSocket({
+                type: "output",
+                index: 0,
+                existingId: data.sockets?.outputs?.[0]?.id,
+                value: data.messageHistory || [],
+              }),
+              name: "Entire History", // Explicitly set name
+            },
+            {
+              ...createSocket({
+                type: "output",
+                index: 1,
+                existingId: data.sockets?.outputs?.[1]?.id,
+                value: "",
+              }),
+              name: "System", // Explicitly set name
+            },
+            {
+              ...createSocket({
+                type: "output",
+                index: 2,
+                existingId: data.sockets?.outputs?.[2]?.id,
+                value: "",
+              }),
+              name: "User", // Explicitly set name
+            },
+          ];
+
+      return {
+        uuid: data.uuid,
+        name: data.name || "Chat",
+        description: data.description || "Chat Node",
+        model: data.model || "",
+        display: data.display || "default",
+        x: data.x || 0,
+        y: data.y || 0,
+        status: data.status || "idle",
+        messageHistory: data.messageHistory || [],
+        sockets: {
+          inputs: data.sockets?.inputs || [],
+          outputs: outputs,
+        },
       };
-    
+    };
+
     const localCardData = Vue.ref(initializeCardData(props.cardData));
 
     // Socket Management
@@ -331,7 +327,7 @@ export default {
         const newSocket = createSocket({
           type: "input",
           index: oldSockets.length,
-          name: `System Input ${oldSockets.length + 1}`
+          name: `System Input ${oldSockets.length + 1}`,
         });
 
         const newSockets = [...oldSockets, newSocket];
@@ -364,136 +360,166 @@ export default {
     };
 
     const renderMarkdown = (content) => {
-        if (!content) return '';
-        
-        try {
-          // Convert to string if not already
-          let textContent = typeof content === 'object' ? 
-            JSON.stringify(content, null, 2) : 
-            String(content);
-      
-          // Check if the content already contains markdown code blocks
-          const hasCodeBlocks = textContent.includes('```');
-          
-          // Check if there's JSON within regular text
-          const isPureJsonInText = () => {
-            const trimmed = textContent.trim();
-            return trimmed.includes('{') && !trimmed.includes('```') && trimmed.indexOf('{') > 0;
-          };
-      
-          // Handle JSON within text first
-          if (isPureJsonInText()) {
-            const jsonStartIndex = textContent.indexOf('{');
-            const prefix = textContent.substring(0, jsonStartIndex);
-            const jsonPart = textContent.substring(jsonStartIndex);
-            
-            try {
-              // Try to parse and format the JSON part
-              const parsed = JSON.parse(jsonPart);
-              // Check if it's a table-like structure
-              if (Array.isArray(parsed) && parsed.every(item => typeof item === 'object')) {
-                // Convert JSON array to markdown table
-                const headers = Object.keys(parsed[0]);
-                let tableMarkdown = '\n| ' + headers.join(' | ') + ' |\n';
-                tableMarkdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
-                tableMarkdown += parsed.map(row => 
-                  '| ' + headers.map(header => String(row[header] || '')).join(' | ') + ' |'
-                ).join('\n');
-                textContent = prefix + tableMarkdown;
-              } else {
-                // Regular JSON formatting
-                const prettyJson = JSON.stringify(parsed, null, 2);
-                textContent = prefix + '\n```json\n' + prettyJson + '\n```';
-              }
-            } catch (e) {
-              // If JSON is incomplete, just wrap it in code block
-              textContent = prefix + '\n```json\n' + jsonPart + '\n```';
-            }
-          }
-          // Handle standalone JSON (no prefix text)
-          else if (!hasCodeBlocks && (textContent.trim().startsWith('{') || textContent.trim().startsWith('['))) {
-            try {
-              const parsed = JSON.parse(textContent);
-              // Check if it's a table-like structure
-              if (Array.isArray(parsed) && parsed.every(item => typeof item === 'object')) {
-                // Convert JSON array to markdown table
-                const headers = Object.keys(parsed[0]);
-                let tableMarkdown = '| ' + headers.join(' | ') + ' |\n';
-                tableMarkdown += '| ' + headers.map(() => '---').join(' | ') + ' |\n';
-                tableMarkdown += parsed.map(row => 
-                  '| ' + headers.map(header => String(row[header] || '')).join(' | ') + ' |'
-                ).join('\n');
-                textContent = tableMarkdown;
-              } else {
-                // Regular JSON formatting
-                textContent = '```json\n' + JSON.stringify(parsed, null, 2) + '\n```';
-              }
-            } catch (e) {
-              // If parsing fails (incomplete JSON), wrap in code block without parsing
-              textContent = '```json\n' + textContent + '\n```';
-            }
-          }
-      
-          // Configure markdown-it with table support and custom rendering
-          const md = markdownit({
-            html: true,
-            breaks: true,
-            linkify: true,
-            typographer: true,
-            highlight: function (str, lang) {
-              if (lang === 'json') {
-                try {
-                  const parsed = JSON.parse(str);
-                  str = JSON.stringify(parsed, null, 2);
-                } catch (e) {
-                  // Keep original string if parsing fails
-                }
-              }
-              return '<pre class="hljs"><code>' + str + '</code></pre>';
-            }
-          });
-      
-          // Enable tables plugin
-          md.enable('table');
-      
-          return md.render(textContent);
-      
-        } catch (error) {
-          console.error('Error in renderMarkdown:', error);
-          return `<pre class="hljs"><code>${content}</code></pre>`;
-        }
-      };
+      if (!content) return "";
 
+      try {
+        // Convert to string if not already
+        let textContent =
+          typeof content === "object"
+            ? JSON.stringify(content, null, 2)
+            : String(content);
+
+        // Check if the content already contains markdown code blocks
+        const hasCodeBlocks = textContent.includes("```");
+
+        // Check if there's JSON within regular text
+        const isPureJsonInText = () => {
+          const trimmed = textContent.trim();
+          return (
+            trimmed.includes("{") &&
+            !trimmed.includes("```") &&
+            trimmed.indexOf("{") > 0
+          );
+        };
+
+        // Handle JSON within text first
+        if (isPureJsonInText()) {
+          const jsonStartIndex = textContent.indexOf("{");
+          const prefix = textContent.substring(0, jsonStartIndex);
+          const jsonPart = textContent.substring(jsonStartIndex);
+
+          try {
+            // Try to parse and format the JSON part
+            const parsed = JSON.parse(jsonPart);
+            // Check if it's a table-like structure
+            if (
+              Array.isArray(parsed) &&
+              parsed.every((item) => typeof item === "object")
+            ) {
+              // Convert JSON array to markdown table
+              const headers = Object.keys(parsed[0]);
+              let tableMarkdown = "\n| " + headers.join(" | ") + " |\n";
+              tableMarkdown +=
+                "| " + headers.map(() => "---").join(" | ") + " |\n";
+              tableMarkdown += parsed
+                .map(
+                  (row) =>
+                    "| " +
+                    headers
+                      .map((header) => String(row[header] || ""))
+                      .join(" | ") +
+                    " |"
+                )
+                .join("\n");
+              textContent = prefix + tableMarkdown;
+            } else {
+              // Regular JSON formatting
+              const prettyJson = JSON.stringify(parsed, null, 2);
+              textContent = prefix + "\n```json\n" + prettyJson + "\n```";
+            }
+          } catch (e) {
+            // If JSON is incomplete, just wrap it in code block
+            textContent = prefix + "\n```json\n" + jsonPart + "\n```";
+          }
+        }
+        // Handle standalone JSON (no prefix text)
+        else if (
+          !hasCodeBlocks &&
+          (textContent.trim().startsWith("{") ||
+            textContent.trim().startsWith("["))
+        ) {
+          try {
+            const parsed = JSON.parse(textContent);
+            // Check if it's a table-like structure
+            if (
+              Array.isArray(parsed) &&
+              parsed.every((item) => typeof item === "object")
+            ) {
+              // Convert JSON array to markdown table
+              const headers = Object.keys(parsed[0]);
+              let tableMarkdown = "| " + headers.join(" | ") + " |\n";
+              tableMarkdown +=
+                "| " + headers.map(() => "---").join(" | ") + " |\n";
+              tableMarkdown += parsed
+                .map(
+                  (row) =>
+                    "| " +
+                    headers
+                      .map((header) => String(row[header] || ""))
+                      .join(" | ") +
+                    " |"
+                )
+                .join("\n");
+              textContent = tableMarkdown;
+            } else {
+              // Regular JSON formatting
+              textContent =
+                "```json\n" + JSON.stringify(parsed, null, 2) + "\n```";
+            }
+          } catch (e) {
+            // If parsing fails (incomplete JSON), wrap in code block without parsing
+            textContent = "```json\n" + textContent + "\n```";
+          }
+        }
+
+        // Configure markdown-it with table support and custom rendering
+        const md = markdownit({
+          html: true,
+          breaks: true,
+          linkify: true,
+          typographer: true,
+          highlight: function (str, lang) {
+            if (lang === "json") {
+              try {
+                const parsed = JSON.parse(str);
+                str = JSON.stringify(parsed, null, 2);
+              } catch (e) {
+                // Keep original string if parsing fails
+              }
+            }
+            return '<pre class="hljs"><code>' + str + "</code></pre>";
+          },
+        });
+
+        // Enable tables plugin
+        md.enable("table");
+
+        return md.render(textContent);
+      } catch (error) {
+        console.error("Error in renderMarkdown:", error);
+        return `<pre class="hljs"><code>${content}</code></pre>`;
+      }
+    };
 
     // Message Management
     const toggleFlag = (index) => {
       const message = localCardData.value.messageHistory[index];
       if (!message.flagged) {
         message.flagged = true;
-        const flaggedCount = localCardData.value.messageHistory
-          .filter(m => m.flagged)
-          .length;
+        const flaggedCount = localCardData.value.messageHistory.filter(
+          (m) => m.flagged
+        ).length;
         const itemNumber = `Item ${flaggedCount}`;
         message.flaggedAs = itemNumber;
-        
+
         // Add new output socket for flagged item
         const oldSockets = [...localCardData.value.sockets.outputs];
         const newSocket = {
           ...createSocket({
             type: "output",
             index: oldSockets.length,
-            value: message.content
+            value: message.content,
           }),
-          name: itemNumber
+          name: itemNumber,
         };
 
         const newSockets = [...oldSockets, newSocket];
         const { reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'output',
+          type: "output",
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         localCardData.value.sockets.outputs = reindexedSockets;
@@ -501,16 +527,20 @@ export default {
         message.flagged = false;
         const flaggedAs = message.flaggedAs;
         message.flaggedAs = null;
-        
+
         // Remove corresponding output socket and update remaining sockets
         const oldSockets = [...localCardData.value.sockets.outputs];
-        const newSockets = oldSockets.filter(s => s.name !== flaggedAs);
-        
+        const newSockets = oldSockets.filter((s) => s.name !== flaggedAs);
+
         // Reindex remaining flagged messages
         const flaggedMessages = localCardData.value.messageHistory
-          .filter(m => m.flagged)
-          .sort((a, b) => parseInt(a.flaggedAs.split(' ')[1]) - parseInt(b.flaggedAs.split(' ')[1]));
-        
+          .filter((m) => m.flagged)
+          .sort(
+            (a, b) =>
+              parseInt(a.flaggedAs.split(" ")[1]) -
+              parseInt(b.flaggedAs.split(" ")[1])
+          );
+
         flaggedMessages.forEach((msg, idx) => {
           const newItemNumber = `Item ${idx + 1}`;
           msg.flaggedAs = newItemNumber;
@@ -519,7 +549,7 @@ export default {
         // Update sockets with new ordering
         updateOutputSockets();
       }
-      
+
       handleCardUpdate();
     };
 
@@ -527,12 +557,14 @@ export default {
       const message = localCardData.value.messageHistory[index];
       if (message.flagged) {
         const flaggedAs = message.flaggedAs;
-        const socketIndex = localCardData.value.sockets.outputs.findIndex(s => s.name === flaggedAs);
+        const socketIndex = localCardData.value.sockets.outputs.findIndex(
+          (s) => s.name === flaggedAs
+        );
         if (socketIndex !== -1) {
           localCardData.value.sockets.outputs.splice(socketIndex, 1);
         }
       }
-      
+
       localCardData.value.messageHistory.splice(index, 1);
       updateOutputSockets();
       handleCardUpdate();
@@ -540,17 +572,18 @@ export default {
 
     // Handle user input and LLM interaction
     const handleUserInput = async (event) => {
-      if (!userInput.value || localCardData.value.status === 'inProgress') return;
-      
+      if (!userInput.value || localCardData.value.status === "inProgress")
+        return;
+
       const content = userInput.value.innerText.trim();
       if (!content) return;
-      
-      userInput.value.innerText = '';
-      
+
+      userInput.value.innerText = "";
+
       localCardData.value.messageHistory.push({
-        role: 'user',
+        role: "user",
         content,
-        flagged: false
+        flagged: false,
       });
 
       Vue.nextTick(scrollToBottom); // Add scroll after user message
@@ -560,99 +593,108 @@ export default {
     };
 
     const updateOutputSockets = () => {
-        // Always update sockets, even if history is empty
-        const systemMessages = localCardData.value.messageHistory
-          .filter(m => m.role === 'system')
-          .map(m => m.content)
-          .join('\n\n');
-        
-        const userMessages = localCardData.value.messageHistory
-          .filter(m => m.role === 'user')
-          .map(m => m.content)
-          .join('\n\n');
-      
-        // Get existing sockets for preservation
-        const oldSockets = [...localCardData.value.sockets.outputs];
-      
-        // Create new sockets array with proper names
-        const newSockets = [];
-      
-        // Add or update the three default sockets
-        const defaultSocketConfigs = [
-          { name: "Entire History", value: JSON.stringify(localCardData.value.messageHistory) },  // Stringify the messageHistory
-          { name: "System", value: systemMessages },
-          { name: "User", value: userMessages }
-        ];
-      
-        defaultSocketConfigs.forEach((config, index) => {
-          const existingSocket = oldSockets[index];
+      // Always update sockets, even if history is empty
+      const systemMessages = localCardData.value.messageHistory
+        .filter((m) => m.role === "system")
+        .map((m) => m.content)
+        .join("\n\n");
+
+      const userMessages = localCardData.value.messageHistory
+        .filter((m) => m.role === "user")
+        .map((m) => m.content)
+        .join("\n\n");
+
+      // Get existing sockets for preservation
+      const oldSockets = [...localCardData.value.sockets.outputs];
+
+      // Create new sockets array with proper names
+      const newSockets = [];
+
+      // Add or update the three default sockets
+      const defaultSocketConfigs = [
+        {
+          name: "Entire History",
+          value: JSON.stringify(localCardData.value.messageHistory),
+        }, // Stringify the messageHistory
+        { name: "System", value: systemMessages },
+        { name: "User", value: userMessages },
+      ];
+
+      defaultSocketConfigs.forEach((config, index) => {
+        const existingSocket = oldSockets[index];
+        newSockets.push({
+          ...createSocket({
+            type: "output",
+            index,
+            existingId: existingSocket?.id,
+            value: config.value,
+          }),
+          name: config.name,
+        });
+      });
+
+      // Add flagged message sockets
+      localCardData.value.messageHistory.forEach((msg) => {
+        if (msg.flagged) {
+          const existingSocket = oldSockets.find(
+            (s) => s.name === msg.flaggedAs
+          );
+          // Ensure content is stringified if it's an object
+          const value =
+            typeof msg.content === "object"
+              ? JSON.stringify(msg.content)
+              : msg.content;
           newSockets.push({
             ...createSocket({
               type: "output",
-              index,
+              index: newSockets.length,
               existingId: existingSocket?.id,
-              value: config.value
+              value: value,
             }),
-            name: config.name
+            name: msg.flaggedAs,
           });
-        });
-      
-        // Add flagged message sockets
-        localCardData.value.messageHistory.forEach((msg) => {
-          if (msg.flagged) {
-            const existingSocket = oldSockets.find(s => s.name === msg.flaggedAs);
-            // Ensure content is stringified if it's an object
-            const value = typeof msg.content === 'object' ? JSON.stringify(msg.content) : msg.content;
-            newSockets.push({
-              ...createSocket({
-                type: "output",
-                index: newSockets.length,
-                existingId: existingSocket?.id,
-                value: value
-              }),
-              name: msg.flaggedAs
-            });
-          }
-        });
-      
-        // Update socket array with proper remapping
-        const { reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: 'output',
-          socketRegistry,
-          connections: connections.value
-        });
-      
-        localCardData.value.sockets.outputs = reindexedSockets;
-      };
+        }
+      });
+
+      // Update socket array with proper remapping
+      const { reindexedSockets } = updateSocketArray({
+        oldSockets,
+        newSockets,
+        type: "output",
+        socketRegistry,
+        connections: connections.value,
+      });
+
+      localCardData.value.sockets.outputs = reindexedSockets;
+    };
 
     const triggerLLM = async () => {
-      if (localCardData.value.status === 'inProgress') return;
+      if (localCardData.value.status === "inProgress") return;
 
       // Process input sockets first
       if (localCardData.value.sockets.inputs.length > 0) {
-        localCardData.value.sockets.inputs.forEach(socket => {
+        localCardData.value.sockets.inputs.forEach((socket) => {
           if (socket.value) {
             localCardData.value.messageHistory.unshift({
-              role: 'system',
+              role: "system",
               content: socket.value,
-              flagged: false
+              flagged: false,
             });
           }
         });
       }
 
       // Clean message history to only include role and content
-      let messageHistory = localCardData.value.messageHistory.map(msg => {
+      let messageHistory = localCardData.value.messageHistory.map((msg) => {
         // Ensure the content is a string
-        const content = typeof msg.content === 'object' ? 
-          JSON.stringify(msg.content) : 
-          String(msg.content || '');
-        
+        const content =
+          typeof msg.content === "object"
+            ? JSON.stringify(msg.content)
+            : String(msg.content || "");
+
         return {
           role: msg.role,
-          content: content
+          content: content,
         };
       });
 
@@ -660,16 +702,16 @@ export default {
 
       // System prompts not yet supported by some models
       if (localCardData.value.model.model === "o1-mini-2024-09-12") {
-        messageHistory = messageHistory.map(msg => ({
+        messageHistory = messageHistory.map((msg) => ({
           ...msg,
-          role: msg.role === 'system' ? 'user' : msg.role
+          role: msg.role === "system" ? "user" : msg.role,
         }));
         temperature = 1;
       }
 
       updateOutputSockets();
 
-      console.log("Message History for Chat", messageHistory)
+      console.log("Message History for Chat", messageHistory);
 
       try {
         await sendToServer(
@@ -681,12 +723,12 @@ export default {
           null,
           null,
           messageHistory,
-          "prompt",  // Changed from "chat" to "prompt"
+          "prompt", // Changed from "chat" to "prompt"
           false
         );
       } catch (error) {
         console.error("Error in triggerLLM:", error);
-        localCardData.value.status = 'error';
+        localCardData.value.status = "error";
       }
     };
 
@@ -732,88 +774,92 @@ export default {
     });
 
     Vue.watch(partialMessage, (newValue, oldValue) => {
-        if (newValue && newValue.length) {
-          localCardData.value.status = 'inProgress';
-          
-          // If this is the start of a new message (no previous partial message)
-          if (!oldValue) {
-            localCardData.value.messageHistory.push({
-              role: 'system',
-              content: '',
-              flagged: false,
-              isPartial: true
-            });
-          }
-          
-          // Update the content of the last message
-          const lastMessage = localCardData.value.messageHistory[localCardData.value.messageHistory.length - 1];
-          if (lastMessage && lastMessage.isPartial) {
-            lastMessage.content = newValue;
-            Vue.nextTick(scrollToBottom);
-          }
-        }
-      });
-      
+      if (newValue && newValue.length) {
+        localCardData.value.status = "inProgress";
 
-      Vue.watch(completedMessage, (newValue) => {
-        if (newValue) {
-          // Find and update the partial message, or create a new one if none exists
-          const lastMessage = localCardData.value.messageHistory[localCardData.value.messageHistory.length - 1];
-          if (lastMessage && lastMessage.isPartial) {
-            lastMessage.content = newValue;
-            lastMessage.isPartial = false;
-          } else {
-            localCardData.value.messageHistory.push({
-              role: 'system',
-              content: newValue,
-              flagged: false
-            });
-          }
-          
-          localCardData.value.status = 'complete';
-          updateOutputSockets();
-          handleCardUpdate();
+        // If this is the start of a new message (no previous partial message)
+        if (!oldValue) {
+          localCardData.value.messageHistory.push({
+            role: "system",
+            content: "",
+            flagged: false,
+            isPartial: true,
+          });
+        }
+
+        // Update the content of the last message
+        const lastMessage =
+          localCardData.value.messageHistory[
+            localCardData.value.messageHistory.length - 1
+          ];
+        if (lastMessage && lastMessage.isPartial) {
+          lastMessage.content = newValue;
           Vue.nextTick(scrollToBottom);
         }
-      });
+      }
+    });
 
+    Vue.watch(completedMessage, (newValue) => {
+      if (newValue) {
+        // Find and update the partial message, or create a new one if none exists
+        const lastMessage =
+          localCardData.value.messageHistory[
+            localCardData.value.messageHistory.length - 1
+          ];
+        if (lastMessage && lastMessage.isPartial) {
+          lastMessage.content = newValue;
+          lastMessage.isPartial = false;
+        } else {
+          localCardData.value.messageHistory.push({
+            role: "system",
+            content: newValue,
+            flagged: false,
+          });
+        }
+
+        localCardData.value.status = "complete";
+        updateOutputSockets();
+        handleCardUpdate();
+        Vue.nextTick(scrollToBottom);
+      }
+    });
 
     Vue.watch(errorMessage, (newValue, oldValue) => {
       if (!oldValue?.length && newValue?.length) {
-        localCardData.value.status = 'error';
+        localCardData.value.status = "error";
         handleCardUpdate();
       }
     });
 
-
     const scrollToBottom = () => {
-        if (chatContainer.value) {
-          chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-        }
-      };
-
-        
-    // Add this utility function to the setup:
-    const showToast = (message, type = 'success') => {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white px-4 py-2 rounded shadow-lg z-50`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        setTimeout(() => notification.remove(), 2000);
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      }
     };
-    
+
+    // Add this utility function to the setup:
+    const showToast = (message, type = "success") => {
+      const notification = document.createElement("div");
+      notification.className = `fixed top-4 right-4 ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      } text-white px-4 py-2 rounded shadow-lg z-50`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 2000);
+    };
+
     const copyToClipboard = async (text) => {
-        try {
+      try {
         const clipData = new ClipboardItem({
-            'text/plain': new Blob([text], { type: 'text/plain' })
+          "text/plain": new Blob([text], { type: "text/plain" }),
         });
         await navigator.clipboard.write([clipData]);
-        showToast('Copied to clipboard!');
-        } catch (error) {
-        console.error('Failed to copy text:', error);
-        showToast('Failed to copy to clipboard', 'error');
-        }
-    };      
+        showToast("Copied to clipboard!");
+      } catch (error) {
+        console.error("Failed to copy text:", error);
+        showToast("Failed to copy to clipboard", "error");
+      }
+    };
 
     // Watch for card data changes
     Vue.watch(
@@ -847,6 +893,24 @@ export default {
       if (models.value.length && !localCardData.value.model) {
         localCardData.value.model = models.value[0];
       }
+
+      // Handle initial socket setup
+      // Only emit socket update if we created new sockets (not loading existing ones)
+      const hadExistingSockets = props.cardData.sockets?.outputs?.length > 0;
+      if (!hadExistingSockets) {
+        const oldSockets = localCardData.value.sockets.outputs;
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: localCardData.value.sockets.outputs,
+            reindexMap: new Map(oldSockets.map((s) => [s.id, s.id])),
+            deletedSocketIds: [],
+            type: "output",
+          })
+        );
+      }
       registerSession(websocketId.value, null);
       localCardData.value.status = sessionStatus.value;
     });
@@ -862,7 +926,7 @@ export default {
     });
 
     return {
-        chatContainer,
+      chatContainer,
       localCardData,
       userInput,
       models,
@@ -879,5 +943,5 @@ export default {
       copyToClipboard,
       showToast,
     };
-  }
+  },
 };

@@ -196,7 +196,9 @@ const handleAnthropicPrompt = async (account, promptConfig) => {
 
   // Find the first system message if it exists
   let systemPrompt = null;
-  const messages = promptConfig.messages.map(msg => {
+  const messages = promptConfig.messages
+  .filter(msg => msg?.content?.length)
+  .map(msg => {
     if (msg.role === "system") {
       if (!systemPrompt) systemPrompt = msg.content;
       // Convert system messages to assistant in the array
