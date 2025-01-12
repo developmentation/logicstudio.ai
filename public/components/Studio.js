@@ -37,7 +37,7 @@ export default {
         <div class="flex items-center gap-2">
           <button 
                 class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="createCanvas"
+                @click="createCanvas()"
             >
             <i class="pi pi-plus mt-1"></i>
             </button>
