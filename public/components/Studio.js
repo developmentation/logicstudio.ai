@@ -4,6 +4,7 @@ import { useCanvases } from "../composables/useCanvases.js";
 import TriggerCard from "./TriggerCard.js";
 import AgentCard from "./AgentCard.js";
 import TextCard from "./TextCard.js";
+import ChatCard from "./ChatCard.js";
 import InputCard from "./InputCard.js";
 import OutputCard from "./OutputCard.js";
 import JoinCard from "./JoinCard.js";
@@ -19,6 +20,7 @@ export default {
     TriggerCard,
     AgentCard,
     TextCard,
+    ChatCard,
     InputCard,
     OutputCard,
     JoinCard,
@@ -404,7 +406,9 @@ export default {
           return "TriggerCard";
         case "text":
           return "TextCard";
-        case "input":
+          case "chat":
+            return "ChatCard";
+          case "input":
           return "InputCard";
         case "output":
           return "OutputCard";

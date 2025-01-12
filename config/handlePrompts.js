@@ -193,15 +193,33 @@ const handleAnthropicPrompt = async (account, promptConfig) => {
   let client = anthropicClient;
   if (account?.anthropicApiKey)
     client = new Anthropic({ apiKey: account.anthropicApiKey });
-  // console.log("Messages", promptConfig.messages);
-  let anthropicPrompt = convertArray(promptConfig.messages);
-  // console.log("anthropicPrompt", anthropicPrompt);
-  anthropicPrompt.model = promptConfig.model;
-  anthropicPrompt.max_tokens = 4096;
-  anthropicPrompt.stream = true;
-  anthropicPrompt.temperature = promptConfig.temperature || 0.5;
 
-  // console.log("Anthropic Prompt", anthropicPrompt);
+  // Find the first system message if it exists
+  let systemPrompt = null;
+  const messages = promptConfig.messages.map(msg => {
+    if (msg.role === "system") {
+      if (!systemPrompt) systemPrompt = msg.content;
+      // Convert system messages to assistant in the array
+      return { role: "assistant", content: msg.content };
+    }
+    return msg;
+  });
+
+  const anthropicPrompt = {
+    messages,
+    model: promptConfig.model,
+    max_tokens: 4096,
+    stream: true,
+    temperature: promptConfig.temperature || 0.5
+  };
+
+  // Add system parameter if we found a system message
+  if (systemPrompt) {
+    anthropicPrompt.system = systemPrompt;
+  }
+
+  console.log("new anthropic prompt", anthropicPrompt)
+
   const responseStream = await client.messages.create(anthropicPrompt);
   return responseStream;
 };
@@ -229,26 +247,26 @@ const handleGroqPrompt = async (account, promptConfig) => {
 };
 
  
-function convertArray(array) {
-  let result = {
-    system: null,
-    messages: [],
-  };
+// function convertArray(array) {
+//   let result = {
+//     system: null,
+//     messages: [],
+//   };
 
-  array.forEach((item, index) => {
-    if (index === 0 && item.role === "system") {
-      // If the first item has role 'system', store its content separately
-      result.system = item.content;
-    } else {
-      // For all other items, convert 'system' to 'assistant'
-      let role = item.role === "system" ? "assistant" : item.role;
-      // Add the message object to the messages array
-      result.messages.push({ role: role, content: item.content });
-    }
-  });
+//   array.forEach((item, index) => {
+//     if (index === 0 && item.role === "system") {
+//       // If the first item has role 'system', store its content separately
+//       result.system = item.content;
+//     } else {
+//       // For all other items, convert 'system' to 'assistant'
+//       let role = item.role === "system" ? "assistant" : item.role;
+//       // Add the message object to the messages array
+//       result.messages.push({ role: role, content: item.content });
+//     }
+//   });
 
-  return result;
-}
+//   return result;
+// }
 
 const handleAzureOpenAiPrompt = async (
   account,
