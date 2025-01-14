@@ -75,6 +75,7 @@ export default {
             contenteditable="true" 
             class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto text-gray-300 whitespace-pre-wrap font-mono cursor-text"
             @mousedown.stop
+            @wheel.stop
             :key="inputKey + 'a'"
           >{{ formattedJson }}</pre>
           
@@ -85,6 +86,7 @@ export default {
             contenteditable="true"
             class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto markdown-dark cursor-text"
             @mousedown.stop
+             @wheel.stop
             :key="inputKey + 'b'"
             v-html="renderedContent"
           ></div>

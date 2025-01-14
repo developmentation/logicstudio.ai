@@ -119,7 +119,7 @@ export default {
         <!-- Chat History -->
         <div class="mt-4 space-y-2">
 
-        <div ref="chatContainer" class="w-full h-[300px] bg-gray-900 rounded overflow-y-auto p-2" @mousedown.stop>
+        <div ref="chatContainer" class="w-full h-[300px] bg-gray-900 rounded overflow-y-auto p-2" @mousedown.stop  @wheel.stop>
             <div v-for="(message, index) in localCardData.messageHistory" :key="index" class="mb-2">
               
             
@@ -210,7 +210,7 @@ export default {
               contenteditable="true"
               class="w-full min-h-[60px] max-h-[300px] overflow-y-auto bg-gray-800 text-xs text-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-700 cursor-text"
               @keydown.enter.prevent="handleUserInput"
-              @mousedown.stop
+              @mousedown.stop  @wheel.stop
               placeholder="Type your message..."
             ></div>
             <div class="absolute bottom-2 right-2">
