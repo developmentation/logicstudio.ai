@@ -10,6 +10,10 @@ import { createZoomPanControls } from "../utils/canvasInteractions/zoomPan.js";
 import { createCardPositioning } from "../utils/cardManagement/cardPositioning.js";
 import { createCardSelection } from "../utils/cardManagement/cardSelection.js";
 import { createCardRegistry } from "../utils/cardManagement/cardRegistry.js";
+ 
+
+//Starter templates
+const canvasTemplates = Vue.ref([]);
 
 // Core canvas state
 //The main array to handle all the user's canvases
@@ -390,8 +394,39 @@ export const useCanvases = () => {
     }
   };
 
+
+  const templateNames = [
+    // Add more template names here
+    'Hot Topics Book Generator',
+  ];
+  
+
+  const loadTemplates = async (templateNames = ['Starter Template']) => {
+    try {
+      canvasTemplates.value = (
+        await Promise.all(
+          templateNames.map(name =>
+            fetch(new URL(`../assets/templates/${name}.json`, import.meta.url))
+              .then(res => res.ok ? res.json() : null)
+              .then(template => template ? { ...template, uuid: uuidv4() } : null)
+              .catch(err => {
+                console.warn(`Failed to load ${name}:`, err);
+                return null;
+              })
+          )
+        )
+      ).filter(Boolean);
+  
+      console.log("canvasTemplates.value", canvasTemplates.value);
+    } catch (error) {
+      console.warn('Error loading templates:', error);
+      canvasTemplates.value = [];
+    }
+  };
+
   // Lifecycle hooks
   Vue.onMounted(() => {
+    
     mouseEvents.setup?.();
     touchEvents.setup?.();
     if (canvasRef.value) {
@@ -399,6 +434,8 @@ export const useCanvases = () => {
         zoomPan.centerCanvas(false);
       });
     }
+
+    loadTemplates(templateNames);
   });
 
   Vue.onUnmounted(() => {
@@ -518,6 +555,9 @@ Vue.watch(
 
   // Comprehensive return statement:
   return {
+    //Templates
+    canvasTemplates,
+
     // Core State
     canvases,
     activeCanvasId,

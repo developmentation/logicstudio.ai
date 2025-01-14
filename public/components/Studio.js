@@ -13,6 +13,10 @@ import LabelCard from "./LabelCard.js";
 import TemplateCard from "./TemplateCard.js";
 import WebCard from "./WebCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
+import CanvasTemplatesToolbar from "./CanvasTemplatesToolbar.js";
+
+import ConnectionsLayer from './ConnectionsLayer.js';
+
 
 export default {
   name: "Studio",
@@ -29,6 +33,8 @@ export default {
     TemplateCard,
     WebCard,
     CanvasToolbar,
+    CanvasTemplatesToolbar,
+    ConnectionsLayer,
   },
   template: `
     <div class="absolute inset-0 flex flex-col overflow-hidden">
@@ -41,6 +47,7 @@ export default {
             >
             <i class="pi pi-plus mt-1"></i>
             </button>
+ 
 
           <InputText v-if="activeCanvas"
               v-model="activeCanvas.name"
@@ -125,7 +132,7 @@ export default {
             class="relative flex-1 bg-gray-900"
          
         >
-            <!-- Side Toolbar -->
+            <!-- Left Side Toolbar -->
             <CanvasToolbar
                 class="z-50"
                 @add-card="handleToolbarAction"
@@ -135,6 +142,14 @@ export default {
                 @update:expanded="(val) => toolbarExpanded = val"
                 @update:show-text="(val) => toolbarShowText = val"
             />
+
+<!-- Right Side Toolbar -->
+    <CanvasTemplatesToolbar 
+  :canvas-templates="canvasTemplates"
+  @add-canvas="handleAddCanvas"
+/>
+
+
 
             <!-- Scrollable Canvas Container -->
 <div 
@@ -195,61 +210,17 @@ export default {
             >
                         <!-- Connections Layer -->
 
-                      
-
-            <svg 
-                class="absolute"
-                :style="{
-                    width: '8000px',
-                    height: '8000px',
-                    top: '-4000px',
-                    left: '-4000px',
-                }"
-            >
-
-              <defs>
-                    <marker
-                    id="arrowhead"
-                    viewBox="0 -3 6 6"
-                    refX="4"
-                    refY="-.3"
-                    markerWidth="6" 
-                    markerHeight="6"
-                    orient="auto"
-                >
-                    <path
-                        d="M0,-2.0L5,0L0,2.0"
-                        stroke="#64748b"
-                        stroke-width=".5"
-                        fill="#64748b"
-                    />
-                </marker>
-                </defs>
-
-                <path 
-                    v-for="conn in activeConnections" 
-                    :key="conn.id"
-                    :d="drawSpline(conn.sourcePoint, conn.targetPoint)"
-                    :stroke="getConnectionStyle(conn).stroke"
-                    :stroke-width="getConnectionStyle(conn).strokeWidth"
-                    fill="none"
-                    style="pointer-events: all; cursor: pointer;"
-                    marker-end="url(#arrowhead)"
-                    @mousedown.stop
-                    @click.stop="(e) => handleConnectionClick(e, conn.id)"
-                />
-                  
-                
-                <path
-                  v-if="activeConnection"
-                  :d="drawSpline(activeConnection.startPoint, activeConnection.currentPoint)"
-                  stroke="#64748b"
-                  stroke-dasharray="5,5"
-                  stroke-width="2"
-                  fill="transparent"
-                    marker-end="url(#arrowhead)"
-                  /> 
-                </svg>
+                                      
+                        <ConnectionsLayer
+                          v-if="canvasRef"
+                          :connections="activeConnections"
+                          :active-connection="activeConnection"
+                          :selected-connection-id="selectedConnectionId"
+                          :zoom-level="zoomLevel"
+                          :canvas-ref="canvasRef"
+                          @connection-click="handleConnectionClick"
+                        />
+                        
 
                         <!-- Cards Layer -->
                         <div class="relative" style="pointer-events: none;">
@@ -285,6 +256,9 @@ export default {
   setup() {
     // Get canvas functionality from composable
     const {
+      //Templates
+      canvasTemplates,
+
       // Core state
       canvases,
       activeCanvas,
@@ -406,9 +380,9 @@ export default {
           return "TriggerCard";
         case "text":
           return "TextCard";
-          case "chat":
-            return "ChatCard";
-          case "input":
+        case "chat":
+          return "ChatCard";
+        case "input":
           return "InputCard";
         case "output":
           return "OutputCard";
@@ -465,6 +439,12 @@ export default {
         //   selectedCardIds.value.add(cardId);
       }
     };
+
+    const handleAddCanvas = (newCanvas) => {
+      canvases.value.push(newCanvas);
+      activeCanvasId.value = newCanvas.id;
+    };
+
 
     const handleManualTrigger = (cardData) => {
       const connections = activeConnections.value.filter(
@@ -737,6 +717,9 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
     );
 
     return {
+      //Templates
+      canvasTemplates,
+
       // State
       canvases,
       activeCanvas,
@@ -767,6 +750,7 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       getCardComponent,
       getConnectionStyle,
       handleToolbarAction,
+      handleAddCanvas,
       handleConnectionClick,
       handleManualTrigger,
       updateCard,

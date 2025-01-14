@@ -1,0 +1,1227 @@
+{
+  "id": "d0d6747b-f36f-45d7-940c-839e0c56676e",
+  "name": "Hot Topics Book Generator",
+  "cards": [
+    {
+      "uuid": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "type": "agent",
+      "display": "default",
+      "x": 102.20102342662166,
+      "y": -50.35887751748198,
+      "zIndex": 1,
+      "name": "5-Part Idea Developer",
+      "description": "Takes an idea and defines it into 5 distinct parts.",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Utilize the following style guide in your book idea development:<socket name=\"Style Guide\"/>",
+      "userPrompt": "Pick me a single headline from the news and write me an idea for a non-fiction book. Expand the following idea into 5 parts, following the style guide provided. Here are the headlines from today:<socket name=\"Headlines\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860542606-nxt6wvwwd5",
+            "type": "input",
+            "name": "Style Guide",
+            "sourceIndex": 0,
+            "value": "5-PART STRUCTURE BREAKDOWN Introduction (10-15% of total length) Hook/attention grabber Context/background Clear thesis statement Preview of main points First Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Second Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Third Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to conclusion Conclusion (10-15%) Restate thesis Summarize main points Broader implications Call to action or final thought DEVELOPMENT CHECKLIST □ Each section flows logically to the next □ Clear topic sentences begin each paragraph □ Evidence supports each main point □ Transitions connect all sections □ Ideas progress from simple to complex □ Examples are specific and relevant REFINEMENT TIPS • Ensure each main point has equal weight • Use consistent terminology throughout • Include varied evidence types (statistics, examples, expert opinions) • Keep paragraphs focused on single ideas • Maintain clear connections to thesis COMMON PITFALLS TO AVOID Uneven section lengths Weak transitions Repetitive information Wandering off-topic Too many or too few examples Unclear connections between points Always write in Markdown format for clarity. Clearly define and label each distinct part with a separate heading.",
+            "momentUpdated": 1736862710284,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736861300506-lq1o81p4yb",
+            "type": "input",
+            "name": "Headlines",
+            "sourceIndex": 1,
+            "value": "ContentSkip to Main ContentAccessibility HelpMenuWhen search suggestions are available use up and down arrows to review and enter to select.SearchSearchSign InQuick LinksCurrently Selected: NewsNewsSportsRadioMusicListen LiveTVWatchnewsCurrently Selected: Top StoriesTop StoriesLocalClimateWorldCanadaPoliticsIndigenousBusinessThe NationalHealthEntertainmentScienceCBC News InvestigatesGo PublicAbout CBC NewsBeing Black in CanadaMore CBC News - Latest Canada, World, Entertainment and Business News LoadedCBC News - Latest Canada, World, Entertainment and Business NewsFeatured ContentRecruiter has allegedly scammed 'hundreds' of Filipino migrant workers. Some are now homelessRecruiter has allegedly scammed 'hundreds' of Filipino migrant workers. Some are now homelessDespite 35 labour violations over the last decade, Jeanett Moskito continues to operateWELCOME TO CANADA5 hours agoWelcome to CanadaTwo women fleeing domestic violence sought asylum in Canada. The system treated them very differentlyJanuary 1, 1970VideoSudanese refugees cast doubt on Canada’s welcoming reputation January 1, 1970This Toronto recruiter has allegedly 'scammed' migrant workers5 hours agoDuration 2:09Welcome to Canada'It's OK if Canada isn't for you': This Calgary newcomer wants to go back home. She isn't aloneJanuary 1, 1970Welcome to CanadaIs it worth immigrating to Canada? These newcomers say it comes at a costJanuary 1, 1970Trump engaged in 'unprecedented criminal effort,' special counsel says in final report on 2020 election caseDonald Trump engaged in an \"unprecedented criminal effort\" to \"unlawfully retain power\" after losing the 2020 election, special counsel Jack Smith said in a report published early Tuesday by the U.S. Justice Department, expressing confidence in the prospect of a conviction at a trial that will not happen now that Trump is returning to the White House.World |1 hour agoUkrainian families question Canada's commitment as residency applications appear 'lost'After the CUAET program closed for Ukrainians fleeing the war, Canada opened a special Ukrainian family reunification stream for permanent residence. Applicants say they're getting mixed messages from IRCC, and are desperately trying to track their \"lost\" applications.Canada -Ottawa |5 hours agoCBC InvestigatesA year later, N.L. still working on plan to deal with rule-breaking landlords and tenantsThe Newfoundland and Labrador government says they expect to implement a pilot project \"in the near future\" to better enforce residential tenancies rules, and plug a gap in the existing system.Canada -Nfld. & Labrador |4 hours ago|NewWhat's different, and worse, about the smoke from the L.A. firesLungs, heart, brain and more at risk, doctors sayWorld |4 hours agoVideo19:32WATCH | How Canadian prime ministers stepped down over the yearsRevisit decades past in Canadian politics as prime ministers came and went, and oversight of the country changed hands.Canada |January 13NewAlberta premier's Trump visit raises concerns she's flouting Team Canada approachCanada |11 minutes agoFRONT BURNERDonald Trump's billionaire administrationRadio -Front Burner |1 hour agoNetflix and other streaming services now blocked on federal government networksPolitics |5 hours ago|Man convicted in 1981 murder of Hamilton woman gets chance for early paroleCanada -Hamilton |1 hour agoCBC ExplainsCan someone who's not an MP become prime minister?Politics |5 hours agoTikTok creators nervous, angry as U.S. ban expected Jan. 194 hours agoPhysician assistants approved to work in a B.C. hospital for the 1st timeCanada -British Columbia |9 hours ago|P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a firstCanada -PEI |January 13|Man allegedly hit neighbour with vehicle before executing him, jury hears as trial beginsCanada -Manitoba |January 14Freeland expected to announce Liberal leadership bid within the week: sourceCanada |12 hours agoRCI is CBC/Radio-Canada's multilingual service, forging bonds between Canadians and citizens of the worldvisit Radio Canada InternationalWatch CBC News NetworkWATCH: CBC News NetworkStream CBC News Network on CBC GemNews |November 12, 2024WATCH: CBC News ExploreCBC News7 months agoDuration 168:00:00See what's live now on CBC NewsCBC News. We explain the news. Stream liveNews |January 8CBC OmbudsmanFeedback or complaints regarding the application of CBC Journalistic Standards and practices? Learn moreFeatured VideonowFeatured Video - 10 videosVideo1:58Thieves are using excavators to rob banks in N.L.The National |2 hours agoVideo7:23P.E.I. homeowner captures sound and video of meteorite strike on camera. Scientists believe it's a firstJanuary 13Video2:58Firefighter recounts heroic rescue of teen who fell through thin ice1 hour agoVideo1:36Waddle this way: Calgary penguins take annual stroll after weather delayCBC News: Calgary at 6:00 |12 hours agoVideo4:29How the Santa Ana winds are worsening the L.A. wildfiresThe National |10 hours agoVideo1:12#TheMoment a man tearfully reunited with his dog that survived the L.A. firesThe National |2 hours agoVideo4:28Canadian pilots fight L.A. wildfires as region braces for more flamesThe National |2 hours agoVideo8:57Trump not 'inclined to change his approach' to tariffs, says Alberta premierJanuary 13Video2:07Mailing anything with Canada Post now costs moreThe National |12 hours agoVideo7:16Men under growing pressure to bulk up with steroids The National |January 13More CBC NewsProsecutor who investigated Hunter Biden criticizes presidential pardonWorld |January 14Federal Court rejects environmentalists' bid to halt B.C. port expansionDarryl GreerCanada -British Columbia |10 hours ago|Video'Nobody deserves that torture': Sister of disabled woman who starved to death testifies at inquestKarin LarsenCanada -British Columbia |10 hours agoAs temperatures dropped in Gaza, this family took refuge in a hole 1.5 metres under their tentWorld |January 13Kyiv and Seoul look to 2 captured North Korean soldiers as potential source for valuable intelligenceBriar StewartWorld |January 13Does your cacio e pepe turn out lumpy? Try this 'scientifically optimized' pasta recipeSheena GoodyearRadio -As It Happens |January 13Alleged drug smuggler for Canadian ex-Olympian could flee if granted bail, prosecutors sayThomas DaigleCanada -Toronto |January 13VideoGastrointestinal illness cases at University of Guelph rise to at least 234Kate BueckertCanada -Kitchener-Waterloo |January 13|Carrie Underwood, Village People to perform at Trump inauguration eventsMichelle L. PriceEntertainment |January 13Notorious marine poacher found guilty of illegally harvesting and selling sea cucumbersCanada -British Columbia |January 13Apple pushes back against proposal to abandon diversity programsBusiness |January 13|Oilers forward Zach Hyman buys OHL's Brantford BulldogsConrad CollacoCanada -Hamilton |January 13|Load MoreFooter LinksMy AccountProfileCBC GemNewslettersAbout CBC AccountsConnect with CBCFacebookXYouTubeInstagramMobileRSSPodcastsContact CBCSubmit FeedbackHelp CentreAudience Relations, CBC P.O. Box 500 Station A Toronto, ON Canada, M5W 1E6 Toll-free (Canada only): 1-866-306-4636About CBCCorporate InfoSitemapReuse & PermissionTerms of UsePrivacyPrivacy PreferencesJobsOur UnionsIndependent ProducersPolitical Ads RegistryAdChoicesServicesOmbudsmanCorrections and ClarificationsPublic AppearancesCommercial ServicesCBC ShopDoing Business with UsRenting FacilitiesRadio Canada InternationalCBC LiteAccessibilityIt is a priority for CBC to create products that are accessible to all in Canada including people with visual, hearing, motor and cognitive challenges.Closed Captioning and Described Video is available for many CBC shows offered on CBC Gem.About CBC AccessibilityAccessibility Feedback©2025 CBC/Radio-Canada. All rights reserved. Visitez Radio-Canada.canow",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+            "name": "Output",
+            "type": "output",
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736860314544
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Utilize the following style guide in your book idea development:<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860542606-nxt6wvwwd5\" data-socket-name=\"Style Guide\">[Style Guide]</span>",
+      "userPromptHtml": "Pick me a single headline from the news and write me an idea for a non-fiction book. Expand the following idea into 5 parts, following the style guide provided.\nHere are the headlines from today:<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736861300506-lq1o81p4yb\" data-socket-name=\"Headlines\">[Headlines]</span>\n\n",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "baa972f6-6590-45f6-ae6f-87326ddea9e1",
+      "type": "text",
+      "display": "default",
+      "x": -437.201693584074,
+      "y": -195.9013766957903,
+      "zIndex": 1,
+      "name": "Idea Style Guide",
+      "description": "Structure the idea\n",
+      "width": 300,
+      "height": 150,
+      "sockets": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "socket-1736860412684-rc035sijpcl",
+            "type": "output",
+            "name": "Initial",
+            "sourceIndex": 0,
+            "value": "5-PART STRUCTURE BREAKDOWN Introduction (10-15% of total length) Hook/attention grabber Context/background Clear thesis statement Preview of main points First Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Second Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Third Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to conclusion Conclusion (10-15%) Restate thesis Summarize main points Broader implications Call to action or final thought DEVELOPMENT CHECKLIST □ Each section flows logically to the next □ Clear topic sentences begin each paragraph □ Evidence supports each main point □ Transitions connect all sections □ Ideas progress from simple to complex □ Examples are specific and relevant REFINEMENT TIPS • Ensure each main point has equal weight • Use consistent terminology throughout • Include varied evidence types (statistics, examples, expert opinions) • Keep paragraphs focused on single ideas • Maintain clear connections to thesis COMMON PITFALLS TO AVOID Uneven section lengths Weak transitions Repetitive information Wandering off-topic Too many or too few examples Unclear connections between points Always write in Markdown format for clarity. Clearly define and label each distinct part with a separate heading.",
+            "momentUpdated": 1736862710276,
+            "index": 0
+          }
+        ]
+      },
+      "content": "5-PART STRUCTURE BREAKDOWN Introduction (10-15% of total length) Hook/attention grabber Context/background Clear thesis statement Preview of main points First Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Second Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Third Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to conclusion Conclusion (10-15%) Restate thesis Summarize main points Broader implications Call to action or final thought DEVELOPMENT CHECKLIST □ Each section flows logically to the next □ Clear topic sentences begin each paragraph □ Evidence supports each main point □ Transitions connect all sections □ Ideas progress from simple to complex □ Examples are specific and relevant REFINEMENT TIPS • Ensure each main point has equal weight • Use consistent terminology throughout • Include varied evidence types (statistics, examples, expert opinions) • Keep paragraphs focused on single ideas • Maintain clear connections to thesis COMMON PITFALLS TO AVOID Uneven section lengths Weak transitions Repetitive information Wandering off-topic Too many or too few examples Unclear connections between points Always write in Markdown format for clarity. Clearly define and label each distinct part with a separate heading.",
+      "contentHtml": "5-PART STRUCTURE BREAKDOWN Introduction (10-15% of total length) Hook/attention grabber Context/background Clear thesis statement Preview of main points First Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Second Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to next point Third Main Point (20-25%) Topic sentence Supporting evidence Examples Connection to thesis Transition to conclusion Conclusion (10-15%) Restate thesis Summarize main points Broader implications Call to action or final thought DEVELOPMENT CHECKLIST □ Each section flows logically to the next □ Clear topic sentences begin each paragraph □ Evidence supports each main point □ Transitions connect all sections □ Ideas progress from simple to complex □ Examples are specific and relevant REFINEMENT TIPS • Ensure each main point has equal weight • Use consistent terminology throughout • Include varied evidence types (statistics, examples, expert opinions) • Keep paragraphs focused on single ideas • Maintain clear connections to thesis COMMON PITFALLS TO AVOID Uneven section lengths Weak transitions Repetitive information Wandering off-topic Too many or too few examples Unclear connections between points Always write in Markdown format for clarity. Clearly define and label each distinct part with a separate heading.",
+      "momentUpdated": 1736862710302
+    },
+    {
+      "uuid": "caf36b05-f040-419b-9129-01be7b16ebb9",
+      "type": "agent",
+      "display": "minimized",
+      "x": 582.030072535309,
+      "y": -141.95453617125452,
+      "zIndex": 1,
+      "name": "Part 1 Expander",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 1 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 1, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<socket name=\"System Socket\"/>",
+      "userPrompt": "Exclusively evaluate and expand ONLY Part 1 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860635853-e84lul6ab",
+            "type": "input",
+            "name": "System Socket",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736862710254,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736860635854-8cjtmxxrkp3",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 1,
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "ac5ce932-e41b-41ca-918a-bc26d98180d8",
+            "name": "Output",
+            "type": "output",
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 1 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 1, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860635853-e84lul6ab\" data-socket-name=\"System Socket\">[System Socket]</span>",
+      "userPromptHtml": "Exclusively evaluate and expand ONLY Part 1 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860635854-8cjtmxxrkp3\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "f26d6e91-ff48-4c07-affe-e30e91b611c5",
+      "type": "agent",
+      "display": "minimized",
+      "x": 581.8206833045164,
+      "y": 5.040874842777029,
+      "zIndex": 1,
+      "name": "Part 2 Expander",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 2 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 2, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<socket name=\"System Socket\"/>",
+      "userPrompt": "Exclusively evaluate and expand ONLY Part 2 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860771138-b7zq06kces4",
+            "type": "input",
+            "name": "System Socket",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736862710254,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736860771138-ccigrozslr",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 1,
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736860771138-0qzqvnktefkb",
+            "name": "Output",
+            "type": "output",
+            "value": "## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 2 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 2, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860771138-b7zq06kces4\" data-socket-name=\"System Socket\">[System Socket]</span>",
+      "userPromptHtml": "Exclusively evaluate and expand ONLY Part 2 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860771138-ccigrozslr\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "01cad5bb-d9d2-4916-bbd6-3ee671a6f8b7",
+      "type": "agent",
+      "display": "minimized",
+      "x": 585.0346615212771,
+      "y": 152.0362858568086,
+      "zIndex": 1,
+      "name": "Part 3 Expander",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 3 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 3, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<socket name=\"System Socket\"/>",
+      "userPrompt": "Exclusively evaluate and expand ONLY Part 3 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860794873-lgbfocrl4t",
+            "type": "input",
+            "name": "System Socket",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736862710254,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736860794873-66jx1yzosf5",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 1,
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736860794873-f30mpo4vh7i",
+            "name": "Output",
+            "type": "output",
+            "value": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 3 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 3, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860794873-lgbfocrl4t\" data-socket-name=\"System Socket\">[System Socket]</span>",
+      "userPromptHtml": "Exclusively evaluate and expand ONLY Part 3 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860794873-66jx1yzosf5\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "8464f334-8573-4f3c-ba5f-155f8a958da1",
+      "type": "agent",
+      "display": "minimized",
+      "x": 583.6841498079656,
+      "y": 301.3139418358762,
+      "zIndex": 1,
+      "name": "Part 4 Expander",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 4 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 4, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<socket name=\"System Socket\"/>",
+      "userPrompt": "Exclusively evaluate and expand ONLY Part 4 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860806252-whv3jy7hiej",
+            "type": "input",
+            "name": "System Socket",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736862710254,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736860806252-6iceh35vx69",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 1,
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736860806252-ov5lkhpmcxm",
+            "name": "Output",
+            "type": "output",
+            "value": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 4 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 4, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860806252-whv3jy7hiej\" data-socket-name=\"System Socket\">[System Socket]</span>",
+      "userPromptHtml": "Exclusively evaluate and expand ONLY Part 4 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860806252-6iceh35vx69\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "67f53a24-e8fb-47b8-8ff1-0535a8cfa761",
+      "type": "agent",
+      "display": "minimized",
+      "x": 577.3885136518483,
+      "y": 453.254477292714,
+      "zIndex": 100,
+      "name": "Part 5 Expander",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 5 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 5, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<socket name=\"System Socket\"/>",
+      "userPrompt": "Exclusively evaluate and expand ONLY Part 5 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860823592-r0bfxs97ieb",
+            "type": "input",
+            "name": "System Socket",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736862710254,
+            "source": "system"
+          },
+          {
+            "id": "socket-1736860823592-olb4usg9kd",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 1,
+            "value": "I'll select this headline from the provided list: \"P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a first\"\n\nHere's a non-fiction book idea expanded into 5 parts following the style guide:\n\n# Cosmic Witnesses: How Citizen Scientists Are Revolutionizing Meteor Research\n\n## Introduction (15%)\n- Hook: The dramatic midnight story of a P.E.I. homeowner capturing unprecedented meteorite footage\n- Background: History of meteor documentation and the challenges of capturing strikes\n- Thesis: Amateur observers with modern technology are transforming our understanding of meteors\n- Preview: Citizen science, technology evolution, scientific impact\n\n## First Main Point (25%): The Rise of Citizen Space Watchers\n- Topic: How everyday people became crucial to meteor research\n- Evidence: Statistics on amateur astronomical discoveries\n- Examples: Notable citizen scientist contributions\n- Connection: Links amateur observation to scientific advancement\n- Transition: Evolution of technology enabling this trend\n\n## Second Main Point (25%): Modern Technology's Role\n- Topic: How consumer technology revolutionized space observation\n- Evidence: Technical specifications of modern cameras and sensors\n- Examples: Security cameras, doorbell cameras, dashcams\n- Connection: Democratization of space observation\n- Transition: Impact on scientific research\n\n## Third Main Point (25%): Scientific Impact and Future Implications\n- Topic: How amateur data changes professional research\n- Evidence: Research papers utilizing citizen scientist data\n- Examples: Breakthrough discoveries from amateur footage\n- Connection: Collaborative future of space science\n- Transition: Looking ahead\n\n## Conclusion (10%)\n- Restate: Amateur observers' crucial role in modern astronomy\n- Summary: Technology, citizen science, and research evolution\n- Implications: Future of collaborative space research\n- Call to Action: Encouraging public participation in meteor watching",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736860823592-9n1ybymnjtc",
+            "name": "Output",
+            "type": "output",
+            "value": "# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Maintain the formatting and the flow of the idea. Exclusively evaluate Part 5 of this idea and expand out the relevant parts. Ignore all other aspects of the idea except Part 5, and focus on refining and enhancing this idea to be as clear as possible. Stay within the context of the original idea, but explore where it could be further enhanced.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860823592-r0bfxs97ieb\" data-socket-name=\"System Socket\">[System Socket]</span>",
+      "userPromptHtml": "Exclusively evaluate and expand ONLY Part 5 of this idea. Do not add any content from other parts into this idea to keep everything distinct and clear.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736860823592-olb4usg9kd\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "type": "join",
+      "display": "default",
+      "x": 1062.4426376753938,
+      "y": 138.65689991278168,
+      "zIndex": 1,
+      "name": "Join",
+      "description": "Join Node",
+      "width": 300,
+      "height": 150,
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736860967297-rf1piaa5x0d",
+            "type": "input",
+            "name": "Input 1",
+            "sourceIndex": 0,
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy",
+            "momentUpdated": 1736862710221
+          },
+          {
+            "id": "socket-1736860977991-1l13n0zle8z",
+            "type": "input",
+            "name": "Input 2",
+            "sourceIndex": 1,
+            "value": "## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols",
+            "momentUpdated": 1736862710221
+          },
+          {
+            "id": "socket-1736860978163-0ysz7djmh4z",
+            "type": "input",
+            "name": "Input 3",
+            "sourceIndex": 2,
+            "value": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities",
+            "momentUpdated": 1736862710221
+          },
+          {
+            "id": "socket-1736860978380-u1npnrd15bg",
+            "type": "input",
+            "name": "Input 4",
+            "sourceIndex": 3,
+            "value": "## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems",
+            "momentUpdated": 1736862710221
+          },
+          {
+            "id": "socket-1736860979459-s4r6le1vli",
+            "type": "input",
+            "name": "Input 5",
+            "sourceIndex": 4,
+            "value": "# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736862710221
+          }
+        ],
+        "outputs": [
+          {
+            "id": "989eb0a6-354a-4645-9d32-b4096713c153",
+            "type": "output",
+            "name": "Output 1",
+            "sourceIndex": 0,
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy \n\n## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems \n\n# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736862710278
+          }
+        ]
+      },
+      "separator": " ",
+      "momentUpdated": 1736862710278
+    },
+    {
+      "uuid": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "type": "text",
+      "display": "default",
+      "x": 110.76487626587,
+      "y": -326.0913370800813,
+      "zIndex": 1,
+      "name": "Expander Style Guide",
+      "description": "Text Node",
+      "width": 300,
+      "height": 150,
+      "sockets": {
+        "inputs": [],
+        "outputs": [
+          {
+            "id": "socket-1736861035186-hctq1kl1qyh",
+            "type": "output",
+            "name": "Initial",
+            "sourceIndex": 0,
+            "value": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+            "momentUpdated": 1736861389252,
+            "index": 0
+          }
+        ]
+      },
+      "content": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+      "contentHtml": "Never write a conclusion to your specific section. Always write in markdown. Never address the user with helpful comments. Always directly perform the task.",
+      "momentUpdated": 1736861389287
+    },
+    {
+      "uuid": "fa5aa147-c421-4c1b-9e56-77fa12e40e88",
+      "type": "output",
+      "display": "default",
+      "x": 2170.6359938237406,
+      "y": 115.72631787717599,
+      "zIndex": 1,
+      "name": "Output",
+      "description": "Output Node",
+      "width": 300,
+      "height": 150,
+      "outputs": [
+        {
+          "type": "pdf",
+          "id": "socket-1736861104771-1lmwq4jv424"
+        },
+        {
+          "type": "pdf",
+          "id": "socket-1736861573864-bz0a8jt1izs"
+        },
+        {
+          "type": "docx",
+          "id": "socket-1736861575084-2kytalz0oxv"
+        }
+      ],
+      "autoDownload": false,
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736861104771-gdiqlrdc96j",
+            "type": "input",
+            "name": "Input 1",
+            "sourceIndex": 0,
+            "value": "Dear John Smith,\n\nI hope this letter finds you well. I trust you had a wonderful holiday season, and I'm excited to share with you a groundbreaking book concept that I believe will captivate readers in 2025.\n\nI'm writing to present \"The Rise of Citizen Space Watchers: How Amateur Astronomers Are Revolutionizing Meteor Science,\" a comprehensive exploration of how everyday citizens are transforming our understanding of space through meteor observation and documentation.\n\nThe book arrives at a crucial moment when citizen science is experiencing unprecedented growth, particularly in astronomy. With the democratization of technology and the increasing accessibility of sophisticated observation equipment, amateur astronomers are making contributions to scientific research that would have been impossible just a decade ago.\n\nKey Marketing Concepts:\n\n1. Timeliness: The book addresses the explosive growth of citizen science in astronomy, coinciding with major advances in consumer technology and AI integration expected by 2025.\n\n2. Universal Appeal: The narrative bridges the gap between professional astronomers and everyday enthusiasts, appealing to both scientific minds and casual readers interested in space exploration.\n\n3. Technology Focus: Detailed coverage of how modern technology (smartphones, security cameras, AI) is revolutionizing meteor observation, making it accessible to anyone.\n\n4. Success Stories: Compelling case studies of amateur astronomers making significant discoveries, including the first-ever recorded meteorite house strike on P.E.I.\n\n5. Educational Value: The book serves as both an inspiring narrative and a practical guide for aspiring citizen scientists.\n\nThe target audience includes:\n- Amateur astronomers and space enthusiasts\n- STEM educators and students\n- Technology enthusiasts\n- General science readers\n- Citizen science participants\n\nWhat makes this book particularly important for 2025 is its timing with the projected peak in citizen science participation and the maturation of AI-assisted observation technologies. It captures a pivotal moment in the democratization of space science and provides a roadmap for future citizen-professional collaborations.\n\nI look forward to discussing this project with you in more detail.\n\nBest regards,\n[Your name]",
+            "momentUpdated": 1736862710254
+          },
+          {
+            "id": "socket-1736861573864-izx9igd24t",
+            "type": "input",
+            "name": "Input 2",
+            "sourceIndex": 1,
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy \n\n## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems \n\n# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736862710254
+          },
+          {
+            "id": "socket-1736861575084-9t1tdre3zma",
+            "type": "input",
+            "name": "Input 3",
+            "sourceIndex": 2,
+            "value": "Here's a 2-3 page sample from \"The Rise of Citizen Space Watchers\" that focuses on a particularly compelling incident:\n\nChapter 3: The Night That Changed Everything\n\nOn February 15, 2023, Sarah Chen wasn't trying to make scientific history. The 16-year-old high school student from Vancouver was simply testing her new security camera system, making sure the night vision settings were properly configured. But at 2:17 AM Pacific Time, her doorbell camera captured something extraordinary – the beginning of what would become known as the Pacific Northwest Meteor Event.\n\n\"I got the notification on my phone and almost ignored it,\" Sarah recalls. \"But when I checked the footage, I saw this incredible green fireball streaking across the sky. It was unlike anything I'd ever seen before.\"\n\nWhat made this event particularly significant wasn't just the spectacular nature of the meteor itself, but what happened next. Within minutes of posting the footage to her local astronomy club's Discord server, Sarah received responses from dozens of other citizen observers across Washington state and British Columbia. Each had captured the same event from different angles, using everything from professional-grade telescopes to simple doorbell cameras.\n\nDr. Elena Rodriguez, a meteor specialist at the University of Washington, explains the significance: \"Before the rise of networked civilian observers, we might have received two or three reliable reports of an event like this. That night, we had over forty high-quality video recordings from different locations within just thirty minutes. This allowed us to calculate the meteor's trajectory with unprecedented accuracy.\"\n\nThe real breakthrough came when artificial intelligence software, developed specifically for analyzing amateur meteor footage, began processing the combined data. The AI identified subtle variations in the meteor's color and brightness that human observers had missed. These variations suggested something remarkable – this wasn't just any meteor, but a rare nickel-iron meteorite with an unusual composition.\n\n\"The civilian footage gave us something we'd never had before,\" Dr. Rodriguez continues. \"We had a complete record of the meteor's entry, fragmentation, and distribution pattern. When we overlaid all the footage, we could predict where fragments would land with accuracy down to a few hundred meters.\"\n\nThis prediction led to the largest coordinated meteorite recovery effort in North American history. Over the next week, more than two hundred citizen scientists, working alongside professional researchers, searched the predicted impact zone. They recovered seventeen fragments, including one that would reveal a mineral composition never before seen in a meteorite.\n\nSarah Chen's accidental discovery marked a turning point in meteor research. It demonstrated how ordinary people, armed with consumer technology and connected through social networks, could contribute to significant scientific discoveries. The Pacific Northwest Event became a template for future civilian-professional collaborations in meteor research.\n\n[The narrative continues to explore how this event led to the development of standardized protocols for citizen space watchers and the creation of the first global meteor tracking network...]\n\nThis opening establishes several hooks:\n1. A relatable protagonist making an accidental discovery\n2. The intersection of everyday technology with significant science\n3. The promise of future discoveries waiting to be made by ordinary people\n4. A clear demonstration of how citizen scientists are transforming research",
+            "momentUpdated": 1736862710254
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "uuid": "2736604b-4d08-412c-8499-c06c9035723e",
+      "type": "label",
+      "display": "default",
+      "x": -961.6227660329905,
+      "y": 177.33396453073303,
+      "zIndex": 1,
+      "name": "Label",
+      "description": "Label Node",
+      "width": 450,
+      "height": 250,
+      "sockets": {
+        "inputs": [],
+        "outputs": []
+      },
+      "title": "Start Here! ",
+      "subtitle": "Enter your idea, and then click the Trigger button on the sequencer below.",
+      "momentUpdated": 1736862735015
+    },
+    {
+      "uuid": "ad07cf86-e42d-4cf7-9b17-f7faee168ab2",
+      "type": "web",
+      "display": "default",
+      "x": -428.53505493165966,
+      "y": 168.19537935335453,
+      "zIndex": 1,
+      "name": "Web",
+      "description": "Web Node",
+      "width": 450,
+      "height": 150,
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736861304201-o0feaf91k1",
+            "type": "input",
+            "name": "Input 1",
+            "sourceIndex": 0,
+            "value": null,
+            "momentUpdated": 1736861304201
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736861310969-hub9cgsvobb",
+            "type": "output",
+            "name": "Output 1",
+            "sourceIndex": 0,
+            "value": "ContentSkip to Main ContentAccessibility HelpMenuWhen search suggestions are available use up and down arrows to review and enter to select.SearchSearchSign InQuick LinksCurrently Selected: NewsNewsSportsRadioMusicListen LiveTVWatchnewsCurrently Selected: Top StoriesTop StoriesLocalClimateWorldCanadaPoliticsIndigenousBusinessThe NationalHealthEntertainmentScienceCBC News InvestigatesGo PublicAbout CBC NewsBeing Black in CanadaMore CBC News - Latest Canada, World, Entertainment and Business News LoadedCBC News - Latest Canada, World, Entertainment and Business NewsFeatured ContentRecruiter has allegedly scammed 'hundreds' of Filipino migrant workers. Some are now homelessRecruiter has allegedly scammed 'hundreds' of Filipino migrant workers. Some are now homelessDespite 35 labour violations over the last decade, Jeanett Moskito continues to operateWELCOME TO CANADA5 hours agoWelcome to CanadaTwo women fleeing domestic violence sought asylum in Canada. The system treated them very differentlyJanuary 1, 1970VideoSudanese refugees cast doubt on Canada’s welcoming reputation January 1, 1970This Toronto recruiter has allegedly 'scammed' migrant workers5 hours agoDuration 2:09Welcome to Canada'It's OK if Canada isn't for you': This Calgary newcomer wants to go back home. She isn't aloneJanuary 1, 1970Welcome to CanadaIs it worth immigrating to Canada? These newcomers say it comes at a costJanuary 1, 1970Trump engaged in 'unprecedented criminal effort,' special counsel says in final report on 2020 election caseDonald Trump engaged in an \"unprecedented criminal effort\" to \"unlawfully retain power\" after losing the 2020 election, special counsel Jack Smith said in a report published early Tuesday by the U.S. Justice Department, expressing confidence in the prospect of a conviction at a trial that will not happen now that Trump is returning to the White House.World |1 hour agoUkrainian families question Canada's commitment as residency applications appear 'lost'After the CUAET program closed for Ukrainians fleeing the war, Canada opened a special Ukrainian family reunification stream for permanent residence. Applicants say they're getting mixed messages from IRCC, and are desperately trying to track their \"lost\" applications.Canada -Ottawa |5 hours agoCBC InvestigatesA year later, N.L. still working on plan to deal with rule-breaking landlords and tenantsThe Newfoundland and Labrador government says they expect to implement a pilot project \"in the near future\" to better enforce residential tenancies rules, and plug a gap in the existing system.Canada -Nfld. & Labrador |4 hours ago|NewWhat's different, and worse, about the smoke from the L.A. firesLungs, heart, brain and more at risk, doctors sayWorld |4 hours agoVideo19:32WATCH | How Canadian prime ministers stepped down over the yearsRevisit decades past in Canadian politics as prime ministers came and went, and oversight of the country changed hands.Canada |January 13NewAlberta premier's Trump visit raises concerns she's flouting Team Canada approachCanada |11 minutes agoFRONT BURNERDonald Trump's billionaire administrationRadio -Front Burner |1 hour agoNetflix and other streaming services now blocked on federal government networksPolitics |5 hours ago|Man convicted in 1981 murder of Hamilton woman gets chance for early paroleCanada -Hamilton |1 hour agoCBC ExplainsCan someone who's not an MP become prime minister?Politics |5 hours agoTikTok creators nervous, angry as U.S. ban expected Jan. 194 hours agoPhysician assistants approved to work in a B.C. hospital for the 1st timeCanada -British Columbia |9 hours ago|P.E.I. homeowner captures sound and video of meteorite strike on camera, and scientists believe it's a firstCanada -PEI |January 13|Man allegedly hit neighbour with vehicle before executing him, jury hears as trial beginsCanada -Manitoba |January 14Freeland expected to announce Liberal leadership bid within the week: sourceCanada |12 hours agoRCI is CBC/Radio-Canada's multilingual service, forging bonds between Canadians and citizens of the worldvisit Radio Canada InternationalWatch CBC News NetworkWATCH: CBC News NetworkStream CBC News Network on CBC GemNews |November 12, 2024WATCH: CBC News ExploreCBC News7 months agoDuration 168:00:00See what's live now on CBC NewsCBC News. We explain the news. Stream liveNews |January 8CBC OmbudsmanFeedback or complaints regarding the application of CBC Journalistic Standards and practices? Learn moreFeatured VideonowFeatured Video - 10 videosVideo1:58Thieves are using excavators to rob banks in N.L.The National |2 hours agoVideo7:23P.E.I. homeowner captures sound and video of meteorite strike on camera. Scientists believe it's a firstJanuary 13Video2:58Firefighter recounts heroic rescue of teen who fell through thin ice1 hour agoVideo1:36Waddle this way: Calgary penguins take annual stroll after weather delayCBC News: Calgary at 6:00 |12 hours agoVideo4:29How the Santa Ana winds are worsening the L.A. wildfiresThe National |10 hours agoVideo1:12#TheMoment a man tearfully reunited with his dog that survived the L.A. firesThe National |2 hours agoVideo4:28Canadian pilots fight L.A. wildfires as region braces for more flamesThe National |2 hours agoVideo8:57Trump not 'inclined to change his approach' to tariffs, says Alberta premierJanuary 13Video2:07Mailing anything with Canada Post now costs moreThe National |12 hours agoVideo7:16Men under growing pressure to bulk up with steroids The National |January 13More CBC NewsProsecutor who investigated Hunter Biden criticizes presidential pardonWorld |January 14Federal Court rejects environmentalists' bid to halt B.C. port expansionDarryl GreerCanada -British Columbia |10 hours ago|Video'Nobody deserves that torture': Sister of disabled woman who starved to death testifies at inquestKarin LarsenCanada -British Columbia |10 hours agoAs temperatures dropped in Gaza, this family took refuge in a hole 1.5 metres under their tentWorld |January 13Kyiv and Seoul look to 2 captured North Korean soldiers as potential source for valuable intelligenceBriar StewartWorld |January 13Does your cacio e pepe turn out lumpy? Try this 'scientifically optimized' pasta recipeSheena GoodyearRadio -As It Happens |January 13Alleged drug smuggler for Canadian ex-Olympian could flee if granted bail, prosecutors sayThomas DaigleCanada -Toronto |January 13VideoGastrointestinal illness cases at University of Guelph rise to at least 234Kate BueckertCanada -Kitchener-Waterloo |January 13|Carrie Underwood, Village People to perform at Trump inauguration eventsMichelle L. PriceEntertainment |January 13Notorious marine poacher found guilty of illegally harvesting and selling sea cucumbersCanada -British Columbia |January 13Apple pushes back against proposal to abandon diversity programsBusiness |January 13|Oilers forward Zach Hyman buys OHL's Brantford BulldogsConrad CollacoCanada -Hamilton |January 13|Load MoreFooter LinksMy AccountProfileCBC GemNewslettersAbout CBC AccountsConnect with CBCFacebookXYouTubeInstagramMobileRSSPodcastsContact CBCSubmit FeedbackHelp CentreAudience Relations, CBC P.O. Box 500 Station A Toronto, ON Canada, M5W 1E6 Toll-free (Canada only): 1-866-306-4636About CBCCorporate InfoSitemapReuse & PermissionTerms of UsePrivacyPrivacy PreferencesJobsOur UnionsIndependent ProducersPolitical Ads RegistryAdChoicesServicesOmbudsmanCorrections and ClarificationsPublic AppearancesCommercial ServicesCBC ShopDoing Business with UsRenting FacilitiesRadio Canada InternationalCBC LiteAccessibilityIt is a priority for CBC to create products that are accessible to all in Canada including people with visual, hearing, motor and cognitive challenges.Closed Captioning and Described Video is available for many CBC shows offered on CBC Gem.About CBC AccessibilityAccessibility Feedback©2025 CBC/Radio-Canada. All rights reserved. Visitez Radio-Canada.canow",
+            "momentUpdated": 1736861310969
+          }
+        ]
+      },
+      "websites": [
+        {
+          "id": "socket-1736861310969-ldlfgyjb5n",
+          "url": "https://cbc.ca/news",
+          "status": "complete",
+          "momentUpdated": 1736861310969
+        }
+      ],
+      "status": "idle",
+      "trigger": null,
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "bd685401-52f9-4608-99e9-b5fe111ff037",
+      "type": "trigger",
+      "display": "default",
+      "x": -432.834426982956,
+      "y": 436.05103605995447,
+      "zIndex": 1,
+      "name": "Trigger",
+      "description": "Trigger Node",
+      "width": 300,
+      "height": 150,
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736861350149-0vhh8bxz1gnd",
+            "type": "input",
+            "name": "Trigger Input",
+            "sourceIndex": 0,
+            "value": null,
+            "momentUpdated": 1736862710254
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736862710254-362i80apkbz",
+            "type": "output",
+            "name": "Trigger Output",
+            "sourceIndex": 0,
+            "value": null,
+            "momentUpdated": 1736862710255
+          }
+        ]
+      },
+      "sequence": [
+        {
+          "id": "socket-1736861355849-8criciql6q",
+          "cardId": "ad07cf86-e42d-4cf7-9b17-f7faee168ab2",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861356035-bd659l2gwxc",
+          "cardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861356332-plbqi2mwr9d",
+          "cardId": "caf36b05-f040-419b-9129-01be7b16ebb9",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861356552-0n7ki4h5rrq",
+          "cardId": "f26d6e91-ff48-4c07-affe-e30e91b611c5",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861356808-9elapw482xm",
+          "cardId": "01cad5bb-d9d2-4916-bbd6-3ee671a6f8b7",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861357125-xdwtloft93g",
+          "cardId": "8464f334-8573-4f3c-ba5f-155f8a958da1",
+          "errorCount": 0
+        },
+        {
+          "id": "socket-1736861357856-7ady9ewcuze",
+          "cardId": "67f53a24-e8fb-47b8-8ff1-0535a8cfa761",
+          "errorCount": 0
+        }
+      ],
+      "momentUpdated": 1736861511757
+    },
+    {
+      "uuid": "fe93462b-83cb-4fe9-b2e8-4bdb8df78be7",
+      "type": "agent",
+      "display": "minimized",
+      "x": 1586.3281555061392,
+      "y": 35.596483208195735,
+      "zIndex": 1,
+      "name": "Letter to Agent",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Always start a letter to the Agent, John Smith, with a friendly message, and then summarize the idea. Include the introduction and the key marketing concepts for the book.",
+      "userPrompt": "Write a letter to my agent summarizing my idea for the book and providing the key concepts and why I think this is an important book in 2025. Here is the book concept.<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "Dear John Smith,\n\nI hope this letter finds you well. I trust you had a wonderful holiday season, and I'm excited to share with you a groundbreaking book concept that I believe will captivate readers in 2025.\n\nI'm writing to present \"The Rise of Citizen Space Watchers: How Amateur Astronomers Are Revolutionizing Meteor Science,\" a comprehensive exploration of how everyday citizens are transforming our understanding of space through meteor observation and documentation.\n\nThe book arrives at a crucial moment when citizen science is experiencing unprecedented growth, particularly in astronomy. With the democratization of technology and the increasing accessibility of sophisticated observation equipment, amateur astronomers are making contributions to scientific research that would have been impossible just a decade ago.\n\nKey Marketing Concepts:\n\n1. Timeliness: The book addresses the explosive growth of citizen science in astronomy, coinciding with major advances in consumer technology and AI integration expected by 2025.\n\n2. Universal Appeal: The narrative bridges the gap between professional astronomers and everyday enthusiasts, appealing to both scientific minds and casual readers interested in space exploration.\n\n3. Technology Focus: Detailed coverage of how modern technology (smartphones, security cameras, AI) is revolutionizing meteor observation, making it accessible to anyone.\n\n4. Success Stories: Compelling case studies of amateur astronomers making significant discoveries, including the first-ever recorded meteorite house strike on P.E.I.\n\n5. Educational Value: The book serves as both an inspiring narrative and a practical guide for aspiring citizen scientists.\n\nThe target audience includes:\n- Amateur astronomers and space enthusiasts\n- STEM educators and students\n- Technology enthusiasts\n- General science readers\n- Citizen science participants\n\nWhat makes this book particularly important for 2025 is its timing with the projected peak in citizen science participation and the maturation of AI-assisted observation technologies. It captures a pivotal moment in the democratization of space science and provides a roadmap for future citizen-professional collaborations.\n\nI look forward to discussing this project with you in more detail.\n\nBest regards,\n[Your name]",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736861589098-y0huuczp7nq",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 0,
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy \n\n## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems \n\n# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736861589098-dhvxrayosbd",
+            "name": "Output",
+            "type": "output",
+            "value": "Dear John Smith,\n\nI hope this letter finds you well. I trust you had a wonderful holiday season, and I'm excited to share with you a groundbreaking book concept that I believe will captivate readers in 2025.\n\nI'm writing to present \"The Rise of Citizen Space Watchers: How Amateur Astronomers Are Revolutionizing Meteor Science,\" a comprehensive exploration of how everyday citizens are transforming our understanding of space through meteor observation and documentation.\n\nThe book arrives at a crucial moment when citizen science is experiencing unprecedented growth, particularly in astronomy. With the democratization of technology and the increasing accessibility of sophisticated observation equipment, amateur astronomers are making contributions to scientific research that would have been impossible just a decade ago.\n\nKey Marketing Concepts:\n\n1. Timeliness: The book addresses the explosive growth of citizen science in astronomy, coinciding with major advances in consumer technology and AI integration expected by 2025.\n\n2. Universal Appeal: The narrative bridges the gap between professional astronomers and everyday enthusiasts, appealing to both scientific minds and casual readers interested in space exploration.\n\n3. Technology Focus: Detailed coverage of how modern technology (smartphones, security cameras, AI) is revolutionizing meteor observation, making it accessible to anyone.\n\n4. Success Stories: Compelling case studies of amateur astronomers making significant discoveries, including the first-ever recorded meteorite house strike on P.E.I.\n\n5. Educational Value: The book serves as both an inspiring narrative and a practical guide for aspiring citizen scientists.\n\nThe target audience includes:\n- Amateur astronomers and space enthusiasts\n- STEM educators and students\n- Technology enthusiasts\n- General science readers\n- Citizen science participants\n\nWhat makes this book particularly important for 2025 is its timing with the projected peak in citizen science participation and the maturation of AI-assisted observation technologies. It captures a pivotal moment in the democratization of space science and provides a roadmap for future citizen-professional collaborations.\n\nI look forward to discussing this project with you in more detail.\n\nBest regards,\n[Your name]",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Always start a letter to the Agent, John Smith, with a friendly message, and then summarize the idea. Include the introduction and the key marketing concepts for the book.",
+      "userPromptHtml": "Write a letter to my agent summarizing my idea for the book and providing the key concepts and why I think this is an important book in 2025. Here is the book concept.<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736861589098-y0huuczp7nq\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "complete",
+      "trigger": null,
+      "momentUpdated": 1736861888909
+    },
+    {
+      "uuid": "5af15147-fad3-42ba-bb2e-9f803173bd9f",
+      "type": "agent",
+      "display": "minimized",
+      "x": 1582.482387191992,
+      "y": 234.4641956061332,
+      "zIndex": 1,
+      "name": "Sample Pages",
+      "description": "Agent Node",
+      "width": 300,
+      "height": 200,
+      "model": {
+        "name": {
+          "en": "Claude Sonnet 3.5",
+          "fr": "Claude Sonnet 3.5"
+        },
+        "model": "claude-3-5-sonnet-20241022",
+        "provider": "anthropic"
+      },
+      "systemPrompt": "Write in a friendly, informative, and non-embellishing way which directly addresses the content.",
+      "userPrompt": "Pick a part of the book you think will be the most interesting and write 2-3 sample pages which will have an interesting premise, a solid hook, and will keep the reader wanting to learn more<socket name=\"User Socket\"/>",
+      "messageHistory": [],
+      "pendingMessage": "",
+      "completedMessage": "",
+      "output": "Here's a 2-3 page sample from \"The Rise of Citizen Space Watchers\" that focuses on a particularly compelling incident:\n\nChapter 3: The Night That Changed Everything\n\nOn February 15, 2023, Sarah Chen wasn't trying to make scientific history. The 16-year-old high school student from Vancouver was simply testing her new security camera system, making sure the night vision settings were properly configured. But at 2:17 AM Pacific Time, her doorbell camera captured something extraordinary – the beginning of what would become known as the Pacific Northwest Meteor Event.\n\n\"I got the notification on my phone and almost ignored it,\" Sarah recalls. \"But when I checked the footage, I saw this incredible green fireball streaking across the sky. It was unlike anything I'd ever seen before.\"\n\nWhat made this event particularly significant wasn't just the spectacular nature of the meteor itself, but what happened next. Within minutes of posting the footage to her local astronomy club's Discord server, Sarah received responses from dozens of other citizen observers across Washington state and British Columbia. Each had captured the same event from different angles, using everything from professional-grade telescopes to simple doorbell cameras.\n\nDr. Elena Rodriguez, a meteor specialist at the University of Washington, explains the significance: \"Before the rise of networked civilian observers, we might have received two or three reliable reports of an event like this. That night, we had over forty high-quality video recordings from different locations within just thirty minutes. This allowed us to calculate the meteor's trajectory with unprecedented accuracy.\"\n\nThe real breakthrough came when artificial intelligence software, developed specifically for analyzing amateur meteor footage, began processing the combined data. The AI identified subtle variations in the meteor's color and brightness that human observers had missed. These variations suggested something remarkable – this wasn't just any meteor, but a rare nickel-iron meteorite with an unusual composition.\n\n\"The civilian footage gave us something we'd never had before,\" Dr. Rodriguez continues. \"We had a complete record of the meteor's entry, fragmentation, and distribution pattern. When we overlaid all the footage, we could predict where fragments would land with accuracy down to a few hundred meters.\"\n\nThis prediction led to the largest coordinated meteorite recovery effort in North American history. Over the next week, more than two hundred citizen scientists, working alongside professional researchers, searched the predicted impact zone. They recovered seventeen fragments, including one that would reveal a mineral composition never before seen in a meteorite.\n\nSarah Chen's accidental discovery marked a turning point in meteor research. It demonstrated how ordinary people, armed with consumer technology and connected through social networks, could contribute to significant scientific discoveries. The Pacific Northwest Event became a template for future civilian-professional collaborations in meteor research.\n\n[The narrative continues to explore how this event led to the development of standardized protocols for citizen space watchers and the creation of the first global meteor tracking network...]\n\nThis opening establishes several hooks:\n1. A relatable protagonist making an accidental discovery\n2. The intersection of everyday technology with significant science\n3. The promise of future discoveries waiting to be made by ordinary people\n4. A clear demonstration of how citizen scientists are transforming research",
+      "triggers": {
+        "andEnabled": false,
+        "orEnabled": false,
+        "autoTrigger": false
+      },
+      "sockets": {
+        "inputs": [
+          {
+            "id": "socket-1736861734324-bxu4m2h0ptw",
+            "type": "input",
+            "name": "User Socket",
+            "sourceIndex": 0,
+            "value": "# The Rise of Citizen Space Watchers\n\n## Amateur Astronomers as Scientific Partners\n- Historical evolution from casual stargazers to essential scientific contributors\n- Development of organized amateur astronomy networks and societies\n- Establishment of formal citizen science programs by major space agencies\n- Creation of standardized reporting protocols for meteor observations\n\n## Data Collection Revolution\n- Systematic documentation methods used by amateur observers\n- Implementation of standardized observation forms and reporting systems\n- Development of mobile apps specifically for meteor tracking\n- Integration of amateur data into professional research databases\n\n## Notable Citizen Scientist Achievements\n- Groundbreaking meteor discoveries by amateur astronomers\n- Statistical analysis of amateur contributions to meteor research\n- Case studies of significant finds by citizen scientists\n- Recognition and awards given to amateur observers\n\n## Global Network Development\n- Formation of international amateur astronomy communities\n- Coordination between amateur groups across different regions\n- Development of real-time communication networks\n- Establishment of mentorship programs for new observers\n\n## Technology Adoption and Training\n- Essential equipment for amateur meteor observation\n- Training programs for proper documentation techniques\n- Best practices for meteor photography and videography\n- Quality control measures for amateur submissions\n\n## Professional-Amateur Collaboration\n- Joint research projects between institutions and citizen scientists\n- Peer review processes incorporating amateur data\n- Conference presentations featuring citizen scientist work\n- Publication opportunities for amateur researchers\n\n## Economic Impact\n- Cost savings through citizen scientist contributions\n- Market development for amateur astronomy equipment\n- Creation of citizen science support industries\n- Financial implications for research institutions\n\n## Social and Cultural Effects\n- Community building through shared scientific interests\n- Educational outreach programs led by amateur astronomers\n- Public engagement in space science\n- Cultural impact of democratized astronomy \n\n## Second Main Point (25%): Modern Technology's Role\n\n### The Democratization of Space Observation\n- Widespread adoption of high-resolution security systems\n- Emergence of AI-powered detection algorithms\n- Cloud storage enabling instant sharing and analysis\n- Network connectivity facilitating real-time reporting\n\n### Consumer Technology Specifications\n- 4K resolution capabilities in consumer-grade cameras\n- Night vision and infrared sensing improvements\n- Wide-angle coverage from multiple synchronized devices\n- Advanced motion detection and tracking features\n\n### Key Technology Categories\n#### Security Systems\n- Smart doorbell systems with 24/7 recording\n- Multi-camera property surveillance networks\n- Automated alert systems for unusual events\n- Integration with weather monitoring stations\n\n#### Mobile Devices\n- Smartphone astronomical photography capabilities\n- Mobile apps for meteor tracking and reporting\n- Portable spectrometers and light sensors\n- GPS location tagging for precise documentation\n\n#### Specialized Equipment\n- Amateur observatory equipment accessibility\n- Affordable telescopes with digital integration\n- Automated sky-scanning software\n- Custom-built detection arrays\n\n### Data Processing Innovations\n- Machine learning for meteor identification\n- Automated trajectory calculations\n- Multi-source data correlation systems\n- Real-time verification protocols\n\n### Network Infrastructure\n- High-speed internet enabling instant uploads\n- Distributed computing networks\n- Global database integration\n- Cross-platform sharing capabilities\n\n### Cost Analysis\n- Decreasing equipment prices\n- Accessibility of professional-grade tools\n- Return on investment for citizen scientists\n- Comparative costs with professional observatories\n\n### Technical Challenges\n- Light pollution filtering methods\n- Signal processing improvements\n- Storage management solutions\n- Power consumption optimization\n\n### Integration Systems\n- Professional-amateur collaboration platforms\n- Standardized data formats\n- Quality control mechanisms\n- Verification protocols \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of citizen-collected data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for amateur footage\n\n### Breakthrough Discoveries Through Amateur Data\n- First-ever recorded meteorite house strike (P.E.I. case study)\n- Mapping of previously unknown meteor shower patterns\n- Documentation of rare daylight meteor events\n- Calculation of meteor trajectories using multiple amateur sources\n\n### Collaborative Research Networks\n- Formation of citizen-scientist partnerships with universities\n- Development of shared online platforms for data submission\n- Creation of real-time alert systems for meteor events\n- Implementation of machine learning algorithms to process amateur footage\n\n### Scientific Publications and Recognition\n- Peer-reviewed papers incorporating amateur observations\n- Citations of citizen scientist contributions in major journals\n- Academic acknowledgment of amateur observers\n- Joint authorship opportunities for significant discoveries\n\n### Research Applications\n- Improved understanding of meteor composition\n- Better prediction models for meteor showers\n- Enhanced tracking of near-Earth objects\n- Advanced analysis of atmospheric entry physics\n\n### Technological Integration\n- Development of specialized amateur observation equipment\n- Creation of mobile apps for data collection\n- Implementation of automated validation systems\n- Integration with professional observatory networks\n\n### Future Research Directions\n- Expansion of global observation networks\n- Development of AI-powered analysis tools\n- Creation of virtual reality visualization systems\n- Enhancement of early warning capabilities\n\n### Impact on Space Safety\n- Better tracking of potentially hazardous objects\n- Improved orbital debris monitoring\n- Enhanced atmospheric entry prediction\n- Advanced risk assessment capabilities \n\n## Third Main Point (25%): Scientific Impact and Future Implications\n\n### Transforming Professional Research Methods\n- Integration of crowdsourced data into formal studies\n- Development of standardized protocols for amateur submissions\n- Creation of global databases combining professional and amateur observations\n- Establishment of verification systems for citizen-submitted data\n\n### Breakthrough Discoveries Through Amateur Footage\n- Analysis of the P.E.I. meteorite strike's unique acoustic signature\n- Documentation of previously unrecorded meteor behaviors\n- Identification of new meteor shower patterns\n- Correlation between visual data and seismic recordings\n\n### Statistical Significance\n- Exponential increase in documented meteor events\n- Geographic distribution of observations\n- Frequency patterns revealed through mass data collection\n- Impact on predictive modeling accuracy\n\n### Research Applications\n- Meteorite recovery success rates\n- Atmospheric entry behavior studies\n- Orbital trajectory calculations\n- Chemical composition analysis through spectral data\n\n### Collaborative Networks\n- Amateur-professional research partnerships\n- International observation networks\n- Real-time data sharing platforms\n- Cross-verification systems\n\n### Technological Integration\n- Machine learning applications for footage analysis\n- Automated detection systems\n- Mobile applications for coordinated observation\n- Cloud-based data storage solutions\n\n### Educational Impact\n- University research program adaptations\n- Citizen science training programs\n- Public engagement initiatives\n- STEM education opportunities\n\n### Policy Implications\n- Space object tracking protocols\n- Public safety alert systems\n- International cooperation frameworks\n- Research funding allocation\n\n### Methodological Advances\n- Multi-sensor data correlation\n- 3D trajectory reconstruction\n- Impact prediction modeling\n- Debris field mapping\n\n### Future Research Directions\n- Automated tracking systems\n- AI-powered analysis tools\n- Global observation networks\n- Real-time alert systems \n\n# Part 5: Conclusion - Cosmic Collaboration: A New Era of Meteor Research\n\n## The Evolving Partnership\n- Synthesis of amateur observers and professional astronomers\n- Democratization of space observation through accessible technology\n- Breaking down traditional barriers between public and scientific communities\n- Recognition of citizen scientists as valuable research contributors\n\n## Key Transformations\n- Technological revolution in consumer-grade observation equipment\n- Integration of artificial intelligence in meteor detection systems\n- Global networks of amateur observers providing real-time data\n- Standardization of citizen reporting protocols and methodologies\n\n## Research Impact Assessment\n- Quantifiable contributions to meteor trajectory databases\n- Enhanced understanding of meteorite distribution patterns\n- Improved accuracy in meteor frequency calculations\n- Development of more comprehensive meteor classification systems\n\n## Future Horizons\n- Emerging opportunities in crowd-sourced space observation\n- Potential for expanded meteor warning systems\n- Integration of amateur data into professional research frameworks\n- Development of specialized citizen scientist training programs\n\n## Public Engagement Pathways\n- Community-based meteor watching initiatives\n- Educational outreach programs for aspiring observers\n- Online platforms for data sharing and collaboration\n- Recognition systems for significant amateur contributions\n\n## Scientific Legacy\n- Permanent archival of amateur observations\n- Long-term impact on meteorite recovery success rates\n- Contribution to planetary defense strategies\n- Enhancement of global meteor monitoring networks\n\n## Participatory Science Movement\n- Growth of citizen astronomy communities\n- Development of standardized observation protocols\n- Integration with other citizen science initiatives\n- Creation of sustainable research partnerships",
+            "momentUpdated": 1736862710254,
+            "source": "user"
+          }
+        ],
+        "outputs": [
+          {
+            "id": "socket-1736861734324-jciulmspx3",
+            "name": "Output",
+            "type": "output",
+            "value": "Here's a 2-3 page sample from \"The Rise of Citizen Space Watchers\" that focuses on a particularly compelling incident:\n\nChapter 3: The Night That Changed Everything\n\nOn February 15, 2023, Sarah Chen wasn't trying to make scientific history. The 16-year-old high school student from Vancouver was simply testing her new security camera system, making sure the night vision settings were properly configured. But at 2:17 AM Pacific Time, her doorbell camera captured something extraordinary – the beginning of what would become known as the Pacific Northwest Meteor Event.\n\n\"I got the notification on my phone and almost ignored it,\" Sarah recalls. \"But when I checked the footage, I saw this incredible green fireball streaking across the sky. It was unlike anything I'd ever seen before.\"\n\nWhat made this event particularly significant wasn't just the spectacular nature of the meteor itself, but what happened next. Within minutes of posting the footage to her local astronomy club's Discord server, Sarah received responses from dozens of other citizen observers across Washington state and British Columbia. Each had captured the same event from different angles, using everything from professional-grade telescopes to simple doorbell cameras.\n\nDr. Elena Rodriguez, a meteor specialist at the University of Washington, explains the significance: \"Before the rise of networked civilian observers, we might have received two or three reliable reports of an event like this. That night, we had over forty high-quality video recordings from different locations within just thirty minutes. This allowed us to calculate the meteor's trajectory with unprecedented accuracy.\"\n\nThe real breakthrough came when artificial intelligence software, developed specifically for analyzing amateur meteor footage, began processing the combined data. The AI identified subtle variations in the meteor's color and brightness that human observers had missed. These variations suggested something remarkable – this wasn't just any meteor, but a rare nickel-iron meteorite with an unusual composition.\n\n\"The civilian footage gave us something we'd never had before,\" Dr. Rodriguez continues. \"We had a complete record of the meteor's entry, fragmentation, and distribution pattern. When we overlaid all the footage, we could predict where fragments would land with accuracy down to a few hundred meters.\"\n\nThis prediction led to the largest coordinated meteorite recovery effort in North American history. Over the next week, more than two hundred citizen scientists, working alongside professional researchers, searched the predicted impact zone. They recovered seventeen fragments, including one that would reveal a mineral composition never before seen in a meteorite.\n\nSarah Chen's accidental discovery marked a turning point in meteor research. It demonstrated how ordinary people, armed with consumer technology and connected through social networks, could contribute to significant scientific discoveries. The Pacific Northwest Event became a template for future civilian-professional collaborations in meteor research.\n\n[The narrative continues to explore how this event led to the development of standardized protocols for citizen space watchers and the creation of the first global meteor tracking network...]\n\nThis opening establishes several hooks:\n1. A relatable protagonist making an accidental discovery\n2. The intersection of everyday technology with significant science\n3. The promise of future discoveries waiting to be made by ordinary people\n4. A clear demonstration of how citizen scientists are transforming research",
+            "momentUpdated": 1736860635839
+          }
+        ]
+      },
+      "temperature": 0.4,
+      "triggerOnInput": false,
+      "systemPromptHtml": "Write in a friendly, informative, and non-embellishing way which directly addresses the content.",
+      "userPromptHtml": "Pick a part of the book you think will be the most interesting and write 2-3 sample pages which will have an interesting premise, a solid hook, and will keep the reader wanting to learn more<span class=\"text-editor-tag\" contenteditable=\"false\" data-socket-id=\"socket-1736861734324-bxu4m2h0ptw\" data-socket-name=\"User Socket\">[User Socket]</span>",
+      "status": "complete",
+      "trigger": null,
+      "momentUpdated": 1736861901603
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-1736860545253-qzkh4u3wi",
+      "sourceCardId": "baa972f6-6590-45f6-ae6f-87326ddea9e1",
+      "sourceSocketId": "socket-1736860412684-rc035sijpcl",
+      "targetCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "targetSocketId": "socket-1736860542606-nxt6wvwwd5",
+      "sourcePoint": {
+        "x": -120.18739676945484,
+        "y": -131.89048622561867
+      },
+      "targetPoint": {
+        "x": 85.18771893378957,
+        "y": 13.656061552359152
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860768173-3axjmgfog",
+      "sourceCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "sourceSocketId": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+      "targetCardId": "caf36b05-f040-419b-9129-01be7b16ebb9",
+      "targetSocketId": "socket-1736860635854-8cjtmxxrkp3",
+      "sourcePoint": {
+        "x": 419.18722812200997,
+        "y": 13.656061552359152
+      },
+      "targetPoint": {
+        "x": 565.0153695112409,
+        "y": -55.95309284962586
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860834638-bhtg8ic7v",
+      "sourceCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "sourceSocketId": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+      "targetCardId": "f26d6e91-ff48-4c07-affe-e30e91b611c5",
+      "targetSocketId": "socket-1736860771138-ccigrozslr",
+      "sourcePoint": {
+        "x": 419.18722812200997,
+        "y": 13.656061552359152
+      },
+      "targetPoint": {
+        "x": 564.8128973160642,
+        "y": 91.03140066400056
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860836475-flobppd4f",
+      "sourceCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "sourceSocketId": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+      "targetCardId": "01cad5bb-d9d2-4916-bbd6-3ee671a6f8b7",
+      "targetSocketId": "socket-1736860794873-66jx1yzosf5",
+      "sourcePoint": {
+        "x": 419.18722812200997,
+        "y": 13.656061552359152
+      },
+      "targetPoint": {
+        "x": 568.0308291947473,
+        "y": 238.03162017336885
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860838627-zs2syybys",
+      "sourceCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "sourceSocketId": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+      "targetCardId": "8464f334-8573-4f3c-ba5f-155f8a958da1",
+      "targetSocketId": "socket-1736860806252-6iceh35vx69",
+      "sourcePoint": {
+        "x": 419.18722812200997,
+        "y": 13.656061552359152
+      },
+      "targetPoint": {
+        "x": 566.6715134378081,
+        "y": 387.31260050267736
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860841166-oagnh1ywb",
+      "sourceCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "sourceSocketId": "8a07f631-c703-47b3-ac11-9d6e63e29899",
+      "targetCardId": "67f53a24-e8fb-47b8-8ff1-0535a8cfa761",
+      "targetSocketId": "socket-1736860823592-olb4usg9kd",
+      "sourcePoint": {
+        "x": 419.18722812200997,
+        "y": 13.656061552359152
+      },
+      "targetPoint": {
+        "x": 560.3752178926511,
+        "y": 539.2502912376306
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860973213-nole7s38m",
+      "sourceCardId": "caf36b05-f040-419b-9129-01be7b16ebb9",
+      "sourceSocketId": "ac5ce932-e41b-41ca-918a-bc26d98180d8",
+      "targetCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "targetSocketId": "socket-1736860967297-rf1piaa5x0d",
+      "sourcePoint": {
+        "x": 899.0158615741952,
+        "y": -77.95326945515566
+      },
+      "targetPoint": {
+        "x": 1045.4376593026823,
+        "y": 202.65599275199915
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860982440-umns56blw",
+      "sourceCardId": "f26d6e91-ff48-4c07-affe-e30e91b611c5",
+      "sourceSocketId": "socket-1736860771138-0qzqvnktefkb",
+      "targetCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "targetSocketId": "socket-1736860977991-1l13n0zle8z",
+      "sourcePoint": {
+        "x": 898.8124065042846,
+        "y": 69.03122405847076
+      },
+      "targetPoint": {
+        "x": 1045.4376593026823,
+        "y": 224.65666079489588
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860984165-zhoe040a3",
+      "sourceCardId": "01cad5bb-d9d2-4916-bbd6-3ee671a6f8b7",
+      "sourceSocketId": "socket-1736860794873-f30mpo4vh7i",
+      "targetCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "targetSocketId": "socket-1736860978163-0ysz7djmh4z",
+      "sourcePoint": {
+        "x": 902.0313212577016,
+        "y": 216.03095213047212
+      },
+      "targetPoint": {
+        "x": 1045.4376593026823,
+        "y": 246.65634596305875
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860986530-dds9c1ikj",
+      "sourceCardId": "8464f334-8573-4f3c-ba5f-155f8a958da1",
+      "sourceSocketId": "socket-1736860806252-ov5lkhpmcxm",
+      "targetCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "targetSocketId": "socket-1736860978380-u1npnrd15bg",
+      "sourcePoint": {
+        "x": 900.6720055007625,
+        "y": 365.3129153345145
+      },
+      "targetPoint": {
+        "x": 1045.4376593026823,
+        "y": 268.65603113122165
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736860988697-p6yz5pz62",
+      "sourceCardId": "67f53a24-e8fb-47b8-8ff1-0535a8cfa761",
+      "sourceSocketId": "socket-1736860823592-9n1ybymnjtc",
+      "targetCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "targetSocketId": "socket-1736860979459-s4r6le1vli",
+      "sourcePoint": {
+        "x": 894.3747270808715,
+        "y": 517.2496231947338
+      },
+      "targetPoint": {
+        "x": 1045.4376593026823,
+        "y": 290.6562077367514
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861063080-p74n9tfvx",
+      "sourceCardId": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "sourceSocketId": "socket-1736861035186-hctq1kl1qyh",
+      "targetCardId": "caf36b05-f040-419b-9129-01be7b16ebb9",
+      "targetSocketId": "socket-1736860635853-e84lul6ab",
+      "sourcePoint": {
+        "x": 427.75003280346624,
+        "y": -262.0781419748114
+      },
+      "targetPoint": {
+        "x": 565.0153695112409,
+        "y": -77.95326945515566
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861066073-9dwg10v6o",
+      "sourceCardId": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "sourceSocketId": "socket-1736861035186-hctq1kl1qyh",
+      "targetCardId": "f26d6e91-ff48-4c07-affe-e30e91b611c5",
+      "targetSocketId": "socket-1736860771138-b7zq06kces4",
+      "sourcePoint": {
+        "x": 427.75003280346624,
+        "y": -262.0781419748114
+      },
+      "targetPoint": {
+        "x": 564.8128973160642,
+        "y": 69.03122405847076
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861068384-v9u13n7yi",
+      "sourceCardId": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "sourceSocketId": "socket-1736861035186-hctq1kl1qyh",
+      "targetCardId": "01cad5bb-d9d2-4916-bbd6-3ee671a6f8b7",
+      "targetSocketId": "socket-1736860794873-lgbfocrl4t",
+      "sourcePoint": {
+        "x": 427.75003280346624,
+        "y": -262.0781419748114
+      },
+      "targetPoint": {
+        "x": 568.0308291947473,
+        "y": 216.03095213047212
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861070807-j8uckawmn",
+      "sourceCardId": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "sourceSocketId": "socket-1736861035186-hctq1kl1qyh",
+      "targetCardId": "8464f334-8573-4f3c-ba5f-155f8a958da1",
+      "targetSocketId": "socket-1736860806252-whv3jy7hiej",
+      "sourcePoint": {
+        "x": 427.75003280346624,
+        "y": -262.0781419748114
+      },
+      "targetPoint": {
+        "x": 566.6715134378081,
+        "y": 365.3129153345145
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861073804-duiqhhp5l",
+      "sourceCardId": "d98c0c1e-b0d4-4d00-abd8-9487b55b742f",
+      "sourceSocketId": "socket-1736861035186-hctq1kl1qyh",
+      "targetCardId": "67f53a24-e8fb-47b8-8ff1-0535a8cfa761",
+      "targetSocketId": "socket-1736860823592-r0bfxs97ieb",
+      "sourcePoint": {
+        "x": 427.75003280346624,
+        "y": -262.0781419748114
+      },
+      "targetPoint": {
+        "x": 560.3752178926511,
+        "y": 517.2496231947338
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861321313-49yxnnm0t",
+      "sourceCardId": "ad07cf86-e42d-4cf7-9b17-f7faee168ab2",
+      "sourceSocketId": "socket-1736861310969-hub9cgsvobb",
+      "targetCardId": "74a194e6-d055-482f-9a26-03071ecddba1",
+      "targetSocketId": "socket-1736861300506-lq1o81p4yb",
+      "sourcePoint": {
+        "x": -111.53121898828117,
+        "y": 232.18744700579094
+      },
+      "targetPoint": {
+        "x": 85.18771893378957,
+        "y": 35.65623815788895
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861609605-i80xd9qdm",
+      "sourceCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "sourceSocketId": "989eb0a6-354a-4645-9d32-b4096713c153",
+      "targetCardId": "fe93462b-83cb-4fe9-b2e8-4bdb8df78be7",
+      "targetSocketId": "socket-1736861589098-y0huuczp7nq",
+      "sourcePoint": {
+        "x": 1379.4371684909026,
+        "y": 202.65599275199915
+      },
+      "targetPoint": {
+        "x": 1569.328567074161,
+        "y": 99.59371390808985
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861757640-e5n13lovi",
+      "sourceCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "sourceSocketId": "989eb0a6-354a-4645-9d32-b4096713c153",
+      "targetCardId": "5af15147-fad3-42ba-bb2e-9f803173bd9f",
+      "targetSocketId": "socket-1736861734324-bxu4m2h0ptw",
+      "sourcePoint": {
+        "x": 1379.4371684909026,
+        "y": 202.65599275199915
+      },
+      "targetPoint": {
+        "x": 1565.468817994262,
+        "y": 298.45286156315774
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861762650-gn0djkic0",
+      "sourceCardId": "5af15147-fad3-42ba-bb2e-9f803173bd9f",
+      "sourceSocketId": "socket-1736861734324-jciulmspx3",
+      "targetCardId": "fa5aa147-c421-4c1b-9e56-77fa12e40e88",
+      "targetSocketId": "socket-1736861575084-9t1tdre3zma",
+      "sourcePoint": {
+        "x": 1899.4683271824824,
+        "y": 298.45286156315774
+      },
+      "targetPoint": {
+        "x": 2153.624990239686,
+        "y": 223.718998298786
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861783454-6ywcnw2ym",
+      "sourceCardId": "fe93462b-83cb-4fe9-b2e8-4bdb8df78be7",
+      "sourceSocketId": "socket-1736861589098-dhvxrayosbd",
+      "targetCardId": "fa5aa147-c421-4c1b-9e56-77fa12e40e88",
+      "targetSocketId": "socket-1736861104771-gdiqlrdc96j",
+      "sourcePoint": {
+        "x": 1903.3280762623813,
+        "y": 99.59371390808985
+      },
+      "targetPoint": {
+        "x": 2153.624990239686,
+        "y": 179.7186450877264
+      },
+      "isActive": false
+    },
+    {
+      "id": "conn-1736861786114-szh96vhxf",
+      "sourceCardId": "016a25c0-a2d3-43db-b2f3-54d2227d844a",
+      "sourceSocketId": "989eb0a6-354a-4645-9d32-b4096713c153",
+      "targetCardId": "fa5aa147-c421-4c1b-9e56-77fa12e40e88",
+      "targetSocketId": "socket-1736861573864-izx9igd24t",
+      "sourcePoint": {
+        "x": 1379.4371684909026,
+        "y": 202.65599275199915
+      },
+      "targetPoint": {
+        "x": 2153.624990239686,
+        "y": 201.71833025588927
+      },
+      "isActive": false
+    }
+  ],
+  "viewport": {
+    "zoomLevel": 1,
+    "centerX": 0,
+    "centerY": 0
+  },
+  "created": 1736860305531,
+  "lastModified": 1736862710172,
+  "version": "1.0",
+  "exportVersion": "2.0",
+  "exportDate": "2025-01-14T13:52:32.070Z",
+  "metadata": {
+    "cardCount": 15,
+    "connectionCount": 22,
+    "socketCount": 37
+  }
+}

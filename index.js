@@ -10,6 +10,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from specific directories
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 app.use("/composables", express.static(path.join(__dirname, "public/composables")));
 app.use("/components", express.static(path.join(__dirname, "public/components")));
 app.use(express.static(path.join(__dirname, "public"))); // Serve other static assets
@@ -21,6 +22,9 @@ app.use((req, res, next) => {
   }
   if (req.path.endsWith(".svg")) {
     res.setHeader("Content-Type", "image/svg+xml");
+  }
+  if (req.path.endsWith(".json")) {
+    res.setHeader("Content-Type", "application/json");
   }
   next();
 });
