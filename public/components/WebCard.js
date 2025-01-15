@@ -156,7 +156,7 @@ export default {
 
     // Initialize card data with proper socket structure
     const initializeCardData = (data) => {
-      // First create the base data structure without sockets
+      // First create the base data structure
       const baseData = {
         uuid: data.uuid,
         name: data.name || "Web Content",
@@ -197,16 +197,16 @@ export default {
         );
       }
     
-      // Emit socket update event to register initial input socket
+      // Emit initial socket registration
       emit(
         "sockets-updated",
         createSocketUpdateEvent({
           cardId: data.uuid,
           oldSockets: [],
-          newSockets: [initialInputSocket],
+          newSockets: [...baseData.sockets.inputs, ...baseData.sockets.outputs],
           reindexMap: new Map([[null, initialInputSocket.id]]),
           deletedSocketIds: [],
-          type: "input",
+          type: "input", // This covers both input and output sockets initial registration
         })
       );
     
@@ -461,43 +461,24 @@ Vue.watch(
     );
 
     // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value) return;
-        isProcessing.value = true;
-    
-        try {
-          // Update position if changed
-          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
-          if (newData.display !== oldData?.display) localCardData.value.display = newData.display;
-          if (newData.trigger !== oldData?.trigger) localCardData.value.trigger = newData.trigger;
-    
-          // Handle socket updates
-          if (newData.sockets?.inputs) {
-            const newInputSocket = newData.sockets.inputs[0];
-            if (newInputSocket && (!localCardData.value.sockets.inputs[0] || 
-                localCardData.value.sockets.inputs[0].value !== newInputSocket.value)) {
-              localCardData.value.sockets.inputs[0] = {
-                ...localCardData.value.sockets.inputs[0],
-                value: newInputSocket.value,
-                momentUpdated: Date.now()
-              };
-            }
-          }
-    
-          // Handle website updates
-          if (newData.websites !== oldData?.websites) {
-            localCardData.value.websites = [...newData.websites];
-            handleCardUpdate();
-          }
-        } finally {
-          isProcessing.value = false;
+    Vue.watch(() => props.cardData, (newData, oldData) => {
+      if (!newData || isProcessing.value) return;
+      isProcessing.value = true;
+      
+      try {
+        // Only update specific properties that changed
+        if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
+        if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+        if (newData.trigger !== oldData?.trigger) localCardData.value.trigger = newData.trigger;
+        
+        // Only update websites if structure changed
+        if (JSON.stringify(newData.websites) !== JSON.stringify(oldData?.websites)) {
+          localCardData.value.websites = [...newData.websites];
         }
-      },
-      { deep: true }
-    );
+      } finally {
+        isProcessing.value = false;
+      }
+    }, { deep: true });
 
     // Cleanup on unmount
     Vue.onUnmounted(() => {
