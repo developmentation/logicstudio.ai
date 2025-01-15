@@ -239,13 +239,21 @@ export default {
       const textToHtml = (text) => {
         if (!text) return "";
       
+        // First handle any existing break tags
         const unescaped = text
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .replace(/&quot;/g, '"')
           .replace(/&amp;/g, "&");
       
-        return cleanHtml(unescaped.replace(
+        // Convert newlines to div tags (which is how contenteditable handles them)
+        const withNewlines = unescaped
+          .split('\n')
+          .map(line => `<div>${line}</div>`)
+          .join('');
+      
+        // Handle break tags
+        return withNewlines.replace(
           /<break\s+name\s*=\s*"([^"]+)"\s*\/>/g,
           (match, breakName) => {
             const breakId = getOrCreateBreakId(breakName, false);
@@ -256,13 +264,14 @@ export default {
               data-break-name="${breakName}"
             >[${breakName}]</span>`;
           }
-        )).replace(/\s+/g, ' ');
+        );
       };
-  
+      
       const htmlToText = (html) => {
         const temp = document.createElement("div");
-        temp.innerHTML = cleanHtml(html);
-  
+        temp.innerHTML = html;
+      
+        // Replace break tags first
         temp.querySelectorAll(".text-editor-tag").forEach((span) => {
           const breakName = span.getAttribute("data-break-name");
           const breakTag = document.createTextNode(
@@ -270,16 +279,26 @@ export default {
           );
           span.replaceWith(breakTag);
         });
-  
-        return temp.innerHTML
+      
+        // Extract text content, preserving newlines between divs
+        const textContent = [];
+        temp.childNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'DIV') {
+            textContent.push(node.textContent);
+          } else if (node.nodeType === Node.TEXT_NODE) {
+            textContent.push(node.textContent);
+          }
+        });
+      
+        // Join with newlines and clean up any HTML entities
+        return textContent
+          .join('\n')
           .replace(/&nbsp;/g, " ")
-          .replace(/\s+/g, " ")
           .replace(/&amp;/g, "&")
           .replace(/&lt;/g, "<")
           .replace(/&gt;/g, ">")
           .replace(/&quot;/g, '"')
-          .replace(/<br\s*\/?>/g, "\\n")
-          .replace(/\\n/g, "\n");
+          .trim();
       };
   
   
