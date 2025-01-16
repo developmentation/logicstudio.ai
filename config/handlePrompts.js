@@ -276,7 +276,7 @@ const handleGeminiPrompt = async (account, promptConfig) => {
     
     const model = client.getGenerativeModel({ model: promptConfig.model });
 
-    let historyForGemini = promptConfig.messages.slice(0, -1).map((msg) => {
+    let historyForGemini = promptConfig.messages.slice(0, -1).filter((msg) => msg?.content?.length).map((msg) => {
       if (msg.role === "system") msg.role = "model";
       if (msg.role === "assistant") msg.role = "model";
       return { 
