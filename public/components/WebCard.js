@@ -137,7 +137,24 @@ export default {
                   @click="removeWebsite(index)"
                   @mousedown.stop
                 >×</button>
+
+
+
               </div>
+
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="checkbox" 
+                    v-model="localCardData.useHtml" 
+                  
+                    class="form-checkbox" 
+                  />
+                <span class="text-xs text-gray-400">Use HTML</span>
+                </label>
+              </div>
+
+
             </div>
           </div>
         </div>
@@ -151,8 +168,7 @@ export default {
     const isProcessing = Vue.ref(false);
     const currentWebsiteIndex = Vue.ref(-1);
 
-
-    const {loadWebContent} = useWeb();
+    const { loadWebContent } = useWeb();
 
     // Initialize card data with proper socket structure
     const initializeCardData = (data) => {
@@ -168,6 +184,7 @@ export default {
         websites: data.websites || [],
         status: data.status || "idle",
         trigger: data.trigger || null,
+        useHtml: data.useHtml || false,
         sockets: {
           inputs: [],
           outputs: [],
@@ -319,67 +336,76 @@ export default {
     };
 
     // Process websites
-    const processWebsites = async () => {
-        if (isProcessing.value) return;
-      
-        isProcessing.value = true;
-        currentWebsiteIndex.value = 0;
-        localCardData.value.status = "inProgress";
-      
-        try {
-          for (let i = 0; i < localCardData.value.websites.length; i++) {
-            const website = localCardData.value.websites[i];
-            if (!website.url) continue;
-      
-            website.status = "inProgress";
-            currentWebsiteIndex.value = i;
-            handleCardUpdate();
-      
-            try {
-              const response = await loadWebContent(website.url);
-              website.status = "complete";
-              
-              // Extract just the text content from the API response
-              let textContent;
-              if (response?.payload?.text) {
-                // Direct text content from payload
-                textContent = response.payload.text;
-              } else if (response?.text) {
-                // Text directly on response
-                textContent = response.text;
-              } else if (typeof response === 'string') {
-                // Response is already a string
-                textContent = response;
-              } else {
-                // Fallback: stringify the whole response
-                textContent = JSON.stringify(response);
-              }
-      
-              localCardData.value.sockets.outputs[i].value = textContent;
-            } catch (error) {
-              console.error(`Error loading website ${website.url}:`, error);
-              website.status = "error";
-            }
-      
-            handleCardUpdate();
-          }
-      
-          // Check if all websites are either complete or error
-          const allProcessed = localCardData.value.websites.every(
-            (site) => site.status === "complete" || site.status === "error"
-          );
-      
-          if (allProcessed) {
-            localCardData.value.status = "complete";
-          }
-        } catch (error) {
-          console.error("Error processing websites:", error);
-        } finally {
-          isProcessing.value = false;
-          currentWebsiteIndex.value = -1;
-          handleCardUpdate();
-        }
-      };
+// Add this function before processWebsites
+const processWebContent = async (response, website, index) => {
+  if (response) {
+    website.status = "complete";
+    const useSource = localCardData.value.useHtml ? "html" : "text";
+    let content;
+
+    if (response?.payload) {
+      content = response.payload[useSource];
+    } else if (response[useSource]) {
+      content = response[useSource];
+    } else if (typeof response === "string") {
+      content = response;
+    } else {
+      content = JSON.stringify(response);
+    }
+
+    localCardData.value.sockets.outputs[index].value = content;
+  } else {
+    localCardData.value.sockets.outputs[index].value = null;
+    website.status = "error";
+  }
+};
+
+// Updated processWebsites function
+const processWebsites = async () => {
+  if (isProcessing.value) return;
+
+  isProcessing.value = true;
+  currentWebsiteIndex.value = 0;
+  localCardData.value.status = "inProgress";
+
+  try {
+    for (let i = 0; i < localCardData.value.websites.length; i++) {
+      const website = localCardData.value.websites[i];
+      if (!website.url) continue;
+
+      website.status = "inProgress";
+      currentWebsiteIndex.value = i;
+      handleCardUpdate();
+
+      try {
+        const response = await loadWebContent(website.url);
+        await processWebContent(response, website, i);
+      } catch (error) {
+        console.error(`Error loading website ${website.url}:`, error);
+        website.status = "error";
+        localCardData.value.sockets.outputs[i].value = null;
+      }
+
+      handleCardUpdate();
+    }
+
+    // Check if all websites are either complete or error
+    const allProcessed = localCardData.value.websites.every(
+      (site) => site.status === "complete" || site.status === "error"
+    );
+
+    if (allProcessed) {
+      localCardData.value.status = "complete";
+    }
+  } catch (error) {
+    console.error("Error processing websites:", error);
+  } finally {
+    isProcessing.value = false;
+    currentWebsiteIndex.value = -1;
+    handleCardUpdate();
+  }
+};
+
 
     const handleTriggerClick = () => {
       processWebsites();
@@ -501,6 +527,7 @@ Vue.watch(
       removeWebsite,
       handleCardUpdate,
       handleTriggerClick,
+      
     };
   },
 };

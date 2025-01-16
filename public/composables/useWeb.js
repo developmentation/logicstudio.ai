@@ -3,11 +3,17 @@
 export const useWeb = () => {
   const loadWebContent = async (url) => {
     try {
-      let webContent = await axios.post("/api/webContent", {url});
+      let webContent = await axios.post("/api/webContent", { url });
+
+      if (!webContent?.data?.payload?.success) {
+        // Attempt a local call
+        console.log("This request was unsuccessful", webContent);
+        return null;
+      }
+
       return webContent.data.payload;
-      console.log
     } catch (error) {
-      console.log("Web Loading error")
+      console.log("Web Loading error", error);
       return null;
     }
   };
