@@ -140,7 +140,12 @@ export default {
         removeCursorIndicator();
       };
   
-      const addBreakAtCursor = () => {
+      const addBreakAtCursor = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      
         // Generate break name or use incremental number
         let breakName = newBreakName?.value?.trim() || "";
         if (!breakName.length) breakName = 'Break ' + nextBreakNumber.value++;
@@ -206,19 +211,37 @@ export default {
         // Update editor content
         handleInput({ target: editor.value });
         
-        // Ensure focus and cursor visibility after content update
         Vue.nextTick(() => {
           editor.value.focus();
-          const finalSelection = window.getSelection();
-          if (finalSelection.rangeCount > 0) {
-            const finalRange = finalSelection.getRangeAt(0);
-            finalRange.collapse(true);
-            finalSelection.removeAllRanges();
-            finalSelection.addRange(finalRange);
-          }
+          
+          // Add scroll event prevention
+          const preventScroll = (e) => {
+            if (e.target !== editor.value) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          };
+      
+          // Add the event listener
+          window.addEventListener('scroll', preventScroll, { capture: true });
+          
+          // Get the bounds of the break node
+          const rect = breakNode.getBoundingClientRect();
+          const editorRect = editor.value.getBoundingClientRect();
+          
+          // Calculate the scroll position to center the break node
+          const scrollTop = editor.value.scrollTop + (rect.top - editorRect.top) - 
+                           (editorRect.height / 2) + (rect.height / 2);
+          
+          // Set the scroll position directly
+          editor.value.scrollTop = scrollTop;
+          
+          // Remove the event listener after a short delay
+          setTimeout(() => {
+            window.removeEventListener('scroll', preventScroll, { capture: true });
+          }, 100);
         });
       };
-  
       const updateBreakSelection = () => {
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
