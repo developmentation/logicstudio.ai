@@ -75,32 +75,31 @@ _Explore a live demonstration of LogicStudio.ai showcasing the creation of a sim
 
 3. **Create an .env file**
 
-   Create an ENV with the following attributes:
+   Create a .env file and modify to get the appropriate API Keys:
 
    ```bash
-    PORT=3000
-    NODE_ENV=DEV
-    LOG_LEVEL=info
-    API_URL=http://localhost:3000
-    WEBSOCKET_URL=ws://localhost:3000
-    ANTHROPIC_API_KEY=#Your Anthropic Key, if applicable
-    DEEPGRAM_API_KEY=#Your Deepgram Key, if applicable
-    OPENAI_API_KEY=#Your OpenAI Key, if appicable
-    TIMEOUT=30000 #Milliseconds for doing web processing
-    JWT_SECRET=#A unique JWT secret, if you're going to add your own login functionality for JWTs
+    cp .env.example .env
    ```
 
 4. **Start the Development Server**
 
    Using npm:
 
+   If you don't have `nodemon` installed, run the following to install it for running the backend server:
+   run the following to install it globally
    ```bash
-   npm index.js 
+   npm install -g nodemon
    ```
-    or
+
+   or as a dev dependency in the project:
+   ```bash
+   npm install --save-dev nodemon
+   ```
+
+   Then run the node.js server:
 
    ```bash
-   nodemon 
+   nodemon index.js 
    ```
 
 5. **Access the Application**
