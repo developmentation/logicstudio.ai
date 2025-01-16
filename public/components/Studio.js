@@ -123,26 +123,36 @@ export default {
 
 
         <!-- Scrollable Canvas Container -->
-        <div class="absolute inset-0 canvas-container" ref="canvasRef" @wheel.prevent="handleWheel"
-            @touchstart.prevent="handleTouchStart" @touchmove.prevent="handleTouchMove"
-            @touchend.prevent="handleTouchEnd" :style="{
-        overflow: 'scroll',  // Changed from auto to scroll
-        position: 'absolute',
-        width: '100%',
-        height: '100%'
-    }">
+<div class="absolute inset-0 canvas-container" 
+     ref="canvasRef" 
+     @wheel.prevent="handleWheel"
+     @scroll="handleScroll"
+     @touchstart.prevent="handleTouchStart" 
+     @touchmove.prevent="handleTouchMove"
+     @touchend.prevent="handleTouchEnd" 
+     :style="{
+       overflow: 'scroll',
+       position: 'absolute',
+       width: '100%',
+       height: '100%'
+     }">
             <!-- Pan Background -->
-            <div class="absolute pan-background" ref="panBackground" @mousedown="handleBackgroundMouseDown"
-                @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseLeave" :style="{
-            cursor: isPanning ? 'grabbing' : isOverBackground ? 'grab' : 'default',
-            width: \`\${8000 * zoomLevel}px\`,  // Scale with zoom
-            height: \`\${8000 * zoomLevel}px\`,  // Scale with zoom
-            position: 'absolute',
-            top: '0',
-            left: '0',
-            minWidth: '8000px',    // Ensure minimum size
-            minHeight: '8000px'    // Ensure minimum size
-        }">
+ <div class="absolute pan-background" 
+       ref="panBackground" 
+       @mousedown="handleBackgroundMouseDown"
+       @mousemove="handleMouseMove" 
+       @mouseup="handleMouseUp" 
+       @mouseleave="handleMouseLeave" 
+       :style="{
+         cursor: isPanning ? 'grabbing' : isOverBackground ? 'grab' : 'default',
+         width: \`\${8000 * zoomLevel}px\`,
+         height: \`\${8000 * zoomLevel}px\`,
+         position: 'absolute',
+         top: '0',
+         left: '0',
+         minWidth: '8000px',
+         minHeight: '8000px'
+       }">
                 <!-- Grid Background -->
                 <div class="absolute inset-0" :style="{
                 backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
@@ -154,18 +164,27 @@ export default {
             }"></div>
 
                 <!-- Content Layer -->
-                <div class="absolute" :style="{
-                    transform: \`scale(\${zoomLevel})\`,
-                    top: '4000px',
-                    left: '4000px',
-                    transformOrigin: '0 0'
-                }">
+    <div class="absolute" :style="{
+      transform: \`scale(\${zoomLevel})\`,
+      top: '4000px',
+      left: '4000px',
+      transformOrigin: '0 0'
+    }">
                     <!-- Connections Layer -->
 
 
-                    <ConnectionsLayer v-if="canvasRef" :connections="activeConnections"
-                        :active-connection="activeConnection" :selected-connection-id="selectedConnectionId"
-                        :zoom-level="zoomLevel" :canvas-ref="canvasRef" @connection-click="handleConnectionClick" />
+       <ConnectionsLayer 
+        v-if="canvasRef"
+        :connections="activeConnections"
+        :active-connection="activeConnection"
+        :selected-connection-id="selectedConnectionId"
+        :zoom-level="zoomLevel"
+        :canvas-ref="canvasRef"
+        :pan-offset-x="panOffset.x"
+        :pan-offset-y="panOffset.y"
+        @connection-click="handleConnectionClick"
+      />
+                    
 
 
                     <!-- Cards Layer -->
@@ -282,21 +301,43 @@ export default {
     const toolbarShowText = Vue.ref(true);
     const initialized = Vue.ref(false);
 
-    // Lifecycle hooks
+    const panOffset = Vue.reactive({ x: 0, y: 0 });
+  
+
+
     Vue.onMounted(() => {
       // Add keyboard event listener
       window.addEventListener("keydown", handleKeyDown);
-
-      // Run setup after DOM is ready
+      window.addEventListener('resize', handleScroll);
+    
+      // Initial setup
       requestAnimationFrame(() => {
-        if (!activeCanvas.value) createCanvas();
-        if (!canvasRef.value) return;
-        centerCanvas(false);
+        if (!activeCanvas.value) {
+          createCanvas();
+        }
+        
+        if (canvasRef.value) {
+          // Set initial pan offset
+          panOffset.x = canvasRef.value.scrollLeft;
+          panOffset.y = canvasRef.value.scrollTop;
+          
+          // Center the canvas
+          centerCanvas(false);
+          
+          // Update offset after centering
+          Vue.nextTick(() => {
+            panOffset.x = canvasRef.value.scrollLeft;
+            panOffset.y = canvasRef.value.scrollTop;
+          });
+        }
       });
     });
 
+
+
     Vue.onUnmounted(() => {
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('resize', handleScroll);
       initialized.value = false;
     });
 
@@ -497,6 +538,48 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
   };
   */
 
+  
+// Throttle utility
+function useThrottle(fn, delay) {
+  let lastCall = 0;
+  let timeout = null;
+
+  const throttled = (...args) => {
+    const now = Date.now();
+
+    if (now - lastCall >= delay) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      fn(...args);
+      lastCall = now;
+    } else if (!timeout) {
+      timeout = setTimeout(() => {
+        fn(...args);
+        lastCall = Date.now();
+        timeout = null;
+      }, delay - (now - lastCall));
+    }
+  };
+
+  Vue.onUnmounted(() => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+  });
+
+  return throttled;
+}
+
+  const handleScroll = useThrottle((event) => {
+    if (canvasRef.value) {
+      panOffset.x = canvasRef.value.scrollLeft;
+      panOffset.y = canvasRef.value.scrollTop;
+    }
+  }, 16);
+
+
     const handleSocketsUpdated = async ({
       oldSockets,
       newSockets,
@@ -634,21 +717,14 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
     };
 
     // Watch for zoom changes to update connections
-    Vue.watch(
-      zoomLevel,
-      () => {
-        Vue.nextTick(() => {
-          if (activeConnections.value) {
-            activeConnections.value.forEach((conn) => {
-              if (conn.sourceCardId) {
-                updateConnections(conn.sourceCardId);
-              }
-            });
-          }
-        });
-      },
-      { flush: "post" }
-    );
+Vue.watch(zoomLevel, () => {
+  Vue.nextTick(() => {
+    if (canvasRef.value) {
+      panOffset.x = canvasRef.value.scrollLeft;
+      panOffset.y = canvasRef.value.scrollTop;
+    }
+  });
+}, { flush: 'post' });
 
     return {
       //Templates
@@ -731,6 +807,9 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       exportToPNG,
       exportToJSON,
       importFromJSON,
+
+      panOffset,
+      handleScroll,
 
       Z_INDEX_LAYERS,
     };

@@ -233,7 +233,7 @@ const updateOutput = () => {
         .map(socket => processValue(socket.value))
         .filter(value => value !== null);
   
-        console.log("inputValues", inputValues)
+        // console.log("inputValues", inputValues)
       const oldSocket = localCardData.value.sockets.outputs?.[0];
       if (oldSocket) {
         const separator = localCardData.value.separator + "\n\n" || "\n\n";
@@ -262,7 +262,7 @@ const updateOutput = () => {
   
           // Update the sockets array
           localCardData.value.sockets.outputs = reindexedSockets;
-          console.log("reindexedSockets", reindexedSockets)
+          // console.log("reindexedSockets", reindexedSockets)
           // Emit socket update event
           emit('sockets-updated', createSocketUpdateEvent({
             cardId: localCardData.value.uuid,
