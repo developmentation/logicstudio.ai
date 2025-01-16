@@ -26,7 +26,7 @@ export default {
   },
   template: `
  <div
-      class="node-card bg-gray-800 rounded-md shadow-lg select-none"
+      class="node-card rounded-md shadow-lg select-none"
       :class="[
         isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isSelected ? 'ring-2 ring-blue-500' : ''

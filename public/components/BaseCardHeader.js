@@ -13,7 +13,7 @@ export default {
   },
   template: `
  <div 
-      class="p-2 bg-gray-700 rounded-t-md flex items-center justify-between select-none"
+      class="p-2 rounded-t-md flex items-center justify-between select-none"
       :class="{'bg-blue-700': isSelected}"
       @mousedown="handleHeaderMouseDown"
     >

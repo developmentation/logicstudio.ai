@@ -225,16 +225,37 @@
             box-shadow: 0 0 0 2px #3B82F6;
         }
 
-        .node-card {
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            touch-action: none;
-            /* Prevents default touch actions on cards */
-        }
+  
 
-        .node-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+/* Enhanced Card Styles */
+.node-card {
+    backdrop-filter: blur(6px);
+    background: rgba(53, 73, 117, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+        touch-action: none;
+}
 
+.node-card:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 12px -2px rgba(0, 0, 0, 0.15),
+        0 4px 6px -2px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    
+}
+
+.node-card.selected {
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 
+        0 0 0 2px rgba(59, 130, 246, 0.3),
+        0 8px 12px -2px rgba(0, 0, 0, 0.15);
+}
+
+ 
         /* Add these styles to your component's <style> section or global CSS */
         .canvas-container {
             cursor: default;
