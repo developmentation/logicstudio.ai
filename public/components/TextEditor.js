@@ -44,6 +44,11 @@ export default {
         spellcheck="false"
       ></div>
       <div class="text-editor-input-container">
+      <button 
+          @click.stop="addBreakAtCursor"
+        >
+          Add
+        </button>
         <input 
           ref="inputRef"  
           type="text"
@@ -54,11 +59,7 @@ export default {
           @mousedown.stop.prevent="handleInputMouseDown"  
           class="text-editor-input"   
         />
-        <button 
-          @click.stop="addBreakAtCursor"
-        >
-          Add
-        </button>
+        
       </div>
     </div>
     `,
@@ -70,6 +71,7 @@ export default {
       const newBreakName = Vue.ref(null);
       const lastCursorPosition = Vue.ref(null);
       const lastText = Vue.ref(props.modelValue || "");
+      const nextBreakNumber = Vue.ref(1);
       const breakIdMap = Vue.reactive(new Map());
       let isProcessing = false;
   
@@ -139,12 +141,14 @@ export default {
       };
   
       const addBreakAtCursor = () => {
-        const breakName = newBreakName?.value?.trim();
-        if (!breakName) return;
-  
+        // Generate break name or use incremental number
+        let breakName = newBreakName?.value?.trim() || "";
+        if (!breakName.length) breakName = 'Break ' + nextBreakNumber.value++;
+      
+        // Create break tag HTML
         const breakTag = `<break name="${breakName}"/>`;
         const breakHtml = textToHtml(breakTag);
-  
+      
         let range;
         const indicator = editor.value?.querySelector('.cursor-indicator');
         
@@ -158,7 +162,8 @@ export default {
           range.selectNodeContents(editor.value);
           range.collapse(false);
         }
-  
+      
+        // Insert break tag
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = breakHtml;
         
@@ -166,13 +171,52 @@ export default {
         const selection = window.getSelection();
         selection.removeAllRanges();
         selection.addRange(range);
+      
+        // Insert the break tag
+        const breakNode = tempDiv.firstChild;
+        range.insertNode(breakNode);
+      
+        // Create a text node for cursor positioning
+        const spaceNode = document.createTextNode('\u200B');
         
-        while (tempDiv.firstChild) {
-          range.insertNode(tempDiv.firstChild);
-        }
-  
+        // Create a new range after the break tag
+        const newRange = document.createRange();
+        newRange.setStartAfter(breakNode);
+        newRange.setEndAfter(breakNode);
+        
+        // Insert the space node
+        newRange.insertNode(spaceNode);
+        
+        // Position cursor after the space node
+        newRange.setStartAfter(spaceNode);
+        newRange.setEndAfter(spaceNode);
+        
+        // Update selection
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      
+        // Clear input
         newBreakName.value = "";
+        
+        // Ensure no tags are selected
+        editor.value.querySelectorAll(".text-editor-tag.selected").forEach((tag) => {
+          tag.classList.remove("selected");
+        });
+      
+        // Update editor content
         handleInput({ target: editor.value });
+        
+        // Ensure focus and cursor visibility after content update
+        Vue.nextTick(() => {
+          editor.value.focus();
+          const finalSelection = window.getSelection();
+          if (finalSelection.rangeCount > 0) {
+            const finalRange = finalSelection.getRangeAt(0);
+            finalRange.collapse(true);
+            finalSelection.removeAllRanges();
+            finalSelection.addRange(finalRange);
+          }
+        });
       };
   
       const updateBreakSelection = () => {
