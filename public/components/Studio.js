@@ -37,144 +37,103 @@ export default {
     ConnectionsLayer,
   },
   template: `
-    <div class="absolute inset-0 flex flex-col overflow-hidden">
-        <!-- Top Toolbar -->
-        <div class="flex items-center space-x-2 p-4 bg-gray-800 select-none z-40">
+  <div class="absolute inset-0 flex flex-col overflow-hidden">
+    <!-- Top Toolbar -->
+    <div class="flex items-center space-x-2 p-4 bg-gray-800 select-none z-40">
         <div class="flex items-center gap-2">
-          <button 
+            <button
                 class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="createCanvas()"
-            >
-            <i class="pi pi-plus mt-1"></i>
+                @click="createCanvas()">
+                <i class="pi pi-plus mt-1"></i>
             </button>
- 
 
-          <InputText v-if="activeCanvas"
-              v-model="activeCanvas.name"
-              placeholder="Canvas Name"
-              class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md"
-              :class="[
+
+            <InputText v-if="activeCanvas" v-model="activeCanvas.name" placeholder="Canvas Name"
+                class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md" :class="[
                   'hover:border-gray-600',
                   'focus:!ring-2 focus:!ring-green-500 focus:!border-transparent !outline-none'
-              ]"
-          />
-          <div v-if="canvases.length > 0" class="flex items-center gap-2">
-              <button
-                  @click="moveCanvasLeft"
-                  
-                  class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                  <i class="pi pi-chevron-left"></i>
-              </button>
-              <span class="text-sm text-gray-300">
-                  {{ (activeCanvasIndex || 0) + 1 }} of {{ canvases.length }}
-              </span>
-              <button
-                  @click="moveCanvasRight"
-                 
-                  class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                  <i class="pi pi-chevron-right"></i>
-              </button>
-          </div>
-
-            <button 
-                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="cloneCanvas"
-            >
-            <i class="pi pi-copy mt-1"></i>
-            </button>
-
-            <button 
-                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="importFromJSON"
-            >
-            <i class="pi pi-cloud-upload mt-1"></i>
-            </button>
-          <button 
-                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="exportToJSON"
-            >
-            <i class="pi pi-cloud-download mt-1"></i>
-            </button>
-
-
-      </div>    
-
-
-            <div class="flex-1"></div>
-            <button 
-                class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="zoomIn"
-            >
-                <i class="pi pi-search-plus mt-1"></i>
-            </button>
-            <button 
-                class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="zoomOut"
-            >
-                <i class="pi pi-search-minus mt-1"></i>
-            </button>
-            <div class="text-gray-400 text-sm ml-2">
-                {{ getZoomPercent() }}%
+              ]" />
+            <div v-if="canvases.length > 0" class="flex items-center gap-2">
+                <button @click="moveCanvasLeft"
+                    class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="pi pi-chevron-left"></i>
+                </button>
+                <span class="text-sm text-gray-300">
+                    {{ (activeCanvasIndex || 0) + 1 }} of {{ canvases.length }}
+                </span>
+                <button @click="moveCanvasRight"
+                    class="px-2 py-1 text-gray-300 hover:bg-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="pi pi-chevron-right"></i>
+                </button>
             </div>
 
-              <button 
-                class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                @click="closeCanvas"
-            >
-                <i class="pi pi-times mt-1 "></i>
+            <button
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="cloneCanvas">
+                <i class="pi pi-copy mt-1"></i>
             </button>
+
+            <button
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="importFromJSON">
+                <i class="pi pi-cloud-upload mt-1"></i>
+            </button>
+            <button
+                class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                @click="exportToJSON">
+                <i class="pi pi-cloud-download mt-1"></i>
+            </button>
+
+
         </div>
 
-        <!-- Main Content Area -->
-        <div 
-            class="relative flex-1 bg-gray-900"
-         
-        >
-            <!-- Left Side Toolbar -->
-            <CanvasToolbar
-                class="z-50"
-                @add-card="handleToolbarAction"
-                @export-png="exportToPNG"
-                @export-json="exportToJSON"
-                @import-json="importFromJSON"
-                @update:expanded="(val) => toolbarExpanded = val"
-                @update:show-text="(val) => toolbarShowText = val"
-            />
 
-<!-- Right Side Toolbar -->
-    <CanvasTemplatesToolbar 
-  :canvas-templates="canvasTemplates"
-  @add-canvas="handleAddCanvas"
-/>
+        <div class="flex-1"></div>
+        <button
+            class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            @click="zoomIn">
+            <i class="pi pi-search-plus mt-1"></i>
+        </button>
+        <button
+            class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            @click="zoomOut">
+            <i class="pi pi-search-minus mt-1"></i>
+        </button>
+        <div class="text-gray-400 text-sm ml-2">
+            {{ getZoomPercent() }}%
+        </div>
+
+        <button
+            class="px-3 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            @click="closeCanvas">
+            <i class="pi pi-times mt-1 "></i>
+        </button>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="relative flex-1 bg-gray-900">
+        <!-- Left Side Toolbar -->
+        <CanvasToolbar class="z-50" @add-card="handleToolbarAction" @export-png="exportToPNG"
+            @export-json="exportToJSON" @import-json="importFromJSON" @update:expanded="(val) => toolbarExpanded = val"
+            @update:show-text="(val) => toolbarShowText = val" />
+
+        <!-- Right Side Toolbar -->
+        <CanvasTemplatesToolbar :canvas-templates="canvasTemplates" @add-canvas="handleAddCanvas" />
 
 
 
-            <!-- Scrollable Canvas Container -->
-<div 
-    class="absolute inset-0 canvas-container"
-    ref="canvasRef"
-    @wheel.prevent="handleWheel"
-    @touchstart.prevent="handleTouchStart"
-    @touchmove.prevent="handleTouchMove"
-    @touchend.prevent="handleTouchEnd"
-    :style="{
+        <!-- Scrollable Canvas Container -->
+        <div class="absolute inset-0 canvas-container" ref="canvasRef" @wheel.prevent="handleWheel"
+            @touchstart.prevent="handleTouchStart" @touchmove.prevent="handleTouchMove"
+            @touchend.prevent="handleTouchEnd" :style="{
         overflow: 'scroll',  // Changed from auto to scroll
         position: 'absolute',
         width: '100%',
         height: '100%'
-    }"
->
-                <!-- Pan Background -->
- <div 
-        class="absolute pan-background"
-        ref="panBackground"
-        @mousedown="handleBackgroundMouseDown"
-        @mousemove="handleMouseMove"
-        @mouseup="handleMouseUp"
-        @mouseleave="handleMouseLeave"
-        :style="{
+    }">
+            <!-- Pan Background -->
+            <div class="absolute pan-background" ref="panBackground" @mousedown="handleBackgroundMouseDown"
+                @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseLeave" :style="{
             cursor: isPanning ? 'grabbing' : isOverBackground ? 'grab' : 'default',
             width: \`\${8000 * zoomLevel}px\`,  // Scale with zoom
             height: \`\${8000 * zoomLevel}px\`,  // Scale with zoom
@@ -183,74 +142,49 @@ export default {
             left: '0',
             minWidth: '8000px',    // Ensure minimum size
             minHeight: '8000px'    // Ensure minimum size
-        }"
-    >
-                    <!-- Grid Background -->
-        <div 
-            class="absolute inset-0"
-            :style="{
+        }">
+                <!-- Grid Background -->
+                <div class="absolute inset-0" :style="{
                 backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
                 backgroundSize: \`\${20 * zoomLevel}px \${20 * zoomLevel}px\`,
                 backgroundPosition: '50% 50%',
                 pointerEvents: 'none',
                 width: '100%',
                 height: '100%'
-            }"
-        ></div>
+            }"></div>
 
-                    <!-- Content Layer -->
-           <div 
-                class="absolute"
-                :style="{
+                <!-- Content Layer -->
+                <div class="absolute" :style="{
                     transform: \`scale(\${zoomLevel})\`,
                     top: '4000px',
                     left: '4000px',
                     transformOrigin: '0 0'
-                }"
-            >
-                        <!-- Connections Layer -->
+                }">
+                    <!-- Connections Layer -->
 
-                                      
-                        <ConnectionsLayer
-                          v-if="canvasRef"
-                          :connections="activeConnections"
-                          :active-connection="activeConnection"
-                          :selected-connection-id="selectedConnectionId"
-                          :zoom-level="zoomLevel"
-                          :canvas-ref="canvasRef"
-                          @connection-click="handleConnectionClick"
-                        />
-                        
 
-                        <!-- Cards Layer -->
-                        <div class="relative" style="pointer-events: none;">
-                            <component
-                                v-for="card in activeCards"
-                                :key="card.uuid"
-                                :is="getCardComponent(card.type)"
-                                :cardData="card"
-                                :zoomLevel="zoomLevel"
-                                :zIndex="card.zIndex"
-                                :is-selected="selectedCardIds.has(card.uuid)"
-                                @update-position="updateCardPosition"
-                                @update-card="updateCard"
-                                @update-socket-value="updateSocketValue"
-                                @connection-drag-start="handleConnectionDragStart"
-                                @connection-drag="handleConnectionDrag"
-                                @connection-drag-end="handleConnectionDragEnd"
-                                @close-card="removeCard"
-                                @clone-card="cloneCard"
-                                @manual-trigger="handleManualTrigger"
-                                @sockets-updated="handleSocketsUpdated"
-                                @select-card="handleCardSelection"
-                                style="pointer-events: auto;"
-                            />
-                        </div>
+                    <ConnectionsLayer v-if="canvasRef" :connections="activeConnections"
+                        :active-connection="activeConnection" :selected-connection-id="selectedConnectionId"
+                        :zoom-level="zoomLevel" :canvas-ref="canvasRef" @connection-click="handleConnectionClick" />
+
+
+                    <!-- Cards Layer -->
+                    <div class="relative" style="pointer-events: none;">
+                        <component v-for="card in activeCards" :key="card.uuid" :is="getCardComponent(card.type)"
+                            :cardData="card" :zoomLevel="zoomLevel" :zIndex="card.zIndex"
+                            :is-selected="selectedCardIds.has(card.uuid)" @update-position="updateCardPosition"
+                            @update-card="updateCard" @update-socket-value="updateSocketValue"
+                            @connection-drag-start="handleConnectionDragStart" @connection-drag="handleConnectionDrag"
+                            @connection-drag-end="handleConnectionDragEnd" @close-card="removeCard"
+                            @clone-card="cloneCard" @manual-trigger="handleManualTrigger"
+                            @sockets-updated="handleSocketsUpdated" @select-card="handleCardSelection"
+                            style="pointer-events: auto;" />
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
     `,
 
   setup() {

@@ -665,7 +665,12 @@ const createFile = async (socketValue, outputType, baseFilename) => {
     case "docx": {
       const markdownContent = typeof content === "object" ? JSON.stringify(content, null, 2) : content;
       const md = markdownit();
-      const htmlContent = md.render(markdownContent);
+
+      let htmlContent = md.render(markdownContent)
+      .replace(/&quot;/g, '"')
+      .replace(/&ldquo;|&rdquo;/g, '"')
+      .replace(/&lsquo;|&rsquo;/g, "'");
+  
 
       const doc = new docx.Document({
         sections: [{
@@ -734,18 +739,25 @@ const createFile = async (socketValue, outputType, baseFilename) => {
       const htmlContent = md.render(markdownContent);
       
       const processedContent = htmlContent
-        .replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1')
-        .replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1')
-        .replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1')
-        .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```')
-        .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1')
-        .replace(/<p[^>]*>(.*?)<\/p>/g, '$1')
-        .replace(/<[^>]*>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&amp;/g, '&')
-        .replace(/\n\s*\n/g, '\n\n');
+    .replace(/<h1[^>]*>(.*?)<\/h1>/g, '# $1')
+    .replace(/<h2[^>]*>(.*?)<\/h2>/g, '## $1')
+    .replace(/<h3[^>]*>(.*?)<\/h3>/g, '### $1')
+    .replace(/<pre><code>(.*?)<\/code><\/pre>/gs, '```\n$1\n```')
+    .replace(/<li[^>]*>(.*?)<\/li>/g, '• $1')
+    .replace(/<p[^>]*>(.*?)<\/p>/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    // Handle quotes before other entities
+    .replace(/&quot;/g, '"')
+    .replace(/&ldquo;|&rdquo;/g, '"')
+    .replace(/&lsquo;|&rsquo;/g, "'")
+    // Then handle other entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–')
+    .replace(/\n\s*\n/g, '\n\n');
       
       const pdf = new jspdf.jsPDF();
       createStyledPdf(pdf, processedContent, baseFilename);
