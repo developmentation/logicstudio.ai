@@ -57,7 +57,7 @@ export default {
             @change="handleCardUpdate"
           >
             <option v-for="model in models" :key="model.model" :value="model">
-              {{model.name.en}}
+             {{model.provider.toUpperCase()}} {{model.name.en}}
             </option>
           </select>
         </div>
