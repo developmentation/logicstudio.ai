@@ -85,13 +85,21 @@ _Explore a live demonstration of LogicStudio.ai showcasing the creation of a sim
 
    Using npm:
 
+   If you don't have `nodemon` installed, run the following to install it for running the backend server:
+   run the following to install it globally
    ```bash
-   npm index.js 
+   npm install -g nodemon
    ```
-    or
+
+   or as a dev dependency in the project:
+   ```bash
+   npm install --save-dev nodemon
+   ```
+
+   Then run the node.js server:
 
    ```bash
-   nodemon 
+   nodemon index.js 
    ```
 
 5. **Access the Application**
