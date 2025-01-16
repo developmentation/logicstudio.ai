@@ -52,10 +52,13 @@ if (process.env.MISTRAL_API_KEY) {
 }
 
 // Initialize Google Gemini client asynchronously
-let geminiClient;
+let geminiClient, HarmCategory, HarmBlockThreshold;
 if (process.env.GEMINI_API_KEY) {
-  const { GoogleGenerativeAI } = require("@google/generative-ai");
+  const {  GoogleGenerativeAI, HarmCategory: HC, HarmBlockThreshold: HBT   } = require("@google/generative-ai");
   geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  HarmCategory = HC;
+  HarmBlockThreshold = HBT;
+  
 }
 
 const handlePrompt = async (promptConfig, sendToClient) => {
@@ -273,30 +276,82 @@ const handleGeminiPrompt = async (account, promptConfig) => {
     if (account?.geminiApiKey) {
       client = new GoogleGenerativeAI(account.geminiApiKey);
     }
-    
-    const model = client.getGenerativeModel({ model: promptConfig.model });
 
-    let historyForGemini = promptConfig.messages.slice(0, -1).filter((msg) => msg?.content?.length).map((msg) => {
-      if (msg.role === "system") msg.role = "model";
-      if (msg.role === "assistant") msg.role = "model";
-      return { 
-        role: msg.role, 
-        parts: [{ text: msg.content }] 
-      };
-    });
 
+    const safetySettings = [
+      {
+        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+      {
+        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+
+      {
+        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+
+      {
+        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+
+      {
+        category: HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+      },
+
+    ];
+
+    let modelConfigs = { model: promptConfig.model };
+
+    //If the first item in the array is a system message, extract it out
+    if (
+      promptConfig.messages.length &&
+      promptConfig.messages[0].role == "system"
+    ) {
+      console.log(
+        "promptConfig.messages[0].content",
+        promptConfig.messages[0].content
+      );
+      if (promptConfig.messages[0].content.length) {
+        modelConfigs.systemInstruction = promptConfig.messages[0].content;
+      }
+      promptConfig.messages.shift(); //remove first item;
+    }
+
+    const model = client.getGenerativeModel(modelConfigs, safetySettings);
+
+    //Prepare the history in Gemini format
+    let historyForGemini = promptConfig.messages
+      .slice(0, -1)
+      .filter((msg) => msg?.content?.length)
+      .map((msg) => {
+        if (msg.role === "system") msg.role = "model";
+        if (msg.role === "assistant") msg.role = "model";
+        return {
+          role: msg.role,
+          parts: [{ text: msg.content }],
+        };
+      });
+
+    console.log("historyForGemini", historyForGemini);
+
+    //Extract out the last user message and use it in the startChat
     const lastMessage = promptConfig.messages.at(-1);
     const messageToSend = lastMessage.content;
 
     const chat = model.startChat({
-      history: historyForGemini,
+      history: historyForGemini.length ? historyForGemini : [],
     });
 
     // Return the result directly without awaiting
     let result = await chat.sendMessageStream(messageToSend);
     return result;
   } catch (error) {
-    console.error('Error in handleGeminiPrompt:', error);
+    console.error("Error in handleGeminiPrompt:", error);
     throw error;
   }
 };
@@ -350,8 +405,6 @@ const handlePromptResponse = async (
   session,
   sendToClient
 ) => {
-
-
   if (provider === "gemini") {
     // Gemini needs to iterate over responseStream.stream
     for await (const chunk of responseStream.stream) {
@@ -388,11 +441,7 @@ const handlePromptResponse = async (
       else if (provider === "groq" && part?.choices?.[0]?.delta?.content) {
         // console.log(part.choices[0])
         sendToClient(uuid, session, "message", part.choices[0].delta.content);
-      } 
-   
-      
-      
-      else {
+      } else {
         sendToClient(uuid, session, "EOM", null);
       }
     } catch (error) {
