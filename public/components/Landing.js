@@ -128,9 +128,9 @@ export default {
         </div>
 
         <div class="flex flex-col items-center p-6 bg-gray-800 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-        <i class="pi pi-twitter text-3xl text-emerald-500 mb-4"></i>
-        <h3 class="text-white font-semibold">X</h3>
-        <p class="text-gray-400 text-sm mt-2">Grok 2 Leading Model</p>
+        <i class="pi pi-google text-3xl text-emerald-500 mb-4"></i>
+        <h3 class="text-white font-semibold">Google</h3>
+        <p class="text-gray-400 text-sm mt-2">Gemini 1.5 & 2.0 Flash</p>
       </div>
 
     </div>
