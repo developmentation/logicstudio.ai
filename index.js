@@ -35,6 +35,7 @@ app.use("/api/healthcheck", require("./routes/healthcheck")); // Healthcheck rou
 app.use("/api/configs", require("./routes/configs")); // Configuration values
 app.use("/api/transcribe", require("./routes/transcribe")); // Perform transcripts
 app.use("/api/webContent", require("./routes/webContent")); // Load web content (web processing)
+app.use("/api/gitHubContent", require("./routes/gitHubContent")); // Load GitHub repo file structures content
 
 // SPA Fallback: Serve `index.html` for any non-API routes
 app.get("*", (req, res) => {

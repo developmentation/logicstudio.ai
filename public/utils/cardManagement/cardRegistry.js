@@ -23,6 +23,7 @@ export const createCardRegistry = (props) => {
     LABEL: "label",
     TEXT: "text",
     WEB: "web",
+    GITHUB: "github",
     CHAT: "chat",
     TOOL: "tool",
   };
@@ -156,6 +157,17 @@ export const createCardRegistry = (props) => {
 
 
     [CARD_TYPES.CHAT]: {
+      display:"default",
+      width: 600,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
+    
+    [CARD_TYPES.GITHUB]: {
       display:"default",
       width: 600,
       height: 250,

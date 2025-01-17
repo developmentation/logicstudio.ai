@@ -30,7 +30,7 @@ const port = process.env.PORT || 3000;
 //Create HTTP Server
 const server = http.createServer(app);
 server.listen( port, '0.0.0.0', () =>
-  console.log(`MinisterGPT - Node.js service listening at http://localhost:${port}`)
+  console.log(`LogicStudio.ai - Node.js service listening at http://localhost:${port}`)
 );
 
 //Establish both websocket and Socket.IO servers

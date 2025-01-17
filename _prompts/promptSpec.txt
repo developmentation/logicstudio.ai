@@ -1,4 +1,4 @@
-Here are the key features and pages of the app. I want to start off by creating an attractive landing page for MinisterGPT. Use PrimeVue and Tailwind css for styling. I have already imported the PrimeVue components into main.js so no further imports are required. Assume Tailwind is already installed and needs no further definition. Here is the app breakdown
+Here are the key features and pages of the app. I want to start off by creating an attractive landing page for LogicStudio.ai. Use PrimeVue and Tailwind css for styling. I have already imported the PrimeVue components into main.js so no further imports are required. Assume Tailwind is already installed and needs no further definition. Here is the app breakdown
 
 **User Groups**
 * **Minister’s Office Staff (Communications Leads, Speechwriters)**: Create and refine speeches, review past performances, adjust style.

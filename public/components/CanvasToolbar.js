@@ -102,6 +102,7 @@ export default {
         { id: 'view', label: 'View', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
         { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
+        { id: 'github', label: 'GitHub (in progress)', icon: 'pi pi-github', type: 'github' },
         { id: 'api', label: 'API (Pending)', icon: 'pi pi-server', type: 'api', disabled:true },
         { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
         { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },

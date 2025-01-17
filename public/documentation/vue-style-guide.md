@@ -1,4 +1,4 @@
-# MinisterGPT Vue.js Development Style Guide
+# LogicStudio.ai Vue.js Development Style Guide
 
 ## Component Structure
 
