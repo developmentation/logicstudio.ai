@@ -127,27 +127,7 @@ export default {
               </button>
             </div>
 
-            <!-- Options -->
-            <div class="flex items-center justify-between">
-              <label class="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  v-model="localCardData.isRecursive"
-                  @change="handleCardUpdate"
-                  class="form-checkbox" 
-                />
-                <span class="text-xs text-gray-400">Recursive</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  v-model="localCardData.autoLoad"
-                  @change="handleCardUpdate"
-                  class="form-checkbox" 
-                />
-                <span class="text-xs text-gray-400">Automatically load contents</span>
-              </label>
-            </div>
+ 
 
             <!-- Tree View with Loading Status -->
             <div class="bg-gray-900 rounded p-2">
@@ -213,15 +193,14 @@ export default {
           display: data.display || "default",
           x: data.x || 0,
           y: data.y || 0,
-          owner: data.owner || "",
-          repo: data.repo || "",
+          owner: data.owner || "developmentation",
+          repo: data.repo || "logicstudio.ai",
           branch: data.branch || "main",
           treeData: data.treeData || null,
           selectedNodes: data.selectedNodes || {},
           expandedNodes: data.expandedNodes || {},
           loadedFiles: createLoadedFilesSet(data.loadedFiles),
-          isRecursive: data.isRecursive || false,
-          autoLoad: data.autoLoad || false,
+          
           sockets: {
             inputs: [],
             outputs: []
@@ -592,20 +571,20 @@ const getAllChildrenStatus = (node) => {
         };
         collectPaths(node);
     
-        if (localCardData.value.isRecursive && !node.leaf) {
-            // Recursively unselect all child nodes
-            const unselectChildren = (node) => {
-                if (node.children) {
-                    node.children.forEach(child => {
-                        delete localCardData.value.selectedNodes[child.data.path];
-                        if (!child.leaf) {
-                            unselectChildren(child);
-                        }
-                    });
-                }
-            };
-            unselectChildren(node);
-        }
+        // if (localCardData.value.isRecursive && !node.leaf) {
+        //     // Recursively unselect all child nodes
+        //     const unselectChildren = (node) => {
+        //         if (node.children) {
+        //             node.children.forEach(child => {
+        //                 delete localCardData.value.selectedNodes[child.data.path];
+        //                 if (!child.leaf) {
+        //                     unselectChildren(child);
+        //                 }
+        //             });
+        //         }
+        //     };
+        //     unselectChildren(node);
+        // }
     
         // Remove corresponding sockets
         const oldSockets = [...localCardData.value.sockets.outputs];
