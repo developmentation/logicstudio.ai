@@ -127,10 +127,24 @@ export default {
               </button>
             </div>
 
- 
+             
+               <!-- Refresh Selected Button -->
+            <div class="flex justify-center">
+              <button 
+                class="px-6 py-2 text-sm font-medium rounded bg-green-600 hover:bg-green-700 disabled:bg-gray-600"
+                @click="refreshSelected"
+                :disabled="!hasSelectedFiles || isProcessing"
+              >
+                {{ isProcessing ? 'Refreshing...' : 'Refresh Selected' }}
+              </button>
+            </div>
 
             <!-- Tree View with Loading Status -->
             <div class="bg-gray-900 rounded p-2">
+
+
+            
+
     <Tree
         v-model:selectionKeys="localCardData.selectedNodes"
         :value="localCardData.treeData"
@@ -162,6 +176,7 @@ export default {
                 </template>
               </Tree>
             </div>
+
           </div>
         </div>
       </BaseCard>
@@ -193,8 +208,8 @@ export default {
           display: data.display || "default",
           x: data.x || 0,
           y: data.y || 0,
-          owner: data.owner || "developmentation",
-          repo: data.repo || "logicstudio.ai",
+          owner: data.owner || "",
+          repo: data.repo || "",
           branch: data.branch || "main",
           treeData: data.treeData || null,
           selectedNodes: data.selectedNodes || {},
@@ -672,6 +687,48 @@ const getAllChildrenStatus = (node) => {
         }
     };
 
+
+        // Add new computed property for selected files
+        const hasSelectedFiles = Vue.computed(() => {
+            if (!localCardData.value.selectedNodes) return false;
+            return Object.keys(localCardData.value.selectedNodes).some(key => {
+              const node = findNodeByPath(localCardData.value.treeData, key);
+              return node && node.leaf;
+            });
+          });
+      
+          // Add new method to refresh selected files
+          const refreshSelected = async () => {
+            if (!hasSelectedFiles.value || isProcessing.value) return;
+            
+            isProcessing.value = true;
+            
+            try {
+              // Get all selected file paths
+              const selectedPaths = Object.keys(localCardData.value.selectedNodes)
+                .filter(key => {
+                  const node = findNodeByPath(localCardData.value.treeData, key);
+                  return node && node.leaf;
+                });
+      
+              // Reset loaded status for selected files
+              selectedPaths.forEach(path => {
+                const node = findNodeByPath(localCardData.value.treeData, path);
+                if (node) {
+                  updateNodeStatus(node, 'idle');
+                  localCardData.value.loadedFiles.delete(path);
+                }
+              });
+      
+              // Reload the files
+              await loadSelectedFiles(selectedPaths);
+            } catch (error) {
+              console.error('Error refreshing selected files:', error);
+            } finally {
+              isProcessing.value = false;
+            }
+          };
+
     // Reset repository state
     const resetRepository = () => {
         localCardData.value.treeData = null;
@@ -725,7 +782,10 @@ const getAllChildrenStatus = (node) => {
         handleNodeCollapse,
         handleCardUpdate,
         loadRepository,
-        resetRepository
+        resetRepository,
+        refreshSelected,
+        hasSelectedFiles
+
     };
   }
 };
