@@ -13,22 +13,34 @@ const DEFAULT_OPTIONS = {
 
 // GitHub API configuration
 const GITHUB_API_BASE = 'https://api.github.com';
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+const getHeaders = (userToken) => {
+    const headers = {
+        'Accept': 'application/vnd.github.v3+json'
+    };
 
-
-// GitHub API client configuration
-const githubClient = axios.create({
-    baseURL: GITHUB_API_BASE,
-    timeout: 60000,
-    headers: {
-        'Accept': 'application/vnd.github.v3+json',
-        ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
+    // First try user token, then fallback to env token
+    const token = userToken || process.env.GITHUB_TOKEN;
+    if (token) {
+        headers['Authorization'] = `token ${token}`;
     }
-});
-async function getDefaultBranch(owner, repo) {
+
+    return headers;
+};
+
+
+const createGithubClient = (userToken) => {
+    return axios.create({
+        baseURL: GITHUB_API_BASE,
+        timeout: 60000,
+        headers: getHeaders(userToken)
+    });
+};
+
+async function getDefaultBranch(owner, repo, userToken) {
+    const client = createGithubClient(userToken);
     try {
-        const response = await githubClient.get(`/repos/${owner}/${repo}`);
+        const response = await client.get(`/repos/${owner}/${repo}`);
         return response.data.default_branch;
     } catch (error) {
         console.error(`Error fetching repository info:`, error.message);
@@ -36,19 +48,20 @@ async function getDefaultBranch(owner, repo) {
     }
 }
 
-async function fetchRepoContents(owner, repo, branch) {
+async function fetchRepoContents(owner, repo, branch, userToken) {
+    const client = createGithubClient(userToken);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
 
     try {
         // Get the branch's commit SHA
-        const refResponse = await githubClient.get(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
+        const refResponse = await client.get(`/repos/${owner}/${repo}/git/refs/heads/${branch}`, {
             signal: controller.signal
         });
         const commitSha = refResponse.data.object.sha;
 
         // Get the full tree in one request
-        const treeResponse = await githubClient.get(`/repos/${owner}/${repo}/git/trees/${commitSha}`, {
+        const treeResponse = await client.get(`/repos/${owner}/${repo}/git/trees/${commitSha}`, {
             params: { recursive: 1 },
             signal: controller.signal
         });
@@ -61,7 +74,7 @@ async function fetchRepoContents(owner, repo, branch) {
 
         // Transform and return only what we need
         return treeResponse.data.tree
-            .filter(item => item.type === 'blob' || item.type === 'tree') // Only include files and directories
+            .filter(item => item.type === 'blob' || item.type === 'tree')
             .map(item => ({
                 name: item.path.split('/').pop(),
                 path: item.path,
@@ -82,7 +95,7 @@ async function fetchRepoContents(owner, repo, branch) {
         const fallbackTimeout = setTimeout(() => controller.abort(), 25000);
         try {
             console.warn('Git Tree API failed, falling back to contents API');
-            const response = await githubClient.get(`/repos/${owner}/${repo}/contents`, {
+            const response = await client.get(`/repos/${owner}/${repo}/contents`, {
                 params: { ref: branch },
                 signal: controller.signal
             });
@@ -104,7 +117,7 @@ async function fetchRepoContents(owner, repo, branch) {
                         type: item.type
                     });
                 } else if (item.type === 'dir') {
-                    const subResponse = await githubClient.get(item._links.self, {
+                    const subResponse = await client.get(item._links.self, {
                         signal: controller.signal
                     });
                     queue.push(...subResponse.data);
@@ -202,9 +215,10 @@ const createFileHierarchy = (files) => {
 };
 
 // Download file content
-const downloadFile = async (fileInfo, options = {}) => {
+const downloadFile = async (fileInfo, userToken, options = {}) => {
+    const client = createGithubClient(userToken);
     try {
-        const response = await githubClient.get(fileInfo.download_url, {
+        const response = await client.get(fileInfo.download_url, {
             responseType: fileInfo.name.match(/\.(jpg|jpeg|png|gif|ico|svg)$/i) ? 'arraybuffer' : 'text',
             timeout: options.timeout || 60000,
             maxRedirects: options.maxRedirects || 5,
@@ -237,12 +251,12 @@ const downloadFile = async (fileInfo, options = {}) => {
 };
 
 // Batch processing with concurrency control
-const processBatch = async (files, options, batchSize = 5) => {
+const processBatch = async (files, userToken, options, batchSize = 5) => {
     const results = [];
     for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
         const batchResults = await Promise.all(
-            batch.map(file => downloadFile(file, options))
+            batch.map(file => downloadFile(file, userToken, options))
         );
         results.push(...batchResults);
         
@@ -450,11 +464,12 @@ const createPrimeVueTreeStructure = (files) => {
 };
 
 
+
 exports.getRepositoryContents = async function (req, res, next) {
     const startTime = process.hrtime();
     
     try {
-        const { owner, repo, branch: requestedBranch, options = {} } = req.body;
+        const { owner, repo, branch: requestedBranch, token, options = {} } = req.body;
         const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
         const version = packageInfo.version;
 
@@ -463,11 +478,11 @@ exports.getRepositoryContents = async function (req, res, next) {
         }
 
         // Get the default branch if none specified
-        const branch = requestedBranch || await getDefaultBranch(owner, repo);
+        const branch = requestedBranch || await getDefaultBranch(owner, repo, token);
         console.log(`Using branch: ${branch} for repository ${owner}/${repo}`);
 
         // Fetch all files with a timeout
-        const fetchPromise = fetchRepoContents(owner, repo, branch);
+        const fetchPromise = fetchRepoContents(owner, repo, branch, token);
         const timeoutPromise = new Promise((_, reject) => 
             setTimeout(() => reject(new Error('Fetch timeout')), 60000)
         );
@@ -537,7 +552,7 @@ exports.getRepositoryContents = async function (req, res, next) {
 // Controller for downloading specific files
 exports.downloadRepositoryFiles = async function (req, res, next) {
     try {
-        const { files, options = {} } = req.body;
+        const { files, token, options = {} } = req.body;
         const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
         const version = packageInfo.version;
 
@@ -546,7 +561,7 @@ exports.downloadRepositoryFiles = async function (req, res, next) {
         }
 
         const startTime = process.hrtime();
-        const results = await processBatch(files, mergedOptions, mergedOptions.batchSize);
+        const results = await processBatch(files, token, mergedOptions, mergedOptions.batchSize);
         const [seconds, nanoseconds] = process.hrtime(startTime);
 
         const successful = results.filter(result => result.success);

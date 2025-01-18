@@ -1,9 +1,9 @@
 // composables/useGitHub.js
  
 export const useGitHub = () => {
-  const loadGitHubContent = async (owner, repo, branch) => {
+  const loadGitHubContent = async (owner, repo, branch, token) => {
     try {
-      const payload = { owner, repo, branch };
+      const payload = { owner, repo, branch, token };
       console.log("Attempting to load", payload);
 
       const response = await axios.post("/api/gitHubContent", payload, {
@@ -22,7 +22,7 @@ export const useGitHub = () => {
     }
   };
 
-  const loadFileContent = async (files) => {
+  const loadFileContent = async (files, token) => {
     try {
       if (!Array.isArray(files)) {
         throw new Error('Files parameter must be an array');
@@ -30,7 +30,7 @@ export const useGitHub = () => {
 
       console.log("Loading files", files)
 
-      const response = await axios.post("/api/gitHubContent/files", { files }, {
+      const response = await axios.post("/api/gitHubContent/files", { files, token }, {
         timeout: 60000
       });
 
