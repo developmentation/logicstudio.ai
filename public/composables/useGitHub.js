@@ -7,7 +7,7 @@ export const useGitHub = () => {
       console.log("Attempting to load", payload);
 
       const response = await axios.post("/api/gitHubContent", payload, {
-        timeout: 30000 // 30 second timeout
+        timeout: 60000 // 60 second timeout
       });
 
       if (!response?.data?.payload?.treeData) {
@@ -28,8 +28,10 @@ export const useGitHub = () => {
         throw new Error('Files parameter must be an array');
       }
 
+      console.log("Loading files", files)
+
       const response = await axios.post("/api/gitHubContent/files", { files }, {
-        timeout: 30000
+        timeout: 60000
       });
 
       if (!response?.data?.payload) {

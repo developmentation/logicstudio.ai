@@ -6,7 +6,7 @@ const packageInfo = require('../package.json');
 const DEFAULT_OPTIONS = {
     batchSize: 5,
     batchDelay: 1000,
-    timeout: 30000,
+    timeout: 60000,
     maxRetries: 2,
     maxRedirects: 5
 };
@@ -20,7 +20,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 // GitHub API client configuration
 const githubClient = axios.create({
     baseURL: GITHUB_API_BASE,
-    timeout: 30000,
+    timeout: 60000,
     headers: {
         'Accept': 'application/vnd.github.v3+json',
         ...(GITHUB_TOKEN && { 'Authorization': `token ${GITHUB_TOKEN}` })
@@ -206,7 +206,7 @@ const downloadFile = async (fileInfo, options = {}) => {
     try {
         const response = await githubClient.get(fileInfo.download_url, {
             responseType: fileInfo.name.match(/\.(jpg|jpeg|png|gif|ico|svg)$/i) ? 'arraybuffer' : 'text',
-            timeout: options.timeout || 30000,
+            timeout: options.timeout || 60000,
             maxRedirects: options.maxRedirects || 5,
             validateStatus: status => status < 500
         });
@@ -469,7 +469,7 @@ exports.getRepositoryContents = async function (req, res, next) {
         // Fetch all files with a timeout
         const fetchPromise = fetchRepoContents(owner, repo, branch);
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Fetch timeout')), 30000)
+            setTimeout(() => reject(new Error('Fetch timeout')), 60000)
         );
 
         const files = await Promise.race([fetchPromise, timeoutPromise]);
@@ -484,7 +484,7 @@ exports.getRepositoryContents = async function (req, res, next) {
         
         const treeData = await Promise.race([
             treePromise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Tree creation timeout')), 30000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Tree creation timeout')), 60000))
         ]);
 
         console.log('Tree structure created successfully');
