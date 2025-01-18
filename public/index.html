@@ -700,10 +700,15 @@
 
 
 <style>
-.dark-tree {
-  background: transparent !important;
+  .dark-tree {
+  background-color: transparent !important;
   border: none !important;
   padding: 0 !important;
+}
+
+.dark-tree-label {
+  color: #ffffff !important;
+  font-size: 0.75rem !important;
 }
 
 .dark-tree-content {
@@ -712,17 +717,160 @@
 }
 
 .dark-tree-content:hover {
-  background-color: rgba(31, 41, 55, 0.8) !important;
+  background-color: rgba(55, 65, 81, 0.8) !important;
+}
+
+.dark-tree-checkbox {
+  width: 1rem !important;
+  height: 1rem !important;
+  margin-right: 0.5rem !important;
+  border-radius: 0.25rem !important;
+  background-color: #1f2937 !important;
+  border: 1px solid #4b5563 !important;
 }
 
 .dark-tree-checkbox.p-highlight {
-  background-color: rgb(59, 130, 246) !important;
-  border-color: rgb(59, 130, 246) !important;
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+
+.dark-tree-toggler {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  margin-right: 0.5rem !important;
+  color: #9ca3af !important;
 }
 
 .dark-tree-container {
   padding: 0 !important;
 }
+
+
+/* Dark theme overrides for PrimeVue Tree */
+.p-tree {
+    background: transparent !important;
+    padding: 0.5rem !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+/* Override the specific hover state for selectable nodes */
+.p-tree-node-content.p-tree-node-selectable:not(.p-tree-node-selected):hover {
+    background: rgba(31, 41, 55, 0.7) !important;
+    color: #9ca3af !important;
+}
+
+.p-tree .p-tree-container {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.p-tree .p-treenode {
+    padding: 0.25rem 0 !important;
+}
+
+.p-tree .p-treenode-content {
+    border-radius: 0.25rem !important;
+    padding: 0.25rem 0.5rem !important;
+    transition: background-color 0.2s ease !important;
+}
+
+/* Selected state */
+.p-tree .p-tree-node-content.p-tree-node-selected {
+    background-color: rgba(59, 130, 246, 0.15) !important;
+    color: #60a5fa !important;
+}
+
+.p-tree .p-tree-toggler {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    margin-right: 0.5rem !important;
+    border-radius: 0.25rem !important;
+    transition: background-color 0.2s ease !important;
+    color: #9ca3af !important;
+}
+
+.p-tree .p-tree-toggler:hover {
+    background-color: rgba(31, 41, 55, 0.7) !important;
+    color: #9ca3af !important;
+}
+
+
+/* Checkbox styles */
+.p-tree .p-checkbox {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    margin-right: 0.5rem !important;
+}
+
+.p-tree .p-checkbox .p-checkbox-box {
+    background-color: #1f2937 !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 0.25rem !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+.p-tree .p-checkbox .p-checkbox-box {
+    background-color: #1f2937 !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 0.25rem !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+}
+
+.p-tree .p-checkbox .p-checkbox-checked
+{
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+.p-tree .p-checkbox .p-checkbox-box.p-highlight .p-checkbox-icon.pi-check {
+    color: #ffffff !important;
+}
+
+.p-tree .p-checkbox .p-checkbox-box .p-checkbox-icon {
+    font-size: 0.75rem !important;
+    font-weight: bold !important;
+    color: #ffffff !important;
+}
+
+
+.p-tree .p-tree-node-label {
+    color: #ffffff !important;
+    font-size: 0.875rem !important;
+    padding: 0 0.25rem !important;
+}
+
+.p-tree .p-tree-node-icon {
+    color: #9ca3af !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Focused state styles */
+.p-tree .p-tree-node-content.p-highlight:focus {
+    box-shadow: 0 0 0 2px #1f2937, 0 0 0 4px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* Loading state */
+.p-tree .p-tree-loading-icon {
+    font-size: 1.5rem !important;
+    color: #6b7280 !important;
+}
+
+/* Filter styles */
+.p-tree .p-tree-filter-container {
+    margin-bottom: 0.5rem !important;
+}
+
+.p-tree .p-tree-filter {
+    background-color: #1f2937 !important;
+    border: 1px solid #4b5563 !important;
+    color: #ffffff !important;
+    padding: 0.5rem !important;
+    border-radius: 0.25rem !important;
+}
+  
 
 </style>
 

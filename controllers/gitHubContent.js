@@ -255,66 +255,117 @@ const processBatch = async (files, options, batchSize = 5) => {
 
 
 
+const getFileIcon = (fileName) => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    const iconMap = {
+        // Web
+        js: 'pi pi-code',
+        jsx: 'pi pi-code',
+        ts: 'pi pi-code',
+        tsx: 'pi pi-code',
+        html: 'pi pi-code',
+        css: 'pi pi-palette',
+        scss: 'pi pi-palette',
+        // Data
+        json: 'pi pi-database',
+        xml: 'pi pi-database',
+        csv: 'pi pi-table',
+        // Documents
+        md: 'pi pi-file-edit',
+        txt: 'pi pi-file-edit',
+        doc: 'pi pi-file-word',
+        docx: 'pi pi-file-word',
+        pdf: 'pi pi-file-pdf',
+        // Images
+        png: 'pi pi-image',
+        jpg: 'pi pi-image',
+        jpeg: 'pi pi-image',
+        gif: 'pi pi-image',
+        svg: 'pi pi-image',
+        // Config
+        yml: 'pi pi-cog',
+        yaml: 'pi pi-cog',
+        config: 'pi pi-cog',
+        env: 'pi pi-cog',
+        // Git
+        gitignore: 'pi pi-github',
+        // Package
+        lock: 'pi pi-lock',
+        // Default
+        default: 'pi pi-file'
+    };
+    
+    if (!ext) return iconMap.default;
+    return iconMap[ext] || iconMap.default;
+};
+
 const createPrimeVueTreeStructure = (files) => {
     console.log('Starting tree creation with', files.length, 'files');
     
-    // Initialize root
-    const root = {
-        key: 'root',
-        label: '/',
-        data: {
-            path: '',
-            type: 'directory',
-            meta: { totalFiles: 0, totalSize: 0 }
-        },
-        children: []
-    };
-
-    // Initialize directory cache
-    const dirCache = new Map([['', root]]);
-
-    console.log('Building directory structure...');
+    // Keep track of processed directories to avoid duplicates
+    const processedPaths = new Set();
     
-    // First, build all directory paths
-    files.forEach((file, index) => {
+    // Create a map to store directory nodes
+    const dirMap = new Map();
+    
+    // Initialize root level structure
+    const root = [];
+
+    // First pass: Create all necessary directories
+    files.forEach(file => {
         const pathParts = file.path.split('/');
         let currentPath = '';
 
-        // Create each directory in the path if it doesn't exist
+        // Process all directory parts of the path
         for (let i = 0; i < pathParts.length - 1; i++) {
             const part = pathParts[i];
             const parentPath = currentPath;
             currentPath = currentPath ? `${currentPath}/${part}` : part;
 
-            if (!dirCache.has(currentPath)) {
+            // Only create directory if it hasn't been processed
+            if (!processedPaths.has(currentPath)) {
+                processedPaths.add(currentPath);
+
                 const dirNode = {
                     key: currentPath,
                     label: part,
                     data: {
                         path: currentPath,
                         type: 'directory',
-                        meta: { totalFiles: 0, totalSize: 0 }
+                        meta: {
+                            totalFiles: 0,
+                            totalSize: 0
+                        }
                     },
+                    icon: 'pi pi-folder',
                     children: []
                 };
-                dirCache.set(currentPath, dirNode);
 
-                // Add to parent
-                const parent = dirCache.get(parentPath);
-                if (parent) {
-                    parent.children.push(dirNode);
+                dirMap.set(currentPath, dirNode);
+
+                // Add to parent or root
+                if (!parentPath) {
+                    root.push(dirNode);
+                } else {
+                    const parentDir = dirMap.get(parentPath);
+                    if (parentDir) {
+                        parentDir.children.push(dirNode);
+                    }
                 }
             }
         }
     });
 
-    console.log('Adding files to structure...');
-
-    // Then add all files
-    files.forEach((file, index) => {
+    // Second pass: Add files to their directories
+    files.forEach(file => {
         const pathParts = file.path.split('/');
         const fileName = pathParts.pop();
         const parentPath = pathParts.join('/');
+        
+        // Skip if this path was already processed as a directory
+        if (processedPaths.has(file.path)) {
+            return;
+        }
 
         const fileNode = {
             key: file.path,
@@ -323,18 +374,23 @@ const createPrimeVueTreeStructure = (files) => {
                 ...file,
                 type: 'file'
             },
+            icon: getFileIcon(fileName),
             leaf: true
         };
 
-        // Add file to its parent directory
-        const parent = dirCache.get(parentPath) || root;
-        parent.children.push(fileNode);
+        // Add to parent directory or root
+        if (!parentPath) {
+            root.push(fileNode);
+        } else {
+            const parentDir = dirMap.get(parentPath);
+            if (parentDir) {
+                parentDir.children.push(fileNode);
+            }
+        }
     });
 
-    console.log('Updating directory statistics...');
-
-    // Update directory statistics
-    const updateDirStats = (node) => {
+    // Calculate directory statistics
+    const calculateDirStats = (node) => {
         if (node.leaf) {
             return {
                 files: 1,
@@ -346,7 +402,7 @@ const createPrimeVueTreeStructure = (files) => {
         let totalSize = 0;
 
         for (const child of node.children) {
-            const stats = updateDirStats(child);
+            const stats = calculateDirStats(child);
             totalFiles += stats.files;
             totalSize += stats.size;
         }
@@ -357,61 +413,42 @@ const createPrimeVueTreeStructure = (files) => {
         return { files: totalFiles, size: totalSize };
     };
 
-    updateDirStats(root);
-
-    console.log('Sorting tree...');
-
-    // Sort all directories
-    const sortDir = (node) => {
+    // Sort function for tree nodes
+    const sortNodes = (node) => {
         if (node.children && node.children.length > 0) {
             // Sort current level
             node.children.sort((a, b) => {
                 // Directories first
-                if (a.leaf !== b.leaf) {
-                    return a.leaf ? 1 : -1;
+                if ((a.children && !b.children) || (!a.children && b.children)) {
+                    return a.children ? -1 : 1;
                 }
                 // Then alphabetically
                 return a.label.localeCompare(b.label);
             });
 
-            // Sort subdirectories
-            node.children.forEach(child => {
-                if (!child.leaf) {
-                    sortDir(child);
-                }
-            });
+            // Sort children recursively
+            node.children.forEach(sortNodes);
         }
     };
 
-    sortDir(root);
+    // Sort root level
+    root.sort((a, b) => {
+        if ((a.children && !b.children) || (!a.children && b.children)) {
+            return a.children ? -1 : 1;
+        }
+        return a.label.localeCompare(b.label);
+    });
+
+    // Update directory statistics
+    root.forEach(node => calculateDirStats(node));
+    
+    // Sort the entire tree
+    root.forEach(sortNodes);
 
     console.log('Tree creation complete');
     return root;
 };
 
-// Simplified file icon helper
-const getFileIcon = (fileName) => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    const icons = {
-        js: 'pi pi-code',
-        jsx: 'pi pi-code',
-        ts: 'pi pi-code',
-        tsx: 'pi pi-code',
-        vue: 'pi pi-code',
-        css: 'pi pi-palette',
-        scss: 'pi pi-palette',
-        html: 'pi pi-globe',
-        json: 'pi pi-database',
-        md: 'pi pi-file-edit',
-        txt: 'pi pi-file-edit',
-        png: 'pi pi-image',
-        jpg: 'pi pi-image',
-        jpeg: 'pi pi-image',
-        gif: 'pi pi-image',
-        svg: 'pi pi-image'
-    };
-    return icons[ext] || 'pi pi-file';
-};
 
 exports.getRepositoryContents = async function (req, res, next) {
     const startTime = process.hrtime();
@@ -438,6 +475,7 @@ exports.getRepositoryContents = async function (req, res, next) {
         const files = await Promise.race([fetchPromise, timeoutPromise]);
         console.log(`Fetched ${files.length} files, converting to tree structure`);
 
+        console.log(files.map((file=> file.name)))
         // Convert to tree structure with a timeout
         const treePromise = new Promise((resolve) => {
             const treeData = createPrimeVueTreeStructure(files);
