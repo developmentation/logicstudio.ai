@@ -26,6 +26,7 @@ export const createCardRegistry = (props) => {
     GITHUB: "github",
     API: "api",
     CHAT: "chat",
+    TRANSCRIBE: "transcribe",
     TOOL: "tool",
   };
 
@@ -188,7 +189,15 @@ export const createCardRegistry = (props) => {
       },
     },
 
-
+    [CARD_TYPES.TRANSCRIBE]: {
+      display:"default",
+      width: 450,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
     
     [CARD_TYPES.TEMPLATE]: {
       display:"default",

@@ -104,9 +104,9 @@ export default {
         { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
         { id: 'github', label: 'GitHub', icon: 'pi pi-github', type: 'github' },
         { id: 'api', label: 'API', icon: 'pi pi-server', type: 'api' },
+        { id: 'transcribe', label: 'Transcribe', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
         { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
-        { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },
-        { id: 'transcribe', label: 'Transcribe (Pending)', icon: 'pi pi-microphone', type: 'tool', disabled:true },
+        // { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },
 
         
         // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
@@ -117,7 +117,7 @@ export default {
       ];
   
       const exportTools = [
-        { id: 'exportPNG', label: 'Export PNG', icon: 'pi pi-image', action: 'export-png' },
+        // { id: 'exportPNG', label: 'Export PNG', icon: 'pi pi-image', action: 'export-png' },
         // { id: 'exportJSON', label: 'Export JSON', icon: 'pi pi-cloud-download', action: 'export-json' },
         // { id: 'importJSON', label: 'Import JSON', icon: 'pi pi-cloud-upload', action: 'import-json' }
       ];
