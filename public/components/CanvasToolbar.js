@@ -91,7 +91,7 @@ export default {
       const showText = Vue.ref(false);
   
       const addTools = [
-        { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model', disabled:true },
+        { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model' },
         { id: 'trigger', label: 'Trigger', icon: 'pi pi-play-circle', type: 'trigger' },
         { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
         { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },

@@ -189,13 +189,13 @@ export function useRealTime() {
     }
 
     // Send to Server function
-    function sendToServer(uuid, session, provider, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson) {
+    function sendToServer(uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson) {
         if (ws) {
-            let wsSendVars = { token: null, uuid, session, provider, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
+            let wsSendVars = { token: null, uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
             console.log("wsSendVars", wsSendVars)
             ws.send(JSON.stringify(wsSendVars));
         } else if (socket && socket.connected) {
-            let socketSendVars = { token: null, uuid, session, provider, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
+            let socketSendVars = { token: null, uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
             socket.emit('message', JSON.stringify(socketSendVars));
         }
     }

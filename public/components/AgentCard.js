@@ -3,6 +3,7 @@ import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import SocketEditor from "./SocketEditor.js";
 import { useConfigs } from "../composables/useConfigs.js";
+import { useCanvases } from "../composables/useCanvases.js";
 import { useRealTime } from "../composables/useRealTime.js";
 
 import {
@@ -58,10 +59,13 @@ export default {
         class="flex-1 bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded cursor-pointer;" style = "border: 1px solid #374151; width:100%"
         @mousedown.stop
         @change="handleCardUpdate">
-        <option v-for="model in models" :key="model.model" :value="model">
+        <option v-for="model in availableModels" :key="model.model" :value="model">
           {{model.provider.toUpperCase()}} {{model.name.en}}
         </option>
       </select>
+
+
+
       </div>
 
       <!-- Input Sockets -->
@@ -189,7 +193,16 @@ export default {
 
     const socketMap = Vue.ref(new Map());
 
-    const { models } = useConfigs();
+    const { canvasModels } = useCanvases(); // Add this import
+    const {  models: configModels  } = useConfigs();
+
+        // Add this computed property
+    const availableModels = Vue.computed(() => {
+      // Use canvas models if available, otherwise fall back to config models
+      return canvasModels.value.length > 0 ? canvasModels.value : configModels.value;
+    });
+
+
     const {
       wsUuid,
       sessions,
@@ -265,9 +278,11 @@ export default {
     const hasSocketError = () => false;
 
     Vue.onMounted(() => {
+
+      
       //If no model is provided, then assign the first one automatically
-      if (models.value.length && !localCardData.value.model) {
-        localCardData.value.model = models.value[0];
+      if (availableModels.value.length && !localCardData.value.model) {
+        localCardData.value.model = availableModels.value[0];
       }
 
       //Register this agent into the websocket registry
@@ -451,6 +466,10 @@ export default {
         return;
       }
 
+      if (localCardData.value.status === "inProgress") return; //Reject requests while in progress
+      if (!localCardData?.value?.model?.provider) return; //Must have a model
+
+
       // We're idle, so clear any pending flag and proceed
       triggerPending.value = false;
 
@@ -489,8 +508,7 @@ export default {
       sendToServer(
         wsUuid.value,
         websocketId.value,
-        localCardData.value.model.provider || "openAi",
-        localCardData.value.model.model || "gpt-4o",
+        localCardData.value.model,
         temperature,
         null,
         null,
@@ -732,7 +750,7 @@ export default {
       sessions,
       websocketId,
       triggerAgent,
-      models,
+      availableModels,
       partialMessage,
       completedMessage,
 

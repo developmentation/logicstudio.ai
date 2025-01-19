@@ -1,6 +1,7 @@
 // components/Studio.js
 
 import { useCanvases } from "../composables/useCanvases.js";
+import ModelCard from "./ModelCard.js";
 import TriggerCard from "./TriggerCard.js";
 import AgentCard from "./AgentCard.js";
 import TextCard from "./TextCard.js";
@@ -23,6 +24,7 @@ import ConnectionsLayer from "./ConnectionsLayer.js";
 export default {
   name: "Studio",
   components: {
+    ModelCard,
     TriggerCard,
     AgentCard,
     TextCard,
@@ -349,11 +351,12 @@ export default {
     // Component utility functions
     const getCardComponent = (type) => {
       switch (type) {
-        case "agent":
-        default:
-          return "AgentCard";
+        case "model":
+          return "ModelCard";
         case "trigger":
           return "TriggerCard";
+        case "agent":
+          return "AgentCard";
         case "text":
           return "TextCard";
         case "chat":

@@ -14,6 +14,7 @@ export const createCardRegistry = (props) => {
   // Enhanced card type definitions
   const CARD_TYPES = {
     TRIGGER: "trigger",
+    MODEL: "model",
     AGENT: "agent",
     INPUT: "input",
     OUTPUT: "output",
@@ -38,6 +39,17 @@ export const createCardRegistry = (props) => {
 
   // Enhanced default configurations with socket schemas
   const CARD_DEFAULTS = {
+
+    [CARD_TYPES.MODEL]: {
+      display:"default",
+      width: 300,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
     [CARD_TYPES.AGENT]: {
       display:"default", //default is as described. could be "minimized", which hides the content, or could be "maximized", which makes the component very large
       width: 300,

@@ -86,7 +86,7 @@ const handlePrompt = async (promptConfig, sendToClient) => {
       ];
 
     switch (provider) {
-      case "openAi":
+      case "openai":
         if (!services.openAi) break;
         responseStream = await handleOpenAiPrompt(account, {
           model,
@@ -118,7 +118,7 @@ const handlePrompt = async (promptConfig, sendToClient) => {
           sendToClient
         );
         break;
-      case "azureOpenAi":
+      case "azureai":
         if (!services.azureOpenAi) break;
         responseStream = await handleAzureOpenAiPrompt(
           account,
