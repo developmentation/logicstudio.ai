@@ -129,7 +129,7 @@ export const createCardRegistry = (props) => {
     },
     [CARD_TYPES.VIEW]: {
       display:"default",
-      width: 600,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -139,7 +139,7 @@ export const createCardRegistry = (props) => {
 
     [CARD_TYPES.LABEL]: {
       display:"default",
-      width: 450,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -160,7 +160,7 @@ export const createCardRegistry = (props) => {
     
     [CARD_TYPES.WEB]: {
       display:"default",
-      width: 450,
+      width: 300,
       height: 150,
       sockets: {
         inputs: [],
@@ -172,7 +172,7 @@ export const createCardRegistry = (props) => {
 
     [CARD_TYPES.CHAT]: {
       display:"default",
-      width: 600,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -183,7 +183,7 @@ export const createCardRegistry = (props) => {
     
     [CARD_TYPES.GITHUB]: {
       display:"default",
-      width: 600,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -193,7 +193,7 @@ export const createCardRegistry = (props) => {
 
     [CARD_TYPES.API]: {
       display:"default",
-      width: 450,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
