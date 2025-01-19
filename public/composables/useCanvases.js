@@ -398,6 +398,7 @@ export const useCanvases = () => {
   const templateNames = [
     // Add more template names here
     'Hot Topics Book Generator',
+    'Weather Forecast and Heat Loss Calculation'
   ];
   
 
