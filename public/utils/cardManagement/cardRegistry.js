@@ -24,6 +24,7 @@ export const createCardRegistry = (props) => {
     TEXT: "text",
     WEB: "web",
     GITHUB: "github",
+    API: "api",
     CHAT: "chat",
     TOOL: "tool",
   };
@@ -176,6 +177,17 @@ export const createCardRegistry = (props) => {
         outputs: [],
       },
     },
+
+    [CARD_TYPES.API]: {
+      display:"default",
+      width: 450,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
 
     
     [CARD_TYPES.TEMPLATE]: {

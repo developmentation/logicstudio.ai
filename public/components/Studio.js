@@ -13,6 +13,7 @@ import LabelCard from "./LabelCard.js";
 import TemplateCard from "./TemplateCard.js";
 import WebCard from "./WebCard.js";
 import GitHubCard from "./GitHubCard.js";
+import ApiCard from "./ApiCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 import CanvasTemplatesToolbar from "./CanvasTemplatesToolbar.js";
 
@@ -33,6 +34,7 @@ export default {
     TemplateCard,
     WebCard,
     GitHubCard,
+    ApiCard,
     CanvasToolbar,
     CanvasTemplatesToolbar,
     ConnectionsLayer,
@@ -368,7 +370,9 @@ export default {
           return "WebCard";
         case "github":
           return "GitHubCard";
-        case "template":
+          case "api":
+            return "ApiCard";
+          case "template":
           return "TemplateCard";
       }
     };
