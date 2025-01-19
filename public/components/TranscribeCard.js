@@ -364,6 +364,9 @@ export default {
         const result = await transcribeFile(
           localCardData.value.currentFile,
           (progress) => {
+            if (progress === 100) {
+              localCardData.value.status = 'transcribing';
+            }
             localCardData.value.progress = progress;
           }
         );
@@ -478,7 +481,7 @@ export default {
 
     const buttonText = Vue.computed(() => {
       switch (localCardData.value.status) {
-        case 'uploading': return 'Uploading...';
+        case 'uploading': return `Uploading... ${localCardData.value.progress}%`;
         case 'transcribing': return 'Transcribing...';
         case 'complete': return 'Transcribe Again';
         case 'error': return 'Retry Transcription';
@@ -550,4 +553,4 @@ export default {
       buttonText
     };
   }
-};
+}
