@@ -22,7 +22,7 @@ export default {
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
-        style="width:450px"
+         
       >
         <!-- Content -->
         <div 
