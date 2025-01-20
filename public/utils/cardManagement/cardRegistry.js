@@ -183,7 +183,7 @@ export const createCardRegistry = (props) => {
     
     [CARD_TYPES.GITHUB]: {
       display:"default",
-      width: 300,
+      width: 500,
       height: 250,
       sockets: {
         inputs: [],
