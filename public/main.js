@@ -50,6 +50,7 @@ app.component('Calendar', PrimeVue.Calendar);
 
 app.component('Select', PrimeVue.Select);
 app.component('MultiSelect', PrimeVue.MultiSelect);
+app.component('Tree', PrimeVue.Tree);
 // app.component('Chart', PrimeVue.Chart);
  
 

@@ -24,9 +24,10 @@ export default {
       default: false,
     },
   },
+  
   template: `
- <div
-      class="node-card rounded-md shadow-lg select-none"
+    <div
+      class="node-card rounded-md shadow-lg select-none relative"
       :class="[
         isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isSelected ? 'ring-2 ring-blue-500' : ''
@@ -36,7 +37,7 @@ export default {
         left: localCardData.x + 'px',
         top: localCardData.y + 'px',
         zIndex: isDragging ? 1000 : zIndex,
-        width: '300px'
+        width: (localCardData.width || 300) + 'px'
       }"
       @mousedown="startDrag"
       @click="handleCardClick"
@@ -45,22 +46,21 @@ export default {
       @touchend.passive="handleTouchEnd"
       :data-card-id="localCardData.uuid"
     >
-    <BaseCardHeader
-      :title="localCardData.name"
-      :is-selected="isSelected"
-      @update:title="updateTitle"
-      @close="$emit('close-card', localCardData.uuid)"
-      @clone-card="$emit('clone-card', localCardData.uuid)"
-      @header-click="handleHeaderClick"
-      @header-mousedown="startDrag"  
-    />
+      <BaseCardHeader
+        :title="localCardData.name"
+        :is-selected="isSelected"
+        @update:title="updateTitle"
+        @close="$emit('close-card', localCardData.uuid)"
+        @clone-card="$emit('clone-card', localCardData.uuid)"
+        @header-click="handleHeaderClick"
+        @header-mousedown="startDrag"  
+      />
       
       <div class="p-3 relative">
         <!-- Description -->
         <div class="mb-2">
           <div v-if="!isEditingDescription" class="flex items-center gap-1">
-
-            <button v-if = "localCardData.display == 'default'"
+            <button v-if="localCardData.display == 'default'"
               class="text-gray-400 hover:text-gray-200"
               @click.stop="toggleDisplay"
             >
@@ -74,8 +74,7 @@ export default {
               <i class="pi pi-caret-down text-xs"></i>
             </button>
 
-
-          <p class="text-xs text-gray-300">{{ localCardData.description }}</p>
+            <p class="text-xs text-gray-300">{{ localCardData.description }}</p>
             <button 
               class="text-gray-400 hover:text-gray-200"
               @click.stop="startDescriptionEdit"
@@ -96,19 +95,63 @@ export default {
 
         <slot></slot>
       </div>
+
+      <!-- Resize Handle -->
+      <div
+        class="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-blue-500 hover:opacity-50"
+        @mousedown.stop="startResize"
+        @touchstart.stop.passive="startResize"
+      ></div>
     </div>
   `,
   setup(props, { emit }) {
-    const localCardData = Vue.reactive({ ...props.cardData });
+    const localCardData = Vue.reactive({ ...props.cardData, width: props.cardData.width || 300 });
     const isDragging = Vue.ref(false);
+    const isResizing = Vue.ref(false);
     const dragStart = Vue.reactive({ x: 0, y: 0 });
     const isEditingDescription = Vue.ref(false);
     const descriptionInput = Vue.ref(null);
-
     const wasDragging = Vue.ref(false);
 
+    const startResize = (event) => {
+      const isTouch = event.type === "touchstart";
+      if (!isTouch && event.button !== 0) return;
+
+      isResizing.value = true;
+      dragStart.x = isTouch ? event.touches[0].clientX : event.clientX;
+      
+      const handleMove = (e) => {
+        if (!isResizing.value) return;
+        
+        const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+        const dx = (currentX - dragStart.x) / props.zoomLevel;
+        
+        const newWidth = Math.max(200, (localCardData.width || 300) + dx);
+        localCardData.width = newWidth;
+        
+        dragStart.x = currentX;
+        
+        emit("update-card", { ...localCardData });
+      };
+
+      const handleEnd = () => {
+        if (!isResizing.value) return;
+        isResizing.value = false;
+        
+        if (!isTouch) {
+          document.removeEventListener("mousemove", handleMove);
+          document.removeEventListener("mouseup", handleEnd);
+        }
+      };
+
+      if (!isTouch) {
+        document.addEventListener("mousemove", handleMove);
+        document.addEventListener("mouseup", handleEnd);
+      }
+    };
+
+
     const handleCardClick = (event) => {
-      // Don't handle click if this was the end of a drag operation
       if (wasDragging.value) return;
 
       if (
@@ -346,27 +389,29 @@ export default {
     Vue.watch(
       () => props.cardData,
       (newData) => {
-        Object.assign(localCardData, newData);
+        Object.assign(localCardData, {
+          ...newData,
+          width: newData.width || localCardData.width || 300
+        });
       },
       { deep: true }
     );
-
     return {
       localCardData,
       isDragging,
+      isResizing,
       isEditingDescription,
       descriptionInput,
       handleCardClick,
-
+      startResize,
       startDrag,
+      startConnectionDrag,
       updateTitle,
       startDescriptionEdit,
       finishDescriptionEdit,
       handleHeaderClick,
       handleTouchMove,
       handleTouchEnd,
-      startConnectionDrag,
-
       toggleDisplay,
     };
   },

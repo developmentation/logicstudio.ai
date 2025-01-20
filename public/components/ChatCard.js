@@ -2,6 +2,7 @@
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import { useConfigs } from "../composables/useConfigs.js";
+import { useCanvases } from "../composables/useCanvases.js";
 import { useRealTime } from "../composables/useRealTime.js";
 
 import {
@@ -45,7 +46,7 @@ export default {
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
-        style = "width:600px;"
+        
       >
         <!-- Model Selection -->
         <div class="w-full" v-show="localCardData.display == 'default'">
@@ -56,7 +57,7 @@ export default {
             @mousedown.stop
             @change="handleCardUpdate"
           >
-            <option v-for="model in models" :key="model.model" :value="model">
+            <option v-for="model in availableModels" :key="model.model" :value="model">
              {{model.provider.toUpperCase()}} {{model.name.en}}
             </option>
           </select>
@@ -232,7 +233,18 @@ export default {
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
     const userInput = Vue.ref(null);
-    const { models } = useConfigs();
+
+    const { canvasModels } = useCanvases(); // Add this import
+    const { models: configModels } = useConfigs();
+
+    // Add this computed property
+    const availableModels = Vue.computed(() => {
+      // Use canvas models if available, otherwise fall back to config models
+      return canvasModels.value.length > 0
+        ? canvasModels.value
+        : configModels.value;
+    });
+
     const chatContainer = Vue.ref(null);
 
     const {
@@ -669,7 +681,9 @@ export default {
     };
 
     const triggerLLM = async () => {
-      if (localCardData.value.status === "inProgress") return;
+
+      if (localCardData.value.status === "inProgress") return; //Reject requests while in progress
+      if (!localCardData?.value?.model?.provider) return; //Must have a model
 
       // Process input sockets first
       if (localCardData.value.sockets.inputs.length > 0) {
@@ -717,8 +731,7 @@ export default {
         await sendToServer(
           wsUuid.value,
           websocketId.value,
-          localCardData.value.model.provider || "openAi",
-          localCardData.value.model.model || "gpt-4",
+          localCardData.value.model,
           temperature,
           null,
           null,
@@ -890,8 +903,9 @@ export default {
 
     // Initialize
     Vue.onMounted(() => {
-      if (models.value.length && !localCardData.value.model) {
-        localCardData.value.model = models.value[0];
+       //If no model is provided, then assign the first one automatically
+       if (availableModels.value.length && !localCardData.value.model) {
+        localCardData.value.model = availableModels.value[0];
       }
 
       // Handle initial socket setup
@@ -929,7 +943,7 @@ export default {
       chatContainer,
       localCardData,
       userInput,
-      models,
+      availableModels,
       getSocketConnections,
       hasSocketError,
       emitWithCardId,

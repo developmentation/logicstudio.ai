@@ -8,7 +8,7 @@ The client app will select whichever protocol it prefers
 const WebSocket = require("ws");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
-const { handlePrompt } = require("./handlePrompts"); // Import the handlePrompt function
+const { handlePrompt } = require("./handleAiInteractions"); // Import the handlePrompt function
 
 const realTimeClients = {};
 const { authenticateAndDecode } = require("../middleware/verify");
@@ -29,8 +29,7 @@ function buildPromptConfig(data, account) {
     account,
     uuid: data.uuid,
     session: data.session,
-    provider: data.provider || "openAi",
-    model: data.model || "gpt-4",
+    model: data.model ,
     temperature: data.temperature,
     systemPrompt: data.systemPrompt,
     userPrompt: data.userPrompt,

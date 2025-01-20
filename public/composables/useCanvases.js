@@ -398,6 +398,7 @@ export const useCanvases = () => {
   const templateNames = [
     // Add more template names here
     'Hot Topics Book Generator',
+    'Weather Forecast and Heat Loss Calculation'
   ];
   
 
@@ -504,6 +505,77 @@ const socketAndConnectionState = Vue.computed(() =>
   }))
 );
 
+
+//Extract the models from the canvas
+// Memoization for model configurations
+const lastModelConfig = Vue.ref(null);
+
+// Helper to compare model configurations (ignoring position data)
+const areModelConfigsEqual = (prev, curr) => {
+  if (!prev || !curr) return false;
+  return JSON.stringify(prev) === JSON.stringify(curr);
+};
+
+// Helper to check if a string field is valid (not null/undefined and has length)
+const isValidField = (field) => field && typeof field === 'string' && field.trim().length > 0;
+
+// Helper to validate all required fields for a model
+const isValidModel = (model) => {
+  // Base validation for all providers
+  if (!isValidField(model.displayName) ||  // Add displayName validation
+      !isValidField(model.model) || 
+      !isValidField(model.provider) || 
+      !isValidField(model.apiKey)) {
+    return false;
+  }
+
+  // Additional validation for AzureAI
+  if (model.provider === 'AzureAI' && !isValidField(model.apiEndpoint)) {
+    return false;
+  }
+
+  return true;
+};
+
+const canvasModels = Vue.computed(() => {
+  if (!activeCanvas.value?.cards) return [];
+  
+  // Extract model configurations and strip reactive properties
+  const currentConfig = Object.values(activeCanvas.value.cards)
+    .filter(card => card.type === 'model')
+    .map(card => ({
+      type: card.type,
+      models: Vue.toRaw(card.models || [])
+        .filter(isValidModel)  // Only include fully valid models
+        .map(model => ({
+          name: { 
+            en: model.displayName, // Always use displayName for the name
+            fr: model.displayName
+          },
+          model: model.model,
+          provider: model.provider,
+          apiKey: model.apiKey,
+          ...(model.provider === 'AzureAI' && { apiEndpoint: model.apiEndpoint })
+        }))
+    }));
+
+  // If the configurations haven't changed, return the previous result
+  if (areModelConfigsEqual(lastModelConfig.value, currentConfig)) {
+    return lastModelConfig.value.reduce((acc, card) => {
+      return acc.concat(card.models);
+    }, []);
+  }
+
+  // Update the last known configuration
+  lastModelConfig.value = currentConfig;
+
+  // Return new model list
+  return currentConfig.reduce((acc, card) => {
+    return acc.concat(card.models);
+  }, []);
+});
+
+
 // Watch the computed instead of the entire canvases array
 Vue.watch(
   socketAndConnectionState,
@@ -567,6 +639,7 @@ Vue.watch(
     activeCanvasIndex,
     moveCanvasLeft,
     moveCanvasRight,
+    canvasModels,
 
     // UI State
     canvasRef,

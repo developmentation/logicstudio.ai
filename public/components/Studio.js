@@ -1,6 +1,7 @@
 // components/Studio.js
 
 import { useCanvases } from "../composables/useCanvases.js";
+import ModelCard from "./ModelCard.js";
 import TriggerCard from "./TriggerCard.js";
 import AgentCard from "./AgentCard.js";
 import TextCard from "./TextCard.js";
@@ -12,15 +13,18 @@ import ViewCard from "./ViewCard.js";
 import LabelCard from "./LabelCard.js";
 import TemplateCard from "./TemplateCard.js";
 import WebCard from "./WebCard.js";
+import GitHubCard from "./GitHubCard.js";
+import ApiCard from "./ApiCard.js";
+import TranscribeCard from "./TranscribeCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 import CanvasTemplatesToolbar from "./CanvasTemplatesToolbar.js";
 
-import ConnectionsLayer from './ConnectionsLayer.js';
-
+import ConnectionsLayer from "./ConnectionsLayer.js";
 
 export default {
   name: "Studio",
   components: {
+    ModelCard,
     TriggerCard,
     AgentCard,
     TextCard,
@@ -32,6 +36,9 @@ export default {
     LabelCard,
     TemplateCard,
     WebCard,
+    GitHubCard,
+    ApiCard,
+    TranscribeCard,
     CanvasToolbar,
     CanvasTemplatesToolbar,
     ConnectionsLayer,
@@ -302,28 +309,26 @@ export default {
     const initialized = Vue.ref(false);
 
     const panOffset = Vue.reactive({ x: 0, y: 0 });
-  
-
 
     Vue.onMounted(() => {
       // Add keyboard event listener
       window.addEventListener("keydown", handleKeyDown);
-      window.addEventListener('resize', handleScroll);
-    
+      window.addEventListener("resize", handleScroll);
+
       // Initial setup
       requestAnimationFrame(() => {
         if (!activeCanvas.value) {
           createCanvas();
         }
-        
+
         if (canvasRef.value) {
           // Set initial pan offset
           panOffset.x = canvasRef.value.scrollLeft;
           panOffset.y = canvasRef.value.scrollTop;
-          
+
           // Center the canvas
           centerCanvas(false);
-          
+
           // Update offset after centering
           Vue.nextTick(() => {
             panOffset.x = canvasRef.value.scrollLeft;
@@ -333,11 +338,9 @@ export default {
       });
     });
 
-
-
     Vue.onUnmounted(() => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener("resize", handleScroll);
       initialized.value = false;
     });
 
@@ -348,11 +351,12 @@ export default {
     // Component utility functions
     const getCardComponent = (type) => {
       switch (type) {
-        case "agent":
-        default:
-          return "AgentCard";
+        case "model":
+          return "ModelCard";
         case "trigger":
           return "TriggerCard";
+        case "agent":
+          return "AgentCard";
         case "text":
           return "TextCard";
         case "chat":
@@ -369,6 +373,12 @@ export default {
           return "LabelCard";
         case "web":
           return "WebCard";
+        case "github":
+          return "GitHubCard";
+        case "api":
+          return "ApiCard";
+        case "transcribe":
+          return "TranscribeCard";
         case "template":
           return "TemplateCard";
       }
@@ -419,7 +429,6 @@ export default {
       canvases.value.push(newCanvas);
       activeCanvasId.value = newCanvas.id;
     };
-
 
     const handleManualTrigger = (cardData) => {
       const connections = activeConnections.value.filter(
@@ -538,47 +547,45 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
   };
   */
 
-  
-// Throttle utility
-function useThrottle(fn, delay) {
-  let lastCall = 0;
-  let timeout = null;
+    // Throttle utility
+    function useThrottle(fn, delay) {
+      let lastCall = 0;
+      let timeout = null;
 
-  const throttled = (...args) => {
-    const now = Date.now();
+      const throttled = (...args) => {
+        const now = Date.now();
 
-    if (now - lastCall >= delay) {
-      if (timeout) {
-        clearTimeout(timeout);
-        timeout = null;
+        if (now - lastCall >= delay) {
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
+          fn(...args);
+          lastCall = now;
+        } else if (!timeout) {
+          timeout = setTimeout(() => {
+            fn(...args);
+            lastCall = Date.now();
+            timeout = null;
+          }, delay - (now - lastCall));
+        }
+      };
+
+      Vue.onUnmounted(() => {
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+      });
+
+      return throttled;
+    }
+
+    const handleScroll = useThrottle((event) => {
+      if (canvasRef.value) {
+        panOffset.x = canvasRef.value.scrollLeft;
+        panOffset.y = canvasRef.value.scrollTop;
       }
-      fn(...args);
-      lastCall = now;
-    } else if (!timeout) {
-      timeout = setTimeout(() => {
-        fn(...args);
-        lastCall = Date.now();
-        timeout = null;
-      }, delay - (now - lastCall));
-    }
-  };
-
-  Vue.onUnmounted(() => {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-  });
-
-  return throttled;
-}
-
-  const handleScroll = useThrottle((event) => {
-    if (canvasRef.value) {
-      panOffset.x = canvasRef.value.scrollLeft;
-      panOffset.y = canvasRef.value.scrollTop;
-    }
-  }, 16);
-
+    }, 16);
 
     const handleSocketsUpdated = async ({
       oldSockets,
@@ -717,14 +724,18 @@ function useThrottle(fn, delay) {
     };
 
     // Watch for zoom changes to update connections
-Vue.watch(zoomLevel, () => {
-  Vue.nextTick(() => {
-    if (canvasRef.value) {
-      panOffset.x = canvasRef.value.scrollLeft;
-      panOffset.y = canvasRef.value.scrollTop;
-    }
-  });
-}, { flush: 'post' });
+    Vue.watch(
+      zoomLevel,
+      () => {
+        Vue.nextTick(() => {
+          if (canvasRef.value) {
+            panOffset.x = canvasRef.value.scrollLeft;
+            panOffset.y = canvasRef.value.scrollTop;
+          }
+        });
+      },
+      { flush: "post" }
+    );
 
     return {
       //Templates

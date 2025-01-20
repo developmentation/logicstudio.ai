@@ -1,37 +1,69 @@
 // composables/useTranscripts.js
-let files = Vue.ref([]);
-let transcripts = Vue.ref([]);
 
 export const useTranscripts = () => {
-  const transcribe = async () => {
+  // Supported formats for validation
+  const SUPPORTED_EXTENSIONS = [
+    // Audio extensions
+    '.mp3', '.wav', '.ogg', '.webm', '.m4a', '.aac', 
+    '.aiff', '.flac', '.caf', '.mka', '.wma',
+    // Video extensions
+    '.mp4', '.ogv', '.mov', '.mkv', '.avi', 
+    '.wmv', '.3gp', '.flv'
+  ];
+
+  // Validation helper
+  const validateFile = (file) => {
+    const errors = [];
+    
+    if (!file) {
+      errors.push('No file selected');
+      return errors;
+    }
+
+    const maxSize = 1000 * 1024 * 1024; // 1GB
+    if (file.size > maxSize) {
+      errors.push('File size exceeds 1GB limit');
+    }
+
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!SUPPORTED_EXTENSIONS.includes(extension)) {
+      errors.push('Unsupported file format. Please upload a valid audio or video file');
+    }
+
+    return errors;
+  };
+
+  // Core transcription function
+  const transcribeFile = async (file, onProgress) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
     try {
-      // if (!files.value || files.value.length === 0) {
-      //   console.log('No files selected!');
-      //   return;
-      // }
-
-      const formData = new FormData();
-      files.value.forEach(file => {
-        formData.append('files', file);
-      });
-
-      console.log("form data", formData)
-
       const response = await axios.post('/api/transcribe', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total && onProgress) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onProgress(progress);
+          }
+        }
       });
 
-      transcripts.value = response.data.transcripts;
-       console.log("Transcripts", transcripts.value);
+      return {
+        success: true,
+        data: response.data.transcript
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.message || 'Transcription failed'
+      };
     }
-    catch (error) {
-      console.log('Error', error);
-    }
-  }
+  };
 
   return {
-    transcribe,
-    files,
-    transcripts
-  }
-}
+    validateFile,
+    transcribeFile,
+    SUPPORTED_EXTENSIONS
+  };
+};

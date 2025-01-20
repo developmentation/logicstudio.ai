@@ -16,7 +16,7 @@ exports.getConfigs = async function (req, res, next) {
             Anthrpoic
             Mistral
             Groq
-            Azure AI
+            AzureAI
             X
             */
 

@@ -14,6 +14,7 @@ export const createCardRegistry = (props) => {
   // Enhanced card type definitions
   const CARD_TYPES = {
     TRIGGER: "trigger",
+    MODEL: "model",
     AGENT: "agent",
     INPUT: "input",
     OUTPUT: "output",
@@ -23,7 +24,10 @@ export const createCardRegistry = (props) => {
     LABEL: "label",
     TEXT: "text",
     WEB: "web",
+    GITHUB: "github",
+    API: "api",
     CHAT: "chat",
+    TRANSCRIBE: "transcribe",
     TOOL: "tool",
   };
 
@@ -35,6 +39,17 @@ export const createCardRegistry = (props) => {
 
   // Enhanced default configurations with socket schemas
   const CARD_DEFAULTS = {
+
+    [CARD_TYPES.MODEL]: {
+      display:"default",
+      width: 300,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
     [CARD_TYPES.AGENT]: {
       display:"default", //default is as described. could be "minimized", which hides the content, or could be "maximized", which makes the component very large
       width: 300,
@@ -114,7 +129,7 @@ export const createCardRegistry = (props) => {
     },
     [CARD_TYPES.VIEW]: {
       display:"default",
-      width: 600,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -124,7 +139,7 @@ export const createCardRegistry = (props) => {
 
     [CARD_TYPES.LABEL]: {
       display:"default",
-      width: 450,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -145,7 +160,7 @@ export const createCardRegistry = (props) => {
     
     [CARD_TYPES.WEB]: {
       display:"default",
-      width: 450,
+      width: 300,
       height: 150,
       sockets: {
         inputs: [],
@@ -157,7 +172,7 @@ export const createCardRegistry = (props) => {
 
     [CARD_TYPES.CHAT]: {
       display:"default",
-      width: 600,
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
@@ -165,6 +180,36 @@ export const createCardRegistry = (props) => {
       },
     },
 
+    
+    [CARD_TYPES.GITHUB]: {
+      display:"default",
+      width: 300,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
+    [CARD_TYPES.API]: {
+      display:"default",
+      width: 300,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
+    [CARD_TYPES.TRANSCRIBE]: {
+      display:"default",
+      width: 450,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
     
     [CARD_TYPES.TEMPLATE]: {
       display:"default",
