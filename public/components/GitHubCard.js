@@ -81,6 +81,20 @@ export default {
         <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.display == 'default'">
           <!-- Repository Info - Only shown before initial load -->
           <div v-if="!localCardData.treeData" class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs text-gray-400">GitHub Repository URL</label>
+                <input
+                  v-model="localCardData.githubUrl"
+                  type="text"
+                  class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
+                  placeholder="https://www.github.com/github_username/repository_name/tree/branch_name"
+                  @change="handleCardUpdate"
+                  @mousedown.stop
+                />
+              </div>
+            <div class="flex justify-center">
+              <span>OR</span>
+            </div>
             <div class="grid grid-cols-3 gap-2">
               <div class="space-y-1">
                 <label class="text-xs text-gray-400">Owner</label>
