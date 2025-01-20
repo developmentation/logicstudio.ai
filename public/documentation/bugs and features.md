@@ -38,8 +38,8 @@
 ## Studio / Canvas
 - The ConnectionsLayer seems to have shifted off the central point of the canvas. 
 - The touch actions have seriously fallen out of sync with the mouse events, bring them back into alignment
-- Allow multiple inputs per socket, and have them overwrite the inputs based on the last updated
 - Adding some cards creates an unexpected scroll back to the centre of the Canvas. Not all cards cause this, but Chat for example seems to.
+    - -  Happens on Agent, Chat and Trigger card, seemingly due to some complex socket registration event emissions.
 
 ## Join
 - Create another join for JSON, whereby multiples are brought into an array (higheset level element) or they are brought into an Object, with the socket name the unique object.
@@ -76,3 +76,8 @@
 ## Node.js backend
 - Test and better integrate the ApiError and apiErrorHandler
 - Add in an optinal logger to track known issues and failures
+
+
+## Completed Features (DONE)
+- User request: Make the GitHub card process a URL into owner/repo (2025-01-20)
+- Experimental: Permit multiple connections to the same input, with the last output update overwriting the input.

@@ -256,14 +256,17 @@ completeConnection,
                                conn.targetSocketId === targetSocketId
                     );
     
-                    if (hasExistingConnection) {
-                        if (nearestSocket.value?.element) {
-                            nearestSocket.value.element.classList.remove('socket-highlight');
-                        }
-                        activeConnection.value = null;
-                        nearestSocket.value = null;
-                        return;
-                    }
+
+                    //Experimental
+                    //As an experiment I am permitting multiple connections to the same input node
+                    // if (hasExistingConnection) {
+                    //     if (nearestSocket.value?.element) {
+                    //         nearestSocket.value.element.classList.remove('socket-highlight');
+                    //     }
+                    //     activeConnection.value = null;
+                    //     nearestSocket.value = null;
+                    //     return;
+                    // }
                 }
     
                 // Create connection if types are compatible and not self-connecting
