@@ -16,6 +16,8 @@ const createClient = (provider, credentials) => {
     throw new Error(`No API key available for ${provider}`);
   }
 
+  // console.log('LLM Request for ', provider)
+
   switch (provider.toLowerCase()) {
     case 'openai':
       return new OpenAI({ apiKey });
@@ -81,6 +83,7 @@ const handlePrompt = async (promptConfig, sendToClient) => {
       apiEndpoint: modelConfig.apiEndpoint,
     });
 
+    
     // Handle provider-specific prompts
     const responseStream = await handleProviderPrompt(
       client,
@@ -114,6 +117,7 @@ const handlePrompt = async (promptConfig, sendToClient) => {
 const handleProviderPrompt = async (client, provider, config) => {
   switch (provider.toLowerCase()) {
     case 'openai':
+      // console.log("handleProviderPrompt, openAI",{client,provider,config})
       return client.chat.completions.create(config);
 
     case 'anthropic':
@@ -216,6 +220,10 @@ const handleGeminiPrompt = async (client, config) => {
 
 // Handle provider responses
 const handleProviderResponse = async (responseStream, provider, uuid, session, sendToClient) => {
+  // Normalize provider name to lowercase
+  provider = provider.toLowerCase();
+
+  // Handle Gemini separately
   if (provider === "gemini") {
     for await (const chunk of responseStream.stream) {
       sendToClient(uuid, session, "message", chunk.text());
@@ -224,12 +232,15 @@ const handleProviderResponse = async (responseStream, provider, uuid, session, s
     return;
   }
 
+  // Handle Azure separately
   if (provider === "azureai") {
     const stream = Readable.from(responseStream);
     handleAzureStream(stream, uuid, session, sendToClient);
     return;
   }
 
+  // Handle other providers
+  let messageEnded = false;
   for await (const part of responseStream) {
     try {
       let content = null;
@@ -237,29 +248,35 @@ const handleProviderResponse = async (responseStream, provider, uuid, session, s
       switch (provider) {
         case "openai":
           content = part?.choices?.[0]?.delta?.content;
+          messageEnded = part?.choices?.[0]?.finish_reason === "stop";
           break;
         case "anthropic":
-          if (part.type !== "message_stop") {
+          if (part.type === "message_stop") {
+            messageEnded = true;
+          } else {
             content = part?.content_block?.text || part?.delta?.text || "";
           }
           break;
         case "mistral":
-          if (part.data.choices[0].delta.content !== undefined && !part.data.choices[0].finishReason) {
-            content = part.data.choices[0].delta.content;
-          }
+          content = part?.data?.choices?.[0]?.delta?.content;
+          messageEnded = part?.data?.choices?.[0]?.finishReason === "stop";
           break;
         case "groq":
           content = part?.choices?.[0]?.delta?.content;
+          messageEnded = part?.choices?.[0]?.finish_reason === "stop";
           break;
       }
 
       if (content) {
         sendToClient(uuid, session, "message", content);
-      } else if (!content && part.type !== "message_stop") {
+      }
+      
+      // Send EOM if we've reached the end of the message
+      if (messageEnded) {
         sendToClient(uuid, session, "EOM", null);
       }
     } catch (error) {
-      console.error("Could not process stream message", error);
+      console.error(`Error processing ${provider} stream message:`, error);
       sendToClient(uuid, session, "ERROR", JSON.stringify({
         message: "Error processing stream message",
         error: error.message,
@@ -267,8 +284,12 @@ const handleProviderResponse = async (responseStream, provider, uuid, session, s
       }));
     }
   }
-};
 
+  // Send final EOM if not already sent
+  if (!messageEnded) {
+    sendToClient(uuid, session, "EOM", null);
+  }
+};
 // Handle AzureAI specific stream
 const handleAzureStream = (stream, uuid, session, sendToClient) => {
   stream.on("data", (event) => {

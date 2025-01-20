@@ -29,7 +29,7 @@ export default {
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
-         
+        style="min-width: 500px;"
       >
         <!-- Input Socket for Trigger -->
         <div class="absolute -left-[12px]" style="top: 16px;">
