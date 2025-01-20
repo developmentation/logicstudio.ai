@@ -12,6 +12,7 @@ const { handlePrompt } = require("./handleAiInteractions"); // Import the handle
 
 const realTimeClients = {};
 const { authenticateAndDecode } = require("../middleware/verify");
+const { connectFormSubmissions, disconnectFormSubmissions } = require("../controllers/adsp");
 
 async function verifyTokenAndAccount(token) {
   try {
@@ -157,24 +158,40 @@ async function handleMessage(message, client) {
       sendError(client, "Missing Uuid");
       return;
     }
-
-    if (data.type === "ping") {
-      sendToClient(data.uuid, data.session, "pong");
-      return;
+    switch (data.type) {
+      case "ping": {
+        sendToClient(data.uuid, data.session, "pong");
+        return;
+      }
+      case "prompt": {
+        const promptConfig = buildPromptConfig(data, null);
+        await handlePrompt(promptConfig, sendToClient);
+        break;
+      }
+      case "connect-form-submissions": {
+        await connectFormSubmissions(
+          { uuid: data.uuid, session: data.session },
+          sendToClient
+        );
+        break;
+      }
+      case "disconnect-form-submissions": {
+        await disconnectFormSubmissions(
+          { uuid: data.uuid, session: data.session },
+          sendToClient
+        );
+        break;
+      }
+      default: {
+        sendToClient(
+          data.uuid,
+          data.session,
+          "ERROR",
+          "Unrecognized message type"
+        );
+        return;
+      }
     }
-
-    if (data.type !== "prompt") {
-      sendToClient(
-        data.uuid,
-        data.session,
-        "ERROR",
-        "Unrecognized message type"
-      );
-      return;
-    }
-
-    const promptConfig = buildPromptConfig(data, null);
-    await handlePrompt(promptConfig, sendToClient);
   } catch (error) {
     console.error("Failed to handle message:", error);
     sendError(client, "Error processing message");
