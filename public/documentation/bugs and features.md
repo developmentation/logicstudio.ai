@@ -10,7 +10,7 @@
 - Deploy - This would be a critical feature to actually deploy the agent to be headlessly operating in the background and be able to start it and stop it with a secret key embedded in the Canvas itself. That way you could control the interactivity. It would need to adopt the reactivity of the UI component.
 
 ## Future Features
-- JSON to Form Card
+- JSON to Form Card - Receive JSON array of field types, and display the input as a form to collect user input, and then finalize the JSON
 - Canvas Inputs and Outputs - Pass content between two canvases in the workspace, like webhooks
 - Google or other search service API calls, which return pages and links for analysis
 - Database integration - Load and navigate schemas, tables, and view and search data. Receive select / CRUD queries and execute them
@@ -24,7 +24,9 @@
 - Show other solutions, like n8n/
 - Create a step by step for how to deploy, including a video with each card.
 - Update features list
-- Update the GitHUb
+- Update the GitHUb readme.md
+- Add the current app version to the homepage.
+
 ## Canvases
 - Exporting and Importing canvases should persist the zoom and the location of the export, so that it loads with the same view as export.
 - Make the drawSpline more loopy when drawing to the left so that linking backward has a nice display
@@ -36,6 +38,8 @@
 ## Studio / Canvas
 - The ConnectionsLayer seems to have shifted off the central point of the canvas. 
 - The touch actions have seriously fallen out of sync with the mouse events, bring them back into alignment
+- Allow multiple inputs per socket, and have them overwrite the inputs based on the last updated
+- Adding some cards creates an unexpected scroll back to the centre of the Canvas. Not all cards cause this, but Chat for example seems to.
 
 ## Join
 - Create another join for JSON, whereby multiples are brought into an array (higheset level element) or they are brought into an Object, with the socket name the unique object.
@@ -68,3 +72,7 @@
 
 ## Export
 - Export the screen into a high resolution PNG or JPG.
+
+## Node.js backend
+- Test and better integrate the ApiError and apiErrorHandler
+- Add in an optinal logger to track known issues and failures
