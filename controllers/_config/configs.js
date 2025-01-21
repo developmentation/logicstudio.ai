@@ -32,7 +32,11 @@ exports.getConfigs = async function (req, res, next) {
           model: "gemini-1.5-flash",
           provider: "gemini",
         },
-
+        {
+          name: { en: "o1", fr: "o1" },
+          model: "o1-2024-12-17",
+          provider: "openAi",
+        },
         {
           name: { en: "GPT 4o", fr: "GPT 4o" },
           model: "gpt-4o",
