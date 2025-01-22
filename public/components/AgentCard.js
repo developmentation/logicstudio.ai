@@ -491,7 +491,7 @@ export default {
       let temperature = localCardData.value.temperature;
 
       //System prompts not yet supported by some models.
-      if (localCardData.value.model.model == "o1-mini-2024-09-12") {
+      if (localCardData.value.model.model === "o1-mini-2024-09-12" || localCardData.value.model.model === "o1-preview") {
         messageHistory[0].role = "user";
         temperature = 1;
       }
