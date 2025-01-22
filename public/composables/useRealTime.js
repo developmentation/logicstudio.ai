@@ -90,7 +90,18 @@ export function useRealTime() {
                     sessions.value[data.session].partialMessage = '';
                 }
 
-                if (data.type === 'EOM') {
+                if (data.type === 'message') {
+                    switch(data.message?.type) {
+                        case 'form-submitted-updates-status': {
+                            sessions.value[data.session].streamConnected = data.message.connected;
+                            break;
+                        }
+                        case 'form-submitted': {
+                            sessions.value[data.session].form = data.message;
+                            break;
+                        }
+                    } 
+                } else if (data.type === 'EOM') {
                     sessions.value[data.session].completedMessage = sessions.value[data.session].messages.join('');
 
                     // Reset the partial message
@@ -190,12 +201,16 @@ export function useRealTime() {
 
     // Send to Server function
     function sendToServer(uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson) {
+        sendMessage(uuid, session, type, { model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson });
+    }
+    
+    function sendMessage(uuid, session, type, payload) {
         if (ws) {
-            let wsSendVars = { token: null, uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
+            let wsSendVars = { token: null, uuid, session, type, ...payload };
             console.log("wsSendVars", wsSendVars)
             ws.send(JSON.stringify(wsSendVars));
         } else if (socket && socket.connected) {
-            let socketSendVars = { token: null, uuid, session, model, temperature, systemPrompt, userPrompt, messageHistory, type, useJson };
+            let socketSendVars = { token: null, uuid, session, type, ...payload };
             socket.emit('message', JSON.stringify(socketSendVars));
         }
     }
@@ -230,7 +245,7 @@ export function useRealTime() {
         retryConnection,
         websocketConnection,
         socketIoConnection,
-
+        sendMessage,
         sendToServer,
         registerSession,
         unregisterSession

@@ -29,6 +29,7 @@ export const createCardRegistry = (props) => {
     CHAT: "chat",
     TRANSCRIBE: "transcribe",
     TOOL: "tool",
+    FORM: "form",
   };
 
   // Socket type definitions
@@ -218,6 +219,16 @@ export const createCardRegistry = (props) => {
       sockets: {
         inputs: [],
         outputs: [],
+      },
+    },
+
+    [CARD_TYPES.FORM]: {
+      display:"default",
+      width: 300,
+      height: 150,
+      sockets: {
+        inputs: [],
+        outputs:  [],
       },
     },
 

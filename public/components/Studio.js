@@ -14,6 +14,7 @@ import LabelCard from "./LabelCard.js";
 import TemplateCard from "./TemplateCard.js";
 import WebCard from "./WebCard.js";
 import GitHubCard from "./GitHubCard.js";
+import FormCard from "./FormCard.js";
 import ApiCard from "./ApiCard.js";
 import TranscribeCard from "./TranscribeCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
@@ -37,6 +38,7 @@ export default {
     TemplateCard,
     WebCard,
     GitHubCard,
+    FormCard,
     ApiCard,
     TranscribeCard,
     CanvasToolbar,
@@ -381,6 +383,8 @@ export default {
           return "TranscribeCard";
         case "template":
           return "TemplateCard";
+        case "form":
+          return "FormCard";
       }
     };
 
