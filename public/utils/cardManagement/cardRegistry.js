@@ -28,6 +28,7 @@ export const createCardRegistry = (props) => {
     API: "api",
     CHAT: "chat",
     TRANSCRIBE: "transcribe",
+    PDF: "pdf",
     TOOL: "tool",
   };
 
@@ -204,6 +205,16 @@ export const createCardRegistry = (props) => {
     [CARD_TYPES.TRANSCRIBE]: {
       display:"default",
       width: 450,
+      height: 250,
+      sockets: {
+        inputs: [],
+        outputs: [],
+      },
+    },
+
+    [CARD_TYPES.PDF]: {
+      display:"default",
+      width: 300,
       height: 250,
       sockets: {
         inputs: [],
