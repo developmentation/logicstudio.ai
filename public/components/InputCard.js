@@ -161,73 +161,7 @@ export default {
       }
     };
 
-    const handleRefreshFile = async (event, index) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const fileData = await readFileContent(file);
-        
-        // Update the file data
-        localCardData.value.filesData[index] = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          lastModified: file.lastModified
-        };
-
-        // Update the socket with new file data
-        if (localCardData.value.sockets.outputs[index]) {
-
-
-
-          const updatedSocket = {
-            ...createSocket({
-              type: 'output',
-              index,
-              existingId: localCardData.value.sockets.outputs[index].id, // Preserve the existing ID
-              value: fileData
-            }),
-            name: file.name
-          };
-
-          // Create new sockets array with the updated socket
-          const newSockets = [...localCardData.value.sockets.outputs];
-          newSockets[index] = updatedSocket;
-
-          // Remap the sockets
-          const { reindexedSockets, reindexMap } = updateSocketArray({
-            oldSockets: localCardData.value.sockets.outputs,
-            newSockets,
-            type: 'output',
-            deletedSocketIds: [],
-            socketRegistry,
-            connections: connections.value
-          });
-
-          localCardData.value.sockets.outputs = reindexedSockets;
-
-          // Emit socket update event
-          emit('sockets-updated', createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets: localCardData.value.sockets.outputs,
-            newSockets: reindexedSockets,
-            reindexMap,  // Use the actual reindexMap
-            deletedSocketIds: [],
-            type: 'output'
-          }));
-        }
-
-      } finally {
-        isProcessing.value = false;
-        handleCardUpdate();
-        // Clear the input value so the same file can be selected again
-        event.target.value = '';
-      }
-    };
+ 
 
 
     // File name editing functions
@@ -313,7 +247,7 @@ export default {
         reader.onload = () => {
           let content = reader.result;
           
-          // Only try to parse JSON for JSON files
+          // Handle JSON files
           if (file.type.includes('json') || file.name.toLowerCase().endsWith('.json')) {
             try {
               content = JSON.parse(reader.result);
@@ -321,7 +255,7 @@ export default {
               console.warn('JSON parsing failed, using raw text content');
             }
           }
-          // For all other text files (including markdown), use raw content
+    
           resolve({
             content,
             metadata: {
@@ -337,8 +271,8 @@ export default {
         if (file.type.startsWith('text/') || 
             file.type.includes('json') || 
             file.type.includes('javascript') ||
-            file.name.toLowerCase().endsWith('.md') ||  // Add explicit handling for .md files
-            file.name.toLowerCase().endsWith('.txt')) { // And .txt files
+            file.name.toLowerCase().endsWith('.md') ||
+            file.name.toLowerCase().endsWith('.txt')) {
           reader.readAsText(file);
         } else if (file.type.startsWith('image/')) {
           reader.readAsDataURL(file);
@@ -348,7 +282,66 @@ export default {
       });
     };
 
-
+    const handleRefreshFile = async (event, index) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+    
+      if (isProcessing.value) return;
+      isProcessing.value = true;
+    
+      try {
+        const fileData = await readFileContent(file);
+        
+        // Update the file data
+        localCardData.value.filesData[index] = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified
+        };
+    
+        if (localCardData.value.sockets.outputs[index]) {
+          const updatedSocket = {
+            ...createSocket({
+              type: 'output',
+              index,
+              existingId: localCardData.value.sockets.outputs[index].id,
+              value: fileData  // Direct assignment of fileData object
+            }),
+            name: file.name
+          };
+    
+          const newSockets = [...localCardData.value.sockets.outputs];
+          newSockets[index] = updatedSocket;
+    
+          const { reindexedSockets, reindexMap } = updateSocketArray({
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets,
+            type: 'output',
+            deletedSocketIds: [],
+            socketRegistry,
+            connections: connections.value
+          });
+    
+          localCardData.value.sockets.outputs = reindexedSockets;
+    
+          emit('sockets-updated', createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds: [],
+            type: 'output'
+          }));
+        }
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
+        event.target.value = '';
+      }
+    };
+    
+    // For processing new files
     const processFiles = async (files) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
@@ -383,9 +376,8 @@ export default {
             ...createSocket({
               type: 'output',
               index: startIndex + index,
-              value: pf.fileData
+              value: pf.fileData  // Direct assignment of fileData object
             }),
-            // Override the default name with the filename
             name: pf.fileInfo.name
           }))
         ];
@@ -399,7 +391,6 @@ export default {
           connections: connections.value
         });
     
-        // Update the sockets with the reindexed version
         localCardData.value.sockets.outputs = reindexedSockets;
     
         emit('sockets-updated', createSocketUpdateEvent({

@@ -52,45 +52,62 @@ export default {
         </div>
 
         <!-- Content -->
-        <div 
-          class="p-4 text-sm" 
-          v-show="localCardData.display == 'default'"
-        >
-          <div class="flex justify-between mb-2">
-            <span class="text-xs text-gray-400">{{ isJsonContent ? 'JSON View' : 'Markdown View' }} (Editable)</span>
-            <button 
-              @click="copyToClipboard"
-              @mousedown.stop
-              class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
-            >
-              <i class="pi pi-copy"></i>
-              Copy
-            </button>
-          </div>
+<div 
+  class="p-4 text-sm" 
+  v-show="localCardData.display == 'default'"
+>
+  <div class="flex justify-between mb-2">
+    <span class="text-xs text-gray-400">
+      {{ isImageContent ? 'Image View' : (isJsonContent ? 'JSON View' : 'Markdown View') }}
+      {{ isImageContent ? '' : '(Editable)' }}
+    </span>
+    <button 
+      @click="copyToClipboard"
+      @mousedown.stop
+      class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1"
+    >
+      <i class="pi pi-copy"></i>
+      Copy
+    </button>
+  </div>
 
-          <!-- JSON View -->
-          <pre 
-            v-if="isJsonContent" 
-            ref="editableContent"
-            contenteditable="true" 
-            class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto text-gray-300 whitespace-pre-wrap font-mono cursor-text"
-            @mousedown.stop
-            @wheel.stop
-            :key="inputKey + 'a'"
-          >{{ formattedJson }}</pre>
-          
-          <!-- Markdown View -->
-          <div 
-            v-else 
-            ref="editableContent"
-            contenteditable="true"
-            class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto markdown-dark cursor-text"
-            @mousedown.stop
-             @wheel.stop
-            :key="inputKey + 'b'"
-            v-html="renderedContent"
-          ></div>
-        </div>
+  <!-- Image View -->
+  <div 
+    v-if="isImageContent"
+    class="bg-[#12141a] border border-gray-800 rounded-lg p-4 flex justify-center"
+  >
+    <img 
+      :src="processContent(localCardData.sockets.inputs[0]?.value)"
+      :alt="localCardData.sockets.inputs[0]?.value?.metadata?.name || 'Image'"
+      class="max-w-full max-h-[400px] object-contain"
+    />
+  </div>
+
+  <!-- JSON View -->
+  <pre 
+    v-else-if="isJsonContent" 
+    ref="editableContent"
+    contenteditable="true" 
+    class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto text-gray-300 whitespace-pre-wrap font-mono cursor-text"
+    @mousedown.stop
+    @wheel.stop
+    :key="inputKey + 'a'"
+  >{{ formattedJson }}</pre>
+  
+  <!-- Markdown View -->
+  <div 
+    v-else 
+    ref="editableContent"
+    contenteditable="true"
+    class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto markdown-dark cursor-text"
+    @mousedown.stop
+    @wheel.stop
+    :key="inputKey + 'b'"
+    v-html="renderedContent"
+  ></div>
+</div>
+        
+
       </BaseCard>
     </div>
   `,
@@ -141,70 +158,103 @@ export default {
 
     const localCardData = Vue.ref(initializeCardData(props.cardData));
 
-    // Content processing and rendering
-    const isJsonContent = Vue.computed(() => {
-      const value = localCardData.value.sockets.inputs[0]?.value;
-      if (!value) return false;
 
-      if (typeof value === "object") {
-        return true;
-      }
 
-      if (typeof value === "string") {
-        try {
-          const trimmed = value.trim();
-          return (
-            (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-            (trimmed.startsWith("[") && trimmed.endsWith("]"))
-          );
-        } catch {
-          return false;
-        }
-      }
-
-      return false;
-    });
-
-    const formattedJson = Vue.computed(() => {
-      const value = localCardData.value.sockets.inputs[0]?.value;
-      if (!value) return "";
-
-      try {
-        const content = typeof value === "string" ? JSON.parse(value) : value;
-        return JSON.stringify(content, null, 2);
-      } catch {
-        return "";
-      }
-    });
-
-    const renderedContent = Vue.computed(() => {
-      const value = localCardData.value.sockets.inputs[0]?.value;
-      if (!value && value !== 0) return ""; // Allow 0 as a valid value
-
-      try {
-        // If it's an object (including arrays), stringify it
-        if (typeof value === "object") {
-          return markdownit().render(JSON.stringify(value, null, 2));
+      // Content type detection and rendering
+      const getContentType = (value) => {
+        if (!value) return 'empty';
+        
+        // Handle the new {content, metadata} format
+        if (value.content !== undefined && value.metadata?.type) {
+          const mimeType = value.metadata.type;
+          if (mimeType.startsWith('image/')) return 'image';
+          if (mimeType === 'application/json' || mimeType.includes('json')) return 'json';
+          if (mimeType.startsWith('text/')) return 'text';
         }
 
-        // If it's any other type (number, boolean, etc), convert to string
-        let content = value;
-        if (typeof value !== "string") {
-          content = String(value);
+        // Fallback detection for direct values
+        if (typeof value === 'object') {
+          try {
+            JSON.stringify(value);
+            return 'json';
+          } catch {
+            return 'text';
+          }
         }
 
-        // Handle potential value.content structure
-        if (value && typeof value === "object" && "content" in value) {
-          content = String(value.content);
-        }
+        return 'text';
+      };
 
-        return markdownit().render(content);
-      } catch (error) {
-        console.error("Error rendering content:", error);
-        return '<p class="text-red-500">Error rendering content</p>';
-      }
-    });
 
+              
+        const processContent = (value) => {
+          if (!value) return '';
+
+          // Handle the new {content, metadata} format
+          if (value.content !== undefined) {
+            return value.content;
+          }
+
+          // Fallback for direct values
+          return value;
+        };
+
+
+        const isJsonContent = Vue.computed(() => {
+          const value = localCardData.value.sockets.inputs[0]?.value;
+          if (!value) return false;
+          return getContentType(value) === 'json';
+        });
+        
+        const isImageContent = Vue.computed(() => {
+          const value = localCardData.value.sockets.inputs[0]?.value;
+          if (!value) return false;
+          return getContentType(value) === 'image';
+        });
+
+
+        const formattedJson = Vue.computed(() => {
+          const value = localCardData.value.sockets.inputs[0]?.value;
+          if (!value) return '';
+        
+          try {
+            const content = processContent(value);
+            // If content is already an object, stringify it
+            if (typeof content === 'object') {
+              return JSON.stringify(content, null, 2);
+            }
+            // If content is a JSON string, parse and re-stringify it
+            return JSON.stringify(JSON.parse(content), null, 2);
+          } catch {
+            return '';
+          }
+        });
+        
+
+const renderedContent = Vue.computed(() => {
+  const value = localCardData.value.sockets.inputs[0]?.value;
+  if (!value && value !== 0) return ''; // Allow 0 as a valid value
+
+  try {
+    const contentType = getContentType(value);
+    const content = processContent(value);
+
+    // Handle different content types
+    if (contentType === 'image') {
+      return `<img src="${content}" alt="${value.metadata?.name || 'Image'}" class="max-w-full"/>`;
+    }
+    
+    if (contentType === 'json') {
+      return markdownit().render('```json\n' + formattedJson.value + '\n```');
+    }
+
+    // Default to markdown rendering for text content
+    return markdownit().render(String(content));
+  } catch (error) {
+    console.error('Error rendering content:', error);
+    return '<p class="text-red-500">Error rendering content</p>';
+  }
+});
     const copyToClipboard = async () => {
       try {
         if (!editableContent.value) return;
@@ -333,6 +383,7 @@ export default {
       localCardData,
       editableContent,
       isJsonContent,
+      isImageContent,
       formattedJson,
       renderedContent,
       getSocketConnections,
@@ -342,6 +393,8 @@ export default {
       handleSocketMount,
       copyToClipboard,
       inputKey,
+      processContent,  // needed for image rendering in template
+      getContentType   // optional, but might be useful for debugging
     };
   },
 };

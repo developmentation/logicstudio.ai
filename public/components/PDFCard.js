@@ -197,262 +197,244 @@ export default {
     };
 
     const readFileContent = async (file) => {
-      if (!file.type.includes("pdf")) {
-        throw new Error("Only PDF files are supported");
-      }
-
-      const parser = new PdfParser({
-        imageScale: 2.0,
-        imageQuality: 0.95,
-        timeout: 30000,
-      });
-
-      const result = await parser.parse(file);
-
-      const socketData = [];
-
-      // If the PDF has text content, create a text socket
-      if (!result.isScanned && result.text.some(pageText => pageText.length > 0)) {
-        // Convert text array into a simple string with page breaks
-        const textContent = result.text
-          .map((pageItems, pageIndex) => {
-            const pageText = pageItems.map(item => item.text.trim()).filter(Boolean).join(' ');
-            return pageText ? `[Page ${pageIndex + 1}]\n${pageText}` : '';
-          })
-          .filter(Boolean)
-          .join('\n\n');
+        if (!file.type.includes("pdf")) {
+          throw new Error("Only PDF files are supported");
+        }
       
-        socketData.push({
-          type: 'text',
-          name: `${file.name} - Text`,
-          value: {
+        const parser = new PdfParser({
+          imageScale: 2.0,
+          imageQuality: 0.95,
+          timeout: 30000,
+        });
+      
+        const result = await parser.parse(file);
+      
+        const socketData = [];
+      
+        // If the PDF has text content, create a text socket
+        if (!result.isScanned && result.text.some((pageText) => pageText.length > 0)) {
+          const textContent = result.text
+            .map((pageItems, pageIndex) => {
+              const pageText = pageItems.map((item) => item.text).join("");
+              return pageText ? `[Page ${pageIndex + 1}]\n${pageText}` : "";
+            })
+            .filter(Boolean)
+            .join("\n\n");
+      
+          socketData.push({
             content: textContent,
             metadata: {
-              type: 'text/plain',
+              type: "text/plain",
               name: `${file.name}.txt`,
               size: textContent.length,
               lastModified: Date.now(),
-              format: 'text'
-            }
-          }
-        });
-      }
-
-      // For rasterized PDFs, create page sockets
-      if (result.isScanned) {
-        result.pages.forEach((page, idx) => {
-          socketData.push({
-            type: 'page',
-            name: `${file.name} - Page ${idx + 1}`,
-            value: {
+              format: "text",
+            },
+          });
+        }
+      
+        // For rasterized PDFs, create page sockets
+        if (result.isScanned) {
+          result.pages.forEach((page, idx) => {
+            socketData.push({
               content: page.dataUrl,
               metadata: {
-                type: 'image/png',
+                type: "image/png",
                 name: `${file.name}_page_${idx + 1}.png`,
                 size: page.size,
                 lastModified: Date.now(),
                 width: page.width,
                 height: page.height,
                 pageNumber: idx + 1,
-                isRasterized: true
-              }
-            }
+                isRasterized: true,
+              },
+            });
           });
-        });
-      }
+        }
       
-
-      // Add extracted images as separate sockets
-
-      // Add extracted images as separate sockets
-      result.images.forEach((img, idx) => {
-        socketData.push({
-          type: 'image',
-          name: `${file.name} - Image ${idx + 1}`,
-          value: {
+        // Add extracted images as separate sockets
+        result.images.forEach((img, idx) => {
+          socketData.push({
             content: img.dataUrl,
             metadata: {
-              type: 'image/png',
+              type: "image/png",
               name: `${file.name}_image_${idx + 1}.png`,
               size: img.size,
               lastModified: Date.now(),
               width: img.width,
               height: img.height,
-              pageNumber: img.pageNumber
-            }
-          }
-        });
-      });
-
-      return {
-        socketData,
-        metadata: {
-          type: file.type,
-          name: file.name,
-          size: file.size,
-          lastModified: file.lastModified,
-          pageCount: result.pageCount,
-          isScanned: result.isScanned,
-          imageCount: result.images.length,
-        },
-      };
-    };
-
-    const handleRefreshFile = async (event, index) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const result = await readFileContent(file);
-
-        // Update the file data
-        localCardData.value.filesData[index] = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          lastModified: file.lastModified,
-          pageCount: result.metadata.pageCount,
-          isScanned: result.metadata.isScanned,
-          imageCount: result.metadata.imageCount,
-          socketCount: result.socketData.length,
-        };
-
-        // Calculate socket indices for this file
-        let startIdx = 0;
-        for (let i = 0; i < index; i++) {
-          startIdx += localCardData.value.filesData[i].socketCount;
-        }
-        const endIdx =
-          startIdx + localCardData.value.filesData[index].socketCount;
-
-        // Create new sockets array
-        const newSockets = [
-          ...localCardData.value.sockets.outputs.slice(0, startIdx),
-          ...result.socketData.map((socketData, idx) => ({
-            ...createSocket({
-              type: "output",
-              index: startIdx + idx,
-              existingId:
-                localCardData.value.sockets.outputs[startIdx + idx]?.id,
-            }),
-            name: socketData.name,
-            value: socketData.value,
-            contentType: socketData.type,
-          })),
-          ...localCardData.value.sockets.outputs.slice(endIdx),
-        ];
-
-        const { reindexedSockets, reindexMap } = updateSocketArray({
-          oldSockets: localCardData.value.sockets.outputs,
-          newSockets,
-          type: "output",
-          deletedSocketIds: [],
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        localCardData.value.sockets.outputs = reindexedSockets;
-
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets: localCardData.value.sockets.outputs,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type: "output",
-          })
-        );
-      } finally {
-        isProcessing.value = false;
-        handleCardUpdate();
-        event.target.value = "";
-      }
-    };
-
-    const processFiles = async (files) => {
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const oldSockets = [...(localCardData.value.sockets.outputs || [])];
-        const startIndex = oldSockets.length;
-
-        const processedFiles = await Promise.all(
-          Array.from(files).map(async (file) => {
-            const result = await readFileContent(file);
-            return {
-              fileInfo: {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                lastModified: file.lastModified,
-                socketCount: result.socketData.length,
-                pageCount: result.metadata.pageCount,
-                isScanned: result.metadata.isScanned,
-                imageCount: result.metadata.imageCount,
-              },
-              socketData: result.socketData,
-            };
-          })
-        );
-
-        // Update filesData state
-        localCardData.value.filesData = [
-          ...localCardData.value.filesData,
-          ...processedFiles.map((pf) => pf.fileInfo),
-        ];
-
-        // Create new sockets for all the PDF content
-        let newSockets = [...oldSockets];
-        let currentIndex = startIndex;
-
-        processedFiles.forEach((pf) => {
-          pf.socketData.forEach((socketData) => {
-            newSockets.push({
-              ...createSocket({
-                type: "output",
-                index: currentIndex++,
-              }),
-              name: socketData.name,
-              value: socketData.value,
-              contentType: socketData.type,
-            });
+              pageNumber: img.pageNumber,
+            },
           });
         });
+      
+        return {
+          socketData,
+          metadata: {
+            type: file.type,
+            name: file.name,
+            size: file.size,
+            lastModified: file.lastModified,
+            pageCount: result.pageCount,
+            isScanned: result.isScanned,
+            imageCount: result.images.length
+          }
+        };
+      };
 
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          deletedSocketIds: [],
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        localCardData.value.sockets.outputs = reindexedSockets;
-
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
+      const handleRefreshFile = async (event, index) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+      
+        if (isProcessing.value) return;
+        isProcessing.value = true;
+      
+        try {
+          const result = await readFileContent(file);
+      
+          // Update the file data
+          localCardData.value.filesData[index] = {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            lastModified: file.lastModified,
+            pageCount: result.metadata.pageCount,
+            isScanned: result.metadata.isScanned,
+            imageCount: result.metadata.imageCount,
+            socketCount: result.socketData.length,
+          };
+      
+          // Calculate socket indices for this file
+          let startIdx = 0;
+          for (let i = 0; i < index; i++) {
+            startIdx += localCardData.value.filesData[i].socketCount;
+          }
+          const endIdx = startIdx + localCardData.value.filesData[index].socketCount;
+      
+          // Create new sockets array
+          const newSockets = [
+            ...localCardData.value.sockets.outputs.slice(0, startIdx),
+            ...result.socketData.map((socketData, idx) => ({
+              ...createSocket({
+                type: "output",
+                index: startIdx + idx,
+                existingId: localCardData.value.sockets.outputs[startIdx + idx]?.id,
+              }),
+              name: socketData.metadata.name,
+              value: socketData,  // The entire socketData object containing content and metadata
+              contentType: socketData.metadata.type,
+            })),
+            ...localCardData.value.sockets.outputs.slice(endIdx),
+          ];
+      
+          const { reindexedSockets, reindexMap } = updateSocketArray({
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets,
             type: "output",
-          })
-        );
+            deletedSocketIds: [],
+            socketRegistry,
+            connections: connections.value,
+          });
+      
+          localCardData.value.sockets.outputs = reindexedSockets;
+      
+          emit(
+            "sockets-updated",
+            createSocketUpdateEvent({
+              cardId: localCardData.value.uuid,
+              oldSockets: localCardData.value.sockets.outputs,
+              newSockets: reindexedSockets,
+              reindexMap,
+              deletedSocketIds: [],
+              type: "output",
+            })
+          );
+        } finally {
+          isProcessing.value = false;
+          handleCardUpdate();
+          event.target.value = "";
+        }
+      };
 
-        handleCardUpdate();
-      } finally {
-        isProcessing.value = false;
-      }
-    };
+      const processFiles = async (files) => {
+        if (isProcessing.value) return;
+        isProcessing.value = true;
+      
+        try {
+          const oldSockets = [...(localCardData.value.sockets.outputs || [])];
+          const startIndex = oldSockets.length;
+      
+          const processedFiles = await Promise.all(
+            Array.from(files).map(async (file) => {
+              const result = await readFileContent(file);
+              return {
+                fileInfo: {
+                  name: file.name,
+                  type: file.type,
+                  size: file.size,
+                  lastModified: file.lastModified,
+                  socketCount: result.socketData.length,
+                  pageCount: result.metadata.pageCount,
+                  isScanned: result.metadata.isScanned,
+                  imageCount: result.metadata.imageCount,
+                },
+                socketData: result.socketData,
+              };
+            })
+          );
+      
+          // Update filesData state
+          localCardData.value.filesData = [
+            ...localCardData.value.filesData,
+            ...processedFiles.map((pf) => pf.fileInfo),
+          ];
+      
+          // Create new sockets for all the PDF content
+          let newSockets = [...oldSockets];
+          let currentIndex = startIndex;
+      
+          processedFiles.forEach((pf) => {
+            pf.socketData.forEach((socketData) => {
+              newSockets.push({
+                ...createSocket({
+                  type: "output",
+                  index: currentIndex++,
+                }),
+                name: socketData.metadata.name,
+                value: socketData,  // The entire socketData object containing content and metadata
+                contentType: socketData.metadata.type,
+              });
+            });
+          });
+      
+          const { reindexMap, reindexedSockets } = updateSocketArray({
+            oldSockets,
+            newSockets,
+            type: "output",
+            deletedSocketIds: [],
+            socketRegistry,
+            connections: connections.value,
+          });
+      
+          localCardData.value.sockets.outputs = reindexedSockets;
+      
+          emit(
+            "sockets-updated",
+            createSocketUpdateEvent({
+              cardId: localCardData.value.uuid,
+              oldSockets,
+              newSockets: reindexedSockets,
+              reindexMap,
+              deletedSocketIds: [],
+              type: "output",
+            })
+          );
+      
+          handleCardUpdate();
+        } finally {
+          isProcessing.value = false;
+        }
+      };
 
     const removeFile = (index) => {
       if (isProcessing.value) return;

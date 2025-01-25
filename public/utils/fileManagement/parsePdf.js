@@ -52,23 +52,56 @@ async function getPageImages(page, pageNumber) {
       const args = opList.argsArray;
       let imgsFound = 0;
   
+      // Track all image and form references to avoid duplicates
+      const processedRefs = new Set();
+  
       // Process each operator
       for (let i = 0; i < fns.length; i++) {
+        const fn = fns[i];
+        const arg = args[i];
+  
         if ([
           pdfjsLib.OPS.paintJpegXObject,
           pdfjsLib.OPS.paintImageXObject,
           pdfjsLib.OPS.paintImageMaskXObject,
-          pdfjsLib.OPS.paintInlineImageXObject
-        ].includes(fns[i])) {
-          const imgKey = args[i][0];
+          pdfjsLib.OPS.paintInlineImageXObject,
+          pdfjsLib.OPS.paintFormXObject,  // Added Form XObject support
+          pdfjsLib.OPS.beginInlineImage   // Added Inline Image support
+        ].includes(fn)) {
+          let imgKey = arg[0];
+          
+          // Handle inline images differently as they don't have a reference key
+          if (fn === pdfjsLib.OPS.beginInlineImage) {
+            imgKey = `inline_${pageNumber}_${imgsFound}`;
+          }
+  
+          // Skip if we've already processed this reference
+          if (processedRefs.has(imgKey)) continue;
+          processedRefs.add(imgKey);
+          
           imgsFound++;
   
           try {
-            const imageData = await new Promise((resolve) => {
-              page.objs.get(imgKey, (img) => {
-                resolve(img);
+            let imageData;
+            
+            if (fn === pdfjsLib.OPS.beginInlineImage) {
+              // Handle inline image data
+              const imageDict = arg[0];  // Image dictionary
+              const imageBytes = arg[1];  // Raw image data
+              imageData = {
+                width: imageDict.width,
+                height: imageDict.height,
+                data: imageBytes,
+                kind: imageDict.colorSpace ? 'RGB' : 'RGBA'
+              };
+            } else {
+              // Get image data from object store
+              imageData = await new Promise((resolve) => {
+                page.objs.get(imgKey, (img) => {
+                  resolve(img);
+                });
               });
-            });
+            }
   
             if (!imageData) {
               console.warn(`No image data for ${imgKey}`);
@@ -76,8 +109,23 @@ async function getPageImages(page, pageNumber) {
             }
   
             const canvas = document.createElement('canvas');
-            
-            if (imageData.bitmap) {
+  
+            if (fn === pdfjsLib.OPS.paintFormXObject) {
+              // Handle Form XObjects by rendering them to canvas
+              const formViewport = page.getViewport({ scale: 1.0 });
+              canvas.width = formViewport.width;
+              canvas.height = formViewport.height;
+              
+              const ctx = canvas.getContext('2d');
+              const renderContext = {
+                canvasContext: ctx,
+                viewport: formViewport,
+                enableWebGL: true
+              };
+  
+              // Render the form XObject
+              await page.render(renderContext).promise;
+            } else if (imageData.bitmap) {
               canvas.width = imageData.bitmap.width;
               canvas.height = imageData.bitmap.height;
               const ctx = canvas.getContext('2d');
@@ -113,10 +161,10 @@ async function getPageImages(page, pageNumber) {
               ctx.putImageData(imgData, 0, 0);
             }
   
-            // Get data URL directly
+            // Get data URL
             const dataUrl = canvas.toDataURL('image/png', 0.95);
             
-            // Also get the blob for size information
+            // Get blob for size information
             const blob = await new Promise(resolve => {
               canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
             });
@@ -129,6 +177,8 @@ async function getPageImages(page, pageNumber) {
                 pageNumber,
                 id: imgKey,
                 size: blob ? blob.size : dataUrl.length,
+                isFormXObject: fn === pdfjsLib.OPS.paintFormXObject,
+                isInlineImage: fn === pdfjsLib.OPS.beginInlineImage,
                 viewport: {
                   width: viewport.width,
                   height: viewport.height
@@ -141,7 +191,7 @@ async function getPageImages(page, pageNumber) {
         }
       }
   
-      // If no images found and page appears to be scanned
+      // Handle page as image if no other images found
       if (images.length === 0) {
         const hasText = await hasTextContent(page);
         if (!hasText) {
@@ -159,11 +209,7 @@ async function getPageImages(page, pageNumber) {
           };
   
           await page.render(renderContext).promise;
-  
-          // Get data URL directly
           const dataUrl = canvas.toDataURL('image/png', 0.95);
-          
-          // Get blob for size information
           const blob = await new Promise(resolve => {
             canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
           });
