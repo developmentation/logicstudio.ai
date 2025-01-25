@@ -5,9 +5,9 @@ import {
   updateSocketArray,
   createSocketUpdateEvent,
   generateSocketId,
-  createSocket
-} from '../utils/socketManagement/socketRemapping.js';
-import { PdfParser } from '../utils/fileManagement/parsePdf.js';
+  createSocket,
+} from "../utils/socketManagement/socketRemapping.js";
+import { PdfParser } from "../utils/fileManagement/parsePdf.js";
 
 export default {
   name: "PDFInputCard",
@@ -16,7 +16,7 @@ export default {
     cardData: { type: Object, required: true },
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
-    isSelected: { type: Boolean, default: false }
+    isSelected: { type: Boolean, default: false },
   },
   template: `
   <div>
@@ -153,7 +153,7 @@ export default {
     </BaseCard>
   </div>
   `,
-  
+
   setup(props, { emit }) {
     const fileInput = Vue.ref(null);
     const fileNameInput = Vue.ref(null);
@@ -162,15 +162,19 @@ export default {
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
     const editingIndex = Vue.ref(-1);
-    const editingName = Vue.ref('');
+    const editingName = Vue.ref("");
     const contentMinHeight = Vue.ref(0);
 
     const getSocketIcon = (type) => {
       switch (type) {
-        case 'text': return 'pi pi-file-edit';
-        case 'image': return 'pi pi-image';
-        case 'page': return 'pi pi-file';
-        default: return 'pi pi-file';
+        case "text":
+          return "pi pi-file-edit";
+        case "image":
+          return "pi pi-image";
+        case "page":
+          return "pi pi-file";
+        default:
+          return "pi pi-file";
       }
     };
 
@@ -178,12 +182,12 @@ export default {
       const parts = [];
       parts.push(`${fileData.pageCount} pages`);
       if (fileData.isScanned) {
-        parts.push('Scanned document');
+        parts.push("Scanned document");
       }
       if (fileData.imageCount) {
         parts.push(`${fileData.imageCount} images`);
       }
-      return parts.join(' • ');
+      return parts.join(" • ");
     };
 
     const triggerRefreshFile = (index) => {
@@ -193,112 +197,106 @@ export default {
     };
 
     const readFileContent = async (file) => {
-        if (!file.type.includes('pdf')) {
-          throw new Error('Only PDF files are supported');
-        }
+      if (!file.type.includes("pdf")) {
+        throw new Error("Only PDF files are supported");
+      }
+
+      const parser = new PdfParser({
+        imageScale: 2.0,
+        imageQuality: 0.95,
+        timeout: 30000,
+      });
+
+      const result = await parser.parse(file);
+
+      const socketData = [];
+
+      // If the PDF has text content, create a text socket
+      if (!result.isScanned && result.text.some(pageText => pageText.length > 0)) {
+        // Convert text array into a simple string with page breaks
+        const textContent = result.text
+          .map((pageItems, pageIndex) => {
+            const pageText = pageItems.map(item => item.text.trim()).filter(Boolean).join(' ');
+            return pageText ? `[Page ${pageIndex + 1}]\n${pageText}` : '';
+          })
+          .filter(Boolean)
+          .join('\n\n');
       
-        const parser = new PdfParser({
-          imageScale: 2.0,
-          imageQuality: 0.95,
-          timeout: 30000
-        });
-      
-        const result = await parser.parse(file);
-        
-        const socketData = [];
-        
-        // If the PDF has text content, create a text socket
-        if (!result.isScanned && result.text.some(pageText => pageText.length > 0)) {
-          // Convert the text array to a more useful format
-          const textContent = result.text.map((pageItems, pageIndex) => {
-            return {
-              pageNumber: pageIndex + 1,
-              content: pageItems.map(item => item.text).join(' '),
-              items: pageItems.map(item => ({
-                text: item.text,
-                position: {
-                  x: item.x || 0,
-                  y: item.y || 0
-                },
-                style: {
-                  fontSize: item.fontSize || 0,
-                  fontFamily: item.fontFamily || 'unknown'
-                }
-              }))
-            };
-          });
-      
-          socketData.push({
-            type: 'text',
-            name: `${file.name} - Text`,
-            value: {
-              content: textContent,
-              metadata: {
-                type: 'application/json',
-                name: `${file.name}.json`,
-                size: JSON.stringify(textContent).length,
-                lastModified: Date.now(),
-                format: 'structured-text'
-              }
+        socketData.push({
+          type: 'text',
+          name: `${file.name} - Text`,
+          value: {
+            content: textContent,
+            metadata: {
+              type: 'text/plain',
+              name: `${file.name}.txt`,
+              size: textContent.length,
+              lastModified: Date.now(),
+              format: 'text'
             }
-          });
-        }
-      
-        // For rasterized PDFs, create page sockets
-        if (result.isScanned) {
-          result.pages.forEach((page, idx) => {
-            socketData.push({
-              type: 'page',
-              name: `${file.name} - Page ${idx + 1}`,
-              value: {
-                content: page.blob,
-                metadata: {
-                  type: 'image/png',
-                  name: `${file.name}_page_${idx + 1}.png`,
-                  size: page.blob.size,
-                  lastModified: Date.now(),
-                  width: page.width,
-                  height: page.height,
-                  pageNumber: idx + 1
-                }
-              }
-            });
-          });
-        }
-      
-        // Add extracted images as separate sockets
-        result.images.forEach((img, idx) => {
+          }
+        });
+      }
+
+      // For rasterized PDFs, create page sockets
+      if (result.isScanned) {
+        result.pages.forEach((page, idx) => {
           socketData.push({
-            type: 'image',
-            name: `${file.name} - Image ${idx + 1}`,
+            type: 'page',
+            name: `${file.name} - Page ${idx + 1}`,
             value: {
-              content: img.blob,
+              content: page.dataUrl,
               metadata: {
                 type: 'image/png',
-                name: `${file.name}_image_${idx + 1}.png`,
-                size: img.blob.size,
+                name: `${file.name}_page_${idx + 1}.png`,
+                size: page.size,
                 lastModified: Date.now(),
-                width: img.width,
-                height: img.height,
-                pageNumber: img.pageNumber
+                width: page.width,
+                height: page.height,
+                pageNumber: idx + 1,
+                isRasterized: true
               }
             }
           });
         });
+      }
       
-        return {
-          socketData,
-          metadata: {
-            type: file.type,
-            name: file.name,
-            size: file.size,
-            lastModified: file.lastModified,
-            pageCount: result.pageCount,
-            isScanned: result.isScanned,
-            imageCount: result.images.length
+
+      // Add extracted images as separate sockets
+
+      // Add extracted images as separate sockets
+      result.images.forEach((img, idx) => {
+        socketData.push({
+          type: 'image',
+          name: `${file.name} - Image ${idx + 1}`,
+          value: {
+            content: img.dataUrl,
+            metadata: {
+              type: 'image/png',
+              name: `${file.name}_image_${idx + 1}.png`,
+              size: img.size,
+              lastModified: Date.now(),
+              width: img.width,
+              height: img.height,
+              pageNumber: img.pageNumber
+            }
           }
-        };
+        });
+      });
+
+      return {
+        socketData,
+        metadata: {
+          type: file.type,
+          name: file.name,
+          size: file.size,
+          lastModified: file.lastModified,
+          pageCount: result.pageCount,
+          isScanned: result.isScanned,
+          imageCount: result.images.length,
+        },
       };
+    };
 
     const handleRefreshFile = async (event, index) => {
       const file = event.target.files?.[0];
@@ -309,7 +307,7 @@ export default {
 
       try {
         const result = await readFileContent(file);
-        
+
         // Update the file data
         localCardData.value.filesData[index] = {
           name: file.name,
@@ -319,7 +317,7 @@ export default {
           pageCount: result.metadata.pageCount,
           isScanned: result.metadata.isScanned,
           imageCount: result.metadata.imageCount,
-          socketCount: result.socketData.length
+          socketCount: result.socketData.length,
         };
 
         // Calculate socket indices for this file
@@ -327,47 +325,52 @@ export default {
         for (let i = 0; i < index; i++) {
           startIdx += localCardData.value.filesData[i].socketCount;
         }
-        const endIdx = startIdx + localCardData.value.filesData[index].socketCount;
+        const endIdx =
+          startIdx + localCardData.value.filesData[index].socketCount;
 
         // Create new sockets array
         const newSockets = [
           ...localCardData.value.sockets.outputs.slice(0, startIdx),
           ...result.socketData.map((socketData, idx) => ({
             ...createSocket({
-              type: 'output',
+              type: "output",
               index: startIdx + idx,
-              existingId: localCardData.value.sockets.outputs[startIdx + idx]?.id
+              existingId:
+                localCardData.value.sockets.outputs[startIdx + idx]?.id,
             }),
             name: socketData.name,
             value: socketData.value,
-            contentType: socketData.type
+            contentType: socketData.type,
           })),
-          ...localCardData.value.sockets.outputs.slice(endIdx)
+          ...localCardData.value.sockets.outputs.slice(endIdx),
         ];
 
         const { reindexedSockets, reindexMap } = updateSocketArray({
           oldSockets: localCardData.value.sockets.outputs,
           newSockets,
-          type: 'output',
+          type: "output",
           deletedSocketIds: [],
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         localCardData.value.sockets.outputs = reindexedSockets;
 
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets: localCardData.value.sockets.outputs,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: [],
-          type: 'output'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets: localCardData.value.sockets.outputs,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds: [],
+            type: "output",
+          })
+        );
       } finally {
         isProcessing.value = false;
         handleCardUpdate();
-        event.target.value = '';
+        event.target.value = "";
       }
     };
 
@@ -378,44 +381,46 @@ export default {
       try {
         const oldSockets = [...(localCardData.value.sockets.outputs || [])];
         const startIndex = oldSockets.length;
-        
-        const processedFiles = await Promise.all(Array.from(files).map(async (file) => {
-          const result = await readFileContent(file);
-          return {
-            fileInfo: {
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              lastModified: file.lastModified,
-              socketCount: result.socketData.length,
-              pageCount: result.metadata.pageCount,
-              isScanned: result.metadata.isScanned,
-              imageCount: result.metadata.imageCount
-            },
-            socketData: result.socketData
-          };
-        }));
+
+        const processedFiles = await Promise.all(
+          Array.from(files).map(async (file) => {
+            const result = await readFileContent(file);
+            return {
+              fileInfo: {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified,
+                socketCount: result.socketData.length,
+                pageCount: result.metadata.pageCount,
+                isScanned: result.metadata.isScanned,
+                imageCount: result.metadata.imageCount,
+              },
+              socketData: result.socketData,
+            };
+          })
+        );
 
         // Update filesData state
         localCardData.value.filesData = [
           ...localCardData.value.filesData,
-          ...processedFiles.map(pf => pf.fileInfo)
+          ...processedFiles.map((pf) => pf.fileInfo),
         ];
 
         // Create new sockets for all the PDF content
         let newSockets = [...oldSockets];
         let currentIndex = startIndex;
 
-        processedFiles.forEach(pf => {
-          pf.socketData.forEach(socketData => {
+        processedFiles.forEach((pf) => {
+          pf.socketData.forEach((socketData) => {
             newSockets.push({
               ...createSocket({
-                type: 'output',
-                index: currentIndex++
+                type: "output",
+                index: currentIndex++,
               }),
               name: socketData.name,
               value: socketData.value,
-              contentType: socketData.type
+              contentType: socketData.type,
             });
           });
         });
@@ -423,22 +428,25 @@ export default {
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'output',
+          type: "output",
           deletedSocketIds: [],
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         localCardData.value.sockets.outputs = reindexedSockets;
 
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: [],
-          type: 'output'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds: [],
+            type: "output",
+          })
+        );
 
         handleCardUpdate();
       } finally {
@@ -453,7 +461,7 @@ export default {
       try {
         const oldSockets = [...localCardData.value.sockets.outputs];
         const fileData = localCardData.value.filesData[index];
-        
+
         // Calculate starting index for this file's sockets
         let startIdx = 0;
         for (let i = 0; i < index; i++) {
@@ -464,7 +472,7 @@ export default {
         // Get all socket IDs to be deleted
         const deletedSocketIds = oldSockets
           .slice(startIdx, endIdx)
-          .map(socket => socket.id);
+          .map((socket) => socket.id);
 
         // Remove file data
         localCardData.value.filesData.splice(index, 1);
@@ -472,31 +480,34 @@ export default {
         // Create new sockets array without the removed file's sockets
         const newSockets = [
           ...oldSockets.slice(0, startIdx),
-          ...oldSockets.slice(endIdx)
+          ...oldSockets.slice(endIdx),
         ];
 
         // Update socket array with proper remapping
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'output',
+          type: "output",
           deletedSocketIds,
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
         // Apply updates
         localCardData.value.sockets.outputs = reindexedSockets;
 
         // Emit the socket update event
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds,
-          type: 'output'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds,
+            type: "output",
+          })
+        );
 
         handleCardUpdate();
       } finally {
@@ -526,12 +537,13 @@ export default {
         for (let i = 0; i < index; i++) {
           startIdx += localCardData.value.filesData[i].socketCount;
         }
-        const endIdx = startIdx + localCardData.value.filesData[index].socketCount;
+        const endIdx =
+          startIdx + localCardData.value.filesData[index].socketCount;
 
         // Update socket names
         for (let i = startIdx; i < endIdx; i++) {
           const socket = localCardData.value.sockets.outputs[i];
-          const suffix = socket.name.split(' - ')[1]; // Preserve the socket type suffix
+          const suffix = socket.name.split(" - ")[1]; // Preserve the socket type suffix
           socket.name = `${newName} - ${suffix}`;
         }
 
@@ -542,7 +554,7 @@ export default {
 
     const cancelEdit = () => {
       editingIndex.value = -1;
-      editingName.value = '';
+      editingName.value = "";
     };
 
     const handleFileSelect = (event) => {
@@ -551,8 +563,8 @@ export default {
     };
 
     const handleFileDrop = (event) => {
-      const pdfFiles = Array.from(event.dataTransfer.files).filter(
-        file => file.type.includes('pdf')
+      const pdfFiles = Array.from(event.dataTransfer.files).filter((file) =>
+        file.type.includes("pdf")
       );
       if (pdfFiles.length > 0) {
         processFiles(pdfFiles);
@@ -575,8 +587,8 @@ export default {
         filesData: data.filesData || [],
         sockets: {
           inputs: [],
-          outputs: data.sockets?.outputs || []
-        }
+          outputs: data.sockets?.outputs || [],
+        },
       };
     };
 
@@ -586,7 +598,10 @@ export default {
 
     const handleSocketMount = (event) => {
       if (!event) return;
-      socketRegistry.set(event.socketId, { element: event.element, cleanup: [] });
+      socketRegistry.set(event.socketId, {
+        element: event.element,
+        cleanup: [],
+      });
     };
 
     const emitWithCardId = (eventName, event) => {
@@ -596,30 +611,38 @@ export default {
     const handleCardUpdate = (data) => {
       if (data) localCardData.value = data;
       if (!isProcessing.value) {
-        emit('update-card', Vue.toRaw(localCardData.value));
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
     // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value) return;
-      isProcessing.value = true;
+    Vue.watch(
+      () => props.cardData,
+      (newData, oldData) => {
+        if (!newData || isProcessing.value) return;
+        isProcessing.value = true;
 
-      try {
-        // Update position
-        if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-        if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+        try {
+          // Update position
+          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
+          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
 
-        // Update sockets if needed
-        if (newData.sockets?.outputs && (!oldData?.sockets || 
-            JSON.stringify(newData.sockets.outputs) !== JSON.stringify(oldData.sockets.outputs))) {
-          localCardData.value.sockets.outputs = newData.sockets.outputs;
+          // Update sockets if needed
+          if (
+            newData.sockets?.outputs &&
+            (!oldData?.sockets ||
+              JSON.stringify(newData.sockets.outputs) !==
+                JSON.stringify(oldData.sockets.outputs))
+          ) {
+            localCardData.value.sockets.outputs = newData.sockets.outputs;
+          }
+        } finally {
+          isProcessing.value = false;
         }
-      } finally {
-        isProcessing.value = false;
-      }
-    }, { deep: true });
-    
+      },
+      { deep: true }
+    );
+
     // Update minimum height based on socket count
     Vue.watch(
       () => localCardData.value.sockets.outputs.length,
@@ -631,7 +654,9 @@ export default {
 
     // Cleanup on unmount
     Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
+      socketRegistry.forEach((socket) =>
+        socket.cleanup.forEach((cleanup) => cleanup())
+      );
       socketRegistry.clear();
       connections.value.clear();
     });
@@ -659,5 +684,5 @@ export default {
       getFileDetails,
       contentMinHeight,
     };
-  }
+  },
 };

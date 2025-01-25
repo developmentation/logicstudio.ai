@@ -1,17 +1,17 @@
 // parsePdf.js
 
-// Configuration constants
 const MAX_IMAGE_SIZE = 1024 * 1024;
 const CMAP_PACKED = true;
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+// Utility functions
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getPdfResourcePath = () => {
-  const scripts = document.getElementsByTagName('script');
-  let pdfJsPath = '';
-  
+  const scripts = document.getElementsByTagName("script");
+  let pdfJsPath = "";
+
   for (const script of scripts) {
-    if (script.src.includes('pdf.min.js')) {
+    if (script.src.includes("pdf.min.js")) {
       pdfJsPath = new URL(script.src);
       break;
     }
@@ -21,7 +21,7 @@ const getPdfResourcePath = () => {
     pdfJsPath = new URL(window.location.origin);
   }
 
-  return new URL('./plugins/', pdfJsPath).href;
+  return new URL("./plugins/", pdfJsPath).href;
 };
 
 const configurePdfWorker = () => {
@@ -38,94 +38,169 @@ const configurePdfWorker = () => {
 const hasTextContent = async (page) => {
   const textContent = await page.getTextContent({
     includeMarkedContent: true,
-    disableCombineTextItems: false
+    disableCombineTextItems: false,
   });
-  return textContent.items.some(item => (item.str || '').trim().length > 0);
+  return textContent.items.some((item) => (item.str || "").trim().length > 0);
 };
 
 async function getPageImages(page, pageNumber) {
-  const images = [];
-  try {
-    const opList = await page.getOperatorList();
-    const validObjectTypes = [
-      pdfjsLib.OPS.paintImageXObject,
-      pdfjsLib.OPS.paintImageXObjectRepeat,
-      pdfjsLib.OPS.paintJpegXObject
-    ];
-
-    const processedImages = new Set();
-
-    for (let i = 0; i < opList.fnArray.length; i++) {
-      if (validObjectTypes.includes(opList.fnArray[i])) {
-        const imageName = opList.argsArray[i][0];
-        
-        if (!processedImages.has(imageName)) {
-          processedImages.add(imageName);
-          
+    const images = [];
+    try {
+      const opList = await page.getOperatorList();
+      const viewport = page.getViewport({ scale: 1.0 });
+      const fns = opList.fnArray;
+      const args = opList.argsArray;
+      let imgsFound = 0;
+  
+      // Process each operator
+      for (let i = 0; i < fns.length; i++) {
+        if ([
+          pdfjsLib.OPS.paintJpegXObject,
+          pdfjsLib.OPS.paintImageXObject,
+          pdfjsLib.OPS.paintImageMaskXObject,
+          pdfjsLib.OPS.paintInlineImageXObject
+        ].includes(fns[i])) {
+          const imgKey = args[i][0];
+          imgsFound++;
+  
           try {
-            const imageObj = await new Promise((resolve) => {
-              page.objs.get(imageName, (obj) => {
-                resolve(obj);
+            const imageData = await new Promise((resolve) => {
+              page.objs.get(imgKey, (img) => {
+                resolve(img);
               });
             });
-
-            if (!imageObj?.data) {
-              console.warn(`No valid image data for ${imageName}`);
+  
+            if (!imageData) {
+              console.warn(`No image data for ${imgKey}`);
               continue;
             }
-
-            // Check image size
-            const imageSize = imageObj.width * imageObj.height;
-            if (imageSize > MAX_IMAGE_SIZE) {
-              console.warn(`Image ${imageName} exceeds maximum size`);
-              continue;
-            }
-
+  
             const canvas = document.createElement('canvas');
-            canvas.width = imageObj.width;
-            canvas.height = imageObj.height;
             
-            const ctx = canvas.getContext('2d');
-            const imageData = new ImageData(
-              new Uint8ClampedArray(imageObj.data.buffer),
-              imageObj.width,
-              imageObj.height
-            );
+            if (imageData.bitmap) {
+              canvas.width = imageData.bitmap.width;
+              canvas.height = imageData.bitmap.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(imageData.bitmap, 0, 0);
+            } else if (imageData instanceof ImageBitmap) {
+              canvas.width = imageData.width;
+              canvas.height = imageData.height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(imageData, 0, 0);
+            } else if (imageData.data) {
+              canvas.width = imageData.width;
+              canvas.height = imageData.height;
+              const ctx = canvas.getContext('2d');
+              
+              let imgData;
+              if (imageData.kind === 'RGB') {
+                const rgba = new Uint8ClampedArray(imageData.width * imageData.height * 4);
+                for (let i = 0; i < imageData.data.length; i += 3) {
+                  const j = (i / 3) * 4;
+                  rgba[j] = imageData.data[i];
+                  rgba[j + 1] = imageData.data[i + 1];
+                  rgba[j + 2] = imageData.data[i + 2];
+                  rgba[j + 3] = 255;
+                }
+                imgData = new ImageData(rgba, imageData.width, imageData.height);
+              } else {
+                imgData = new ImageData(
+                  new Uint8ClampedArray(imageData.data),
+                  imageData.width,
+                  imageData.height
+                );
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+  
+            // Get data URL directly
+            const dataUrl = canvas.toDataURL('image/png', 0.95);
             
-            ctx.putImageData(imageData, 0, 0);
-
-            // Convert to blob
+            // Also get the blob for size information
             const blob = await new Promise(resolve => {
               canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
             });
-
-            if (blob) {
+  
+            if (dataUrl) {
               images.push({
-                blob,
-                width: imageObj.width,
-                height: imageObj.height,
+                dataUrl,
+                width: canvas.width,
+                height: canvas.height,
                 pageNumber,
-                id: imageName
+                id: imgKey,
+                size: blob ? blob.size : dataUrl.length,
+                viewport: {
+                  width: viewport.width,
+                  height: viewport.height
+                }
               });
             }
           } catch (error) {
-            console.warn(`Error processing image ${imageName}:`, error);
+            console.warn(`Error processing image ${imgKey}:`, error);
           }
         }
       }
+  
+      // If no images found and page appears to be scanned
+      if (images.length === 0) {
+        const hasText = await hasTextContent(page);
+        if (!hasText) {
+          const scale = 2.0;
+          const scaledViewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
+          
+          const ctx = canvas.getContext('2d');
+          const renderContext = {
+            canvasContext: ctx,
+            viewport: scaledViewport,
+            enableWebGL: true
+          };
+  
+          await page.render(renderContext).promise;
+  
+          // Get data URL directly
+          const dataUrl = canvas.toDataURL('image/png', 0.95);
+          
+          // Get blob for size information
+          const blob = await new Promise(resolve => {
+            canvas.toBlob(blob => resolve(blob), 'image/png', 0.95);
+          });
+  
+          if (dataUrl) {
+            images.push({
+              dataUrl,
+              width: scaledViewport.width,
+              height: scaledViewport.height,
+              pageNumber,
+              id: `page-${pageNumber}`,
+              size: blob ? blob.size : dataUrl.length,
+              isFullPage: true,
+              viewport: {
+                width: viewport.width,
+                height: viewport.height
+              }
+            });
+          }
+        }
+      }
+  
+      console.log(`Page ${pageNumber}: Successfully processed ${images.length} images`);
+  
+    } catch (error) {
+      console.warn(`Failed to process page ${pageNumber}:`, error);
     }
-  } catch (error) {
-    console.warn(`Failed to extract images from page ${pageNumber}:`, error);
+  
+    return images;
   }
-  return images;
-}
 
 export class PdfParser {
   constructor(options = {}) {
     this.options = {
       imageScale: options.imageScale || 2.0,
-      imageFormat: options.imageFormat || 'image/png',
-      imageQuality: options.imageQuality || 0.95,
+      imageFormat: options.imageFormat || "image/png",
+      imageQuality: options.imageQuality || 0.92,
       maxPageSize: options.maxPageSize || 5000,
       maxImageSize: options.maxImageSize || MAX_IMAGE_SIZE,
       imageLoadDelay: options.imageLoadDelay || 100,
@@ -141,9 +216,9 @@ export class PdfParser {
       disableRange: options.disableRange ?? false,
       disableStream: options.disableStream ?? false,
       disableAutoFetch: options.disableAutoFetch ?? false,
-      ...options
+      ...options,
     };
-    
+
     if (this.options.workerPath) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = this.options.workerPath;
     } else {
@@ -155,7 +230,7 @@ export class PdfParser {
 
   async parse(fileOrBuffer) {
     if (!fileOrBuffer) {
-      throw new Error('PDF parsing failed: No file or buffer provided');
+      throw new Error("PDF parsing failed: No file or buffer provided");
     }
 
     try {
@@ -164,42 +239,49 @@ export class PdfParser {
         data = fileOrBuffer;
       } else if (fileOrBuffer instanceof Blob) {
         data = await fileOrBuffer.arrayBuffer();
-      } else if (typeof fileOrBuffer.arrayBuffer === 'function') {
+      } else if (typeof fileOrBuffer.arrayBuffer === "function") {
         data = await fileOrBuffer.arrayBuffer();
       } else {
-        throw new Error('Invalid input: Expected File, Blob, or ArrayBuffer');
+        throw new Error("Invalid input: Expected File, Blob, or ArrayBuffer");
       }
 
       if (!data || data.byteLength === 0) {
-        throw new Error('Invalid PDF data: Empty buffer');
+        throw new Error("Invalid PDF data: Empty buffer");
       }
 
       const parsePromise = this._doParse(data);
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('PDF parsing timed out')), this.options.timeout);
+        setTimeout(
+          () => reject(new Error("PDF parsing timed out")),
+          this.options.timeout
+        );
       });
 
       return await Promise.race([parsePromise, timeoutPromise]);
     } catch (error) {
-      console.error('PDF parsing error:', error);
-      throw new Error(`PDF parsing failed: ${error.message || 'Unknown error'}`);
+      console.error("PDF parsing error:", error);
+      throw new Error(
+        `PDF parsing failed: ${error.message || "Unknown error"}`
+      );
     }
   }
 
   async _doParse(data) {
     const basePath = getPdfResourcePath();
-    
+
     this._loadingTask = pdfjsLib.getDocument({
       data,
       maxImageSize: this.options.maxImageSize,
       cMapUrl: this.options.cMapPath || `${basePath}pdfjs-dist/cmaps/`,
       cMapPacked: CMAP_PACKED,
-      standardFontDataUrl: this.options.standardFontPath || `${basePath}pdfjs-dist/standard_fonts/`,
+      standardFontDataUrl:
+        this.options.standardFontPath ||
+        `${basePath}pdfjs-dist/standard_fonts/`,
       useSystemFonts: this.options.useSystemFonts,
       enableXfa: this.options.enableXfa,
       disableRange: this.options.disableRange,
       disableStream: this.options.disableStream,
-      disableAutoFetch: this.options.disableAutoFetch
+      disableAutoFetch: this.options.disableAutoFetch,
     });
 
     if (this.options.onProgress) {
@@ -216,9 +298,10 @@ export class PdfParser {
       text: [],
       images: [],
       pages: [],
-      isScanned: false
+      isScanned: false,
     };
-    
+
+    // Get document-level metadata
     if (pdf.getAttachments) {
       result.attachments = await pdf.getAttachments().catch(() => ({}));
     }
@@ -229,31 +312,44 @@ export class PdfParser {
       result.permissions = await pdf.getPermissions().catch(() => null);
     }
 
+    // Process each page
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
-      const images = await getPageImages(page, i);
-      
+
+      // Extract text content
       const textContent = await page.getTextContent({
         includeMarkedContent: true,
-        disableCombineTextItems: false
+        disableCombineTextItems: false,
       });
 
-      const text = textContent.items.map(item => ({
-        text: item.str || '',
+      const text = textContent.items.map((item) => ({
+        text: item.str || "",
         x: item.transform ? item.transform[4] : 0,
         y: item.transform ? item.transform[5] : 0,
-        fontSize: item.transform ? Math.sqrt(item.transform[0] * item.transform[0] + item.transform[1] * item.transform[1]) : 0,
-        fontFamily: item.fontName || 'unknown'
+        fontSize: item.transform
+          ? Math.sqrt(
+              item.transform[0] * item.transform[0] +
+                item.transform[1] * item.transform[1]
+            )
+          : 0,
+        fontFamily: item.fontName || "unknown",
       }));
+
+      // Extract images
+      const images = await getPageImages(page, i);
 
       result.text.push(text);
       result.images.push(...images);
-      result.isScanned = result.isScanned || !text.length;
 
+      // Update scanned status
+      result.isScanned =
+        result.isScanned || (!text.length && images.length > 0);
+
+      // Update progress if callback provided
       if (this.options.onProgress) {
         this.options.onProgress({
           currentPage: i,
-          totalPages: pdf.numPages
+          totalPages: pdf.numPages,
         });
       }
     }
@@ -269,6 +365,7 @@ export class PdfParser {
   }
 }
 
+// Helper hook for Vue applications
 export function usePdfParser(options = {}) {
   const parser = ref(null);
   const parsing = ref(false);
@@ -280,13 +377,13 @@ export function usePdfParser(options = {}) {
     parser.value = new PdfParser({
       ...options,
       onProgress: ({ loaded, total, currentPage, totalPages }) => {
-        progress.value = { 
-          loaded, 
+        progress.value = {
+          loaded,
           total,
           currentPage,
-          totalPages
+          totalPages,
         };
-      }
+      },
     });
   };
 
@@ -325,6 +422,6 @@ export function usePdfParser(options = {}) {
     parsing: readonly(parsing),
     error: readonly(error),
     result: readonly(result),
-    progress: readonly(progress)
+    progress: readonly(progress),
   };
 }
