@@ -57,7 +57,7 @@ export default {
             </button>
 
 
-            <InputText v-if="activeCanvas" v-model="activeCanvas.name" placeholder="Canvas Name"
+            <input type = "text" v-if="activeCanvas" v-model="activeCanvas.name" placeholder="Canvas Name"
                 class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md" :class="[
                   'hover:border-gray-600',
                   'focus:!ring-2 focus:!ring-green-500 focus:!border-transparent !outline-none'
