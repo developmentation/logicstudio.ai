@@ -55,6 +55,13 @@ const Z_INDEX_LAYERS = {
   DRAGGING: 1000,
 };
 
+const dragState = Vue.ref({
+  isDragging: false,
+  dragOrigin: { x: 0, y: 0 },
+  startPositions: new Map()
+});
+
+
 // Actives are set as shortcuts for quick reference throughout the application
 // const activeCanvas = Vue.ref(null);
 // const activeCards = Vue.ref(null);
@@ -262,7 +269,7 @@ export const useCanvases = () => {
   const cardSelection = createCardSelection({
     cards: activeCards,
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Pass dragState instead of dragStartPositions
     lastSelectionTime,
     canvasRef,
     Z_INDEX_LAYERS,
@@ -271,11 +278,9 @@ export const useCanvases = () => {
   const cardPositioning = createCardPositioning({
     cards: activeCards,
     selectedCardIds,
-    dragStartPositions,
     zoomLevel,
     connections: activeConnections,
     canvasRef,
-
     calculateConnectionPoint,
     calculateConnectionPoints,
     updateConnections: () => {
@@ -290,8 +295,11 @@ export const useCanvases = () => {
       }
     },
     GRID_SIZE,
+    Z_INDEX_LAYERS,
+    dragState  // Pass the dragState
   });
 
+  
   const zoomPan = createZoomPanControls({
     zoomLevel,
     canvasRef,
@@ -310,7 +318,7 @@ export const useCanvases = () => {
     panStart,
     lastScroll,
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Pass dragState instead of dragStartPositions
     selectedConnectionId,
     connections: activeConnections,
     panBackground,
@@ -318,6 +326,7 @@ export const useCanvases = () => {
     nearestSocket,
     canvasRef,
     zoomLevel,
+
 
     createConnection: socketConnections.createConnection,
     validateConnection: socketConnections.validateConnection,
@@ -485,25 +494,27 @@ const clearTargetSocket = (connection, canvas) => {
 };
 
 // Create a computed that only extracts the data we need to watch
-const socketAndConnectionState = Vue.computed(() => 
-  canvases.value.map(canvas => ({
-    id: canvas.id,
-    connections: canvas.connections.map(conn => ({
-      id: conn.id,
-      sourceCardId: conn.sourceCardId,
-      sourceSocketId: conn.sourceSocketId,
-      targetCardId: conn.targetCardId,
-      targetSocketId: conn.targetSocketId
-    })),
-    socketValues: canvas.cards.map(card => ({
-      cardId: card.uuid,
-      outputs: card.sockets.outputs.map(socket => ({
-        id: socket.id,
-        value: socket.value
-      }))
-    }))
-  }))
-);
+// Create a computed that only extracts the data we need to watch
+// const socketAndConnectionState = Vue.computed(() => 
+//   canvases.value.map(canvas => ({
+//     id: canvas.id,
+//     connections: canvas.connections.map(conn => ({
+//       id: conn.id,
+//       sourceCardId: conn.sourceCardId,
+//       sourceSocketId: conn.sourceSocketId,
+//       targetCardId: conn.targetCardId,
+//       targetSocketId: conn.targetSocketId
+//     })),
+//     socketValues: canvas.cards.map(card => ({
+//       cardId: card.uuid,
+//       outputs: card.data?.sockets?.outputs?.map(socket => ({
+//         id: socket.id,
+//         value: socket.value
+//       })) || []  // Add fallback empty array
+//     }))
+//   }))
+// );
+
 
 
 //Extract the models from the canvas
@@ -577,53 +588,53 @@ const canvasModels = Vue.computed(() => {
 
 
 // Watch the computed instead of the entire canvases array
-Vue.watch(
-  socketAndConnectionState,
-  (newState, oldState) => {
-    if (!newState?.length) return;
+// Vue.watch(
+//   socketAndConnectionState,
+//   (newState, oldState) => {
+//     if (!newState?.length) return;
     
-    newState.forEach((canvasState, canvasIndex) => {
-      const canvas = canvases.value[canvasIndex];
-      const oldCanvasState = oldState?.[canvasIndex];
+//     newState.forEach((canvasState, canvasIndex) => {
+//       const canvas = canvases.value[canvasIndex];
+//       const oldCanvasState = oldState?.[canvasIndex];
       
-      if (oldCanvasState) {
-        // Check for deleted connections
-        oldCanvasState.connections.forEach(oldConnection => {
-          const stillExists = canvasState.connections.some(conn => conn.id === oldConnection.id);
-          if (!stillExists) {
-            clearTargetSocket(oldConnection, canvas);
-          }
-        });
-      }
+//       if (oldCanvasState) {
+//         // Check for deleted connections
+//         oldCanvasState.connections.forEach(oldConnection => {
+//           const stillExists = canvasState.connections.some(conn => conn.id === oldConnection.id);
+//           if (!stillExists) {
+//             clearTargetSocket(oldConnection, canvas);
+//           }
+//         });
+//       }
 
-      // Check for new connections
-      canvasState.connections.forEach(connection => {
-        const oldConnection = oldCanvasState?.connections.find(c => c.id === connection.id);
-        if (!oldConnection) {
-          propagateValueThroughConnection(connection, canvas);
-        }
-      });
+//       // Check for new connections
+//       canvasState.connections.forEach(connection => {
+//         const oldConnection = oldCanvasState?.connections.find(c => c.id === connection.id);
+//         if (!oldConnection) {
+//           propagateValueThroughConnection(connection, canvas);
+//         }
+//       });
 
-      // Check for socket value changes
-      canvasState.socketValues.forEach((cardState) => {
-        const oldCardState = oldCanvasState?.socketValues.find(c => c.cardId === cardState.cardId);
+//       // Check for socket value changes
+//       canvasState.socketValues.forEach((cardState) => {
+//         const oldCardState = oldCanvasState?.socketValues.find(c => c.cardId === cardState.cardId);
         
-        cardState.outputs.forEach(output => {
-          const oldOutput = oldCardState?.outputs.find(o => o.id === output.id);
-          if (oldOutput && output.value !== oldOutput.value) {
-            canvas.connections
-              .filter(conn => conn.sourceCardId === cardState.cardId && conn.sourceSocketId === output.id)
-              .forEach(conn => propagateValueThroughConnection(conn, canvas));
-          }
-        });
-      });
-    });
-  },
-  { 
-    deep: true,
-    immediate: true
-  }
-);
+//         cardState.outputs.forEach(output => {
+//           const oldOutput = oldCardState?.outputs.find(o => o.id === output.id);
+//           if (oldOutput && output.value !== oldOutput.value) {
+//             canvas.connections
+//               .filter(conn => conn.sourceCardId === cardState.cardId && conn.sourceSocketId === output.id)
+//               .forEach(conn => propagateValueThroughConnection(conn, canvas));
+//           }
+//         });
+//       });
+//     });
+//   },
+//   { 
+//     deep: true,
+//     immediate: true
+//   }
+// );
 
   // Comprehensive return statement:
   return {
@@ -650,7 +661,7 @@ Vue.watch(
 
     // Selection State
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Return dragState instead of dragStartPositions
     selectedConnectionId,
 
     // Connection State
@@ -667,6 +678,12 @@ Vue.watch(
     removeCard: cardRegistry.removeCard,
     updateCardPosition: cardPositioning.updateCardPosition,
     handleCardSelection: cardSelection.handleCardSelection,
+
+
+    
+    handleStartDrag: cardPositioning.handleStartDrag,
+    handleDrag: cardPositioning.handleDrag,
+    handleDragEnd: cardPositioning.handleDragEnd,
 
     // Connection Management
     createConnection: socketConnections.createConnection,

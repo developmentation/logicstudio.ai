@@ -40,263 +40,389 @@ export const createCardRegistry = (props) => {
 
   // Enhanced default configurations with socket schemas
   const CARD_DEFAULTS = {
-
     [CARD_TYPES.MODEL]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.MODEL,
+      ui: {
+        name: "Model",
+        description: "Model Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: [],
+        }
+      }
     },
-
+  
     [CARD_TYPES.AGENT]: {
-      display:"default", //default is as described. could be "minimized", which hides the content, or could be "maximized", which makes the component very large
-      width: 300,
-      height: 200,
-      model: null,
-      systemPrompt: '<socket name = "System Socket"/>',
-      userPrompt: '<socket name = "User Socket"/>',
-      messageHistory: [],
-      pendingMessage: "",
-      completedMessage: "",
-      output: "",
-      triggers: {
-        andEnabled: false,
-        orEnabled: false,
-        autoTrigger: false,
+      uuid: null,
+      type: CARD_TYPES.AGENT,
+      ui: {
+        name: "Agent",
+        description: "Agent Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 200,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
-      sockets: {
-        inputs: [],
-        outputs: [
-          {
-            id: uuidv4(),
-            name: "Output",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
-      },
+      data: {
+        model: null,
+        systemPrompt: '<socket name="System Socket"/>',
+        userPrompt: '<socket name="User Socket"/>',
+        messageHistory: [],
+        pendingMessage: "",
+        completedMessage: "",
+        output: "",
+        triggers: {
+          andEnabled: false,
+          orEnabled: false,
+          autoTrigger: false,
+        },
+        sockets: {
+          inputs: [],
+          outputs: [
+            {
+              id: uuidv4(),
+              name: "Output",
+              type: SOCKET_TYPES.OUTPUT,
+              value: null,
+              momentUpdated: Date.now(),
+            }
+          ]
+        }
+      }
     },
+  
     [CARD_TYPES.INPUT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      files: [],
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.INPUT,
+      ui: {
+        name: "Input",
+        description: "File Input Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        files: [],
+        filesData: [],
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
+  
     [CARD_TYPES.OUTPUT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      outputs: [],
-      autoDownload: false,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.OUTPUT,
+      ui: {
+        name: "Output",
+        description: "Output Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        outputs: [],
+        autoDownload: false,
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.JOIN]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [
-          {
-            id: uuidv4(),
-            name: "Output",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
+      uuid: null,
+      type: CARD_TYPES.JOIN,
+      ui: {
+        name: "Join",
+        description: "Join Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: [
+            {
+              id: uuidv4(),
+              name: "Output",
+              type: SOCKET_TYPES.OUTPUT,
+              value: null,
+              momentUpdated: Date.now(),
+            }
+          ]
+        }
+      }
     },
+  
     [CARD_TYPES.TEXT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.TEXT,
+      ui: {
+        name: "Text",
+        description: "Text Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        content: "Enter text here...",
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
+  
     [CARD_TYPES.VIEW]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.VIEW,
+      ui: {
+        name: "View",
+        description: "View Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.LABEL]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.LABEL,
+      ui: {
+        name: "Label",
+        description: "Label Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.TRIGGER]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.TRIGGER,
+      ui: {
+        name: "Trigger",
+        description: "Trigger Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-    
+  
     [CARD_TYPES.WEB]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.WEB,
+      ui: {
+        name: "Web",
+        description: "Web Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-
-
+  
     [CARD_TYPES.CHAT]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.CHAT,
+      ui: {
+        name: "Chat",
+        description: "Chat Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        messages: [],
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-    
+  
     [CARD_TYPES.GITHUB]: {
-      display:"default",
-      width: 500,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.GITHUB,
+      ui: {
+        name: "GitHub",
+        description: "GitHub Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 500,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.API]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.API,
+      ui: {
+        name: "API",
+        description: "API Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.TRANSCRIBE]: {
-      display:"default",
-      width: 450,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.TRANSCRIBE,
+      ui: {
+        name: "Transcribe",
+        description: "Transcribe Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 450,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.PDF]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.PDF,
+      ui: {
+        name: "PDF",
+        description: "PDF Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-    
+  
     [CARD_TYPES.TEMPLATE]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.TEMPLATE,
+      ui: {
+        name: "Template",
+        description: "Template Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
-    },
-
-    // [CARD_TYPES.DISPLAY]: {
-    //   width: 300,
-    //   height: 200,
-    //   displayType: "markdown",
-    //   content: "",
-    //   sockets: {
-    //     inputs: [ ],
-    //     outputs: [],
-    //   },
-    // },
-
-    // [CARD_TYPES.TEXT]: {
-    //   width: 250,
-    //   height: 150,
-    //   content: "Enter text here...",
-    //   sockets: {
-    //     inputs: [],
-    //     outputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "text",
-    //         type: SOCKET_TYPES.OUTPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //   },
-    // },
-
-    // [CARD_TYPES.TOOL]: {
-    //   width: 250,
-    //   height: 150,
-    //   toolType: "custom",
-    //   config: {},
-    //   sockets: {
-    //     inputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "input",
-    //         type: SOCKET_TYPES.INPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //     outputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "output",
-    //         type: SOCKET_TYPES.OUTPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //   },
-    // },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
+    }
   };
-
   // In cardRegistry.js
+ 
+  
   const createCard = (type, position = null) => {
-    // console.log({type, position })
-
+    // Reset z-index for all cards
     activeCards.value = activeCards.value.map((card) => ({
       ...card,
-      zIndex: Z_INDEX_LAYERS.DEFAULT,
+      ui: {
+        ...card.ui,
+        zIndex: Z_INDEX_LAYERS.DEFAULT
+      }
     }));
+    
     selectedCardIds.value.clear();
 
     const defaultConfig = CARD_DEFAULTS[type];
@@ -314,52 +440,49 @@ export const createCardRegistry = (props) => {
       const scrollTop = container.scrollTop;
 
       position = {
-        x:
-          (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value -
-          defaultConfig.width / 2,
-        y:
-          (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value -
-          defaultConfig.height / 2 -
-          200,
+        x: (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value - defaultConfig.ui.width / 2,
+        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 200,
       };
     }
 
+    // Create a deep clone of the default config
     const defaultConfigClone = JSON.parse(JSON.stringify(defaultConfig));
     const cardId = uuidv4();
 
-    //By card type, find the first available number in a sequence for that card to occupy
-    //Or if you like, find the next highest number, so the sequence keeps going
-
+    // Create the new card as a plain object (since it will be inside the activeCards ref)
     const newCard = {
       uuid: cardId,
       type,
-      display:"default",
-      x: position?.x ?? 0,
-      y: position?.y ?? 0,
-      zIndex: Z_INDEX_LAYERS.SELECTED,
-      name: `${type.charAt(0).toUpperCase() + type.slice(1)}`, // Simplified name
-      description: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
-      ...defaultConfigClone,
-      sockets: {
-        inputs: defaultConfigClone.sockets.inputs.map((socket) => ({
-          ...socket,
-          id: uuidv4(),
-          momentUpdated: Date.now(),
-        })),
-        outputs: defaultConfigClone.sockets.outputs.map((socket) => ({
-          ...socket,
-          id: uuidv4(),
-          momentUpdated: Date.now(),
-        })),
+      ui: {
+        ...defaultConfigClone.ui,
+        x: position?.x ?? 0,
+        y: position?.y ?? 0,
+        zIndex: Z_INDEX_LAYERS.SELECTED,
       },
+      data: {
+        ...defaultConfigClone.data,
+        sockets: {
+          inputs: defaultConfigClone.data.sockets.inputs.map(socket => ({
+            ...socket,
+            id: uuidv4(),
+            momentUpdated: Date.now(),
+          })),
+          outputs: defaultConfigClone.data.sockets.outputs.map(socket => ({
+            ...socket,
+            id: uuidv4(),
+            momentUpdated: Date.now(),
+          })),
+        }
+      }
     };
 
-    // console.log(newCard)
+    // Update the ref array with the new card
     activeCards.value = [...activeCards.value, newCard];
     selectedCardIds.value.add(cardId);
-    // console.log(activeCards.value)
+    
     return cardId;
   };
+
 
   const cloneCard = (uuid) => {
     let clonedCards = [];

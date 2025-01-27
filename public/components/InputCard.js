@@ -5,8 +5,8 @@ import {
   updateSocketArray,
   createSocketUpdateEvent,
   generateSocketId,
-  createSocket
-} from '../utils/socketManagement/socketRemapping.js';
+  createSocket,
+} from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "InputCard",
@@ -15,10 +15,9 @@ export default {
     cardData: { type: Object, required: true },
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
-    isSelected: { type: Boolean, default: false }
+    isSelected: { type: Boolean, default: false },
   },
   template: `
-  <div >
     <BaseCard
       :card-data="localCardData"
       :zoom-level="zoomLevel"
@@ -27,14 +26,14 @@ export default {
       @update-position="$emit('update-position', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
-      @clone-card="uuid => $emit('clone-card', uuid )"
+      @clone-card="uuid => $emit('clone-card', uuid)"
       @select-card="$emit('select-card', $event)"
-       :style="{ minHeight: contentMinHeight + 'px' }"
+      :style="{ minHeight: contentMinHeight + 'px' }"
     >
       <!-- Output Sockets -->
       <div class="absolute -right-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
         <div 
-          v-for="(socket, index) in localCardData.sockets.outputs"
+          v-for="(socket, index) in localCardData.data.sockets.outputs"
           :key="socket.id"
           class="flex items-center justify-end"
         >
@@ -57,9 +56,8 @@ export default {
 
       <!-- Content -->
       <div 
-      class="space-y-2 text-gray-300 p-4 select-none" 
-      v-show = "localCardData.display == 'default'"
-     
+        class="space-y-2 text-gray-300 p-4 select-none" 
+        v-show="localCardData.ui.display === 'default'"
       >
         <!-- File Upload Area -->
         <div 
@@ -86,7 +84,7 @@ export default {
         <!-- File List -->
         <div class="space-y-2">
           <div 
-            v-for="(fileData, index) in localCardData.filesData" 
+            v-for="(fileData, index) in localCardData.data.filesData" 
             :key="fileData.name + index"
             class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
           >
@@ -114,12 +112,12 @@ export default {
                 {{ fileData.name }}
               </div>
             </div>
-             <input
-                type="file"
-                :ref="el => { if (el) refreshInputs[index] = el }"
-                class="hidden"
-                @change="(e) => handleRefreshFile(e, index)"
-              />
+            <input
+              type="file"
+              :ref="el => { if (el) refreshInputs[index] = el }"
+              class="hidden"
+              @change="(e) => handleRefreshFile(e, index)"
+            />
             <button 
               class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
               @click.stop="triggerRefreshFile(index)"
@@ -139,9 +137,8 @@ export default {
         </div>
       </div>
     </BaseCard>
-    </div>
   `,
-  
+
   setup(props, { emit }) {
     const fileInput = Vue.ref(null);
     const fileNameInput = Vue.ref(null);
@@ -150,19 +147,52 @@ export default {
     const connections = Vue.ref(new Set());
     const isProcessing = Vue.ref(false);
     const editingIndex = Vue.ref(-1);
-    const editingName = Vue.ref('');
+    const editingName = Vue.ref("");
     const contentMinHeight = Vue.ref(0);
 
+    const initializeCardData = (data) => {
+      return {
+        uuid: data.uuid,
+        type: data.type,
+        ui: {
+          name: data.ui?.name || "Input Card",
+          description: data.ui?.description || "File Input Node",
+          display: data.ui?.display || "default",
+          x: data.ui?.x || 0,
+          y: data.ui?.y || 0,
+          width: data.ui?.width || 300,
+          height: data.ui?.height || 150,
+          zIndex: data.ui?.zIndex || 1,
+        },
+        data: {
+          filesData: data.data?.filesData || [],
+          files: data.data?.files || [],
+          sockets: {
+            inputs: data.data?.sockets?.inputs || [],
+            outputs: data.data?.sockets?.outputs || [],
+          },
+        },
+      };
+    };
 
-    
+    const localCardData = Vue.ref(initializeCardData(props.cardData));
+
+    // Socket handling
+    const getSocketConnections = (socketId) => connections.value.has(socketId);
+
+    const handleSocketMount = (event) => {
+      if (!event) return;
+      socketRegistry.set(event.socketId, {
+        element: event.element,
+        cleanup: [],
+      });
+    };
+
     const triggerRefreshFile = (index) => {
       if (refreshInputs.value[index]) {
         refreshInputs.value[index].click();
       }
     };
-
- 
-
 
     // File name editing functions
     const startEditing = (index, name) => {
@@ -179,10 +209,10 @@ export default {
     const saveFileName = (index) => {
       if (editingName.value.trim()) {
         const newName = editingName.value.trim();
-        localCardData.value.filesData[index].name = newName;
+        localCardData.value.data.filesData[index].name = newName;
         // Update the socket name as well
-        if (localCardData.value.sockets.outputs[index]) {
-          localCardData.value.sockets.outputs[index].name = newName;
+        if (localCardData.value.data.sockets.outputs[index]) {
+          localCardData.value.data.sockets.outputs[index].name = newName;
         }
         handleCardUpdate();
       }
@@ -191,50 +221,7 @@ export default {
 
     const cancelEdit = () => {
       editingIndex.value = -1;
-      editingName.value = '';
-    };
-
-
-   
-    const initializeCardData = (data) => {
-      // Extract file data from sockets
-      const filesData = data.sockets?.outputs?.map(socket => ({
-        name: socket.value?.metadata?.name || socket.name,
-        type: socket.value?.metadata?.type || 'text/plain',
-        size: socket.value?.metadata?.size || 0,
-        lastModified: socket.value?.metadata?.lastModified || Date.now()
-      })) || [];
-    
-      return {
-        uuid: data.uuid,
-        name: data.name || "Input Card",
-        description: data.description || "File Input Node",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        filesData: filesData,
-        sockets: {
-          inputs: [],
-          outputs: data.sockets?.outputs?.map((socket, index) => ({
-            ...socket,
-            type: 'output',
-            index: socket.sourceIndex || index,
-            // Preserve the existing socket ID and value
-            id: socket.id,
-            value: socket.value,
-            name: socket.name
-          })) || []
-        }
-      };
-    };
-
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
-
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, { element: event.element, cleanup: [] });
+      editingName.value = "";
     };
 
     const emitWithCardId = (eventName, event) => {
@@ -246,35 +233,40 @@ export default {
         const reader = new FileReader();
         reader.onload = () => {
           let content = reader.result;
-          
+
           // Handle JSON files
-          if (file.type.includes('json') || file.name.toLowerCase().endsWith('.json')) {
+          if (
+            file.type.includes("json") ||
+            file.name.toLowerCase().endsWith(".json")
+          ) {
             try {
               content = JSON.parse(reader.result);
             } catch {
-              console.warn('JSON parsing failed, using raw text content');
+              console.warn("JSON parsing failed, using raw text content");
             }
           }
-    
+
           resolve({
             content,
             metadata: {
               type: file.type,
               name: file.name,
               size: file.size,
-              lastModified: file.lastModified
-            }
+              lastModified: file.lastModified,
+            },
           });
         };
-    
+
         // Determine how to read the file
-        if (file.type.startsWith('text/') || 
-            file.type.includes('json') || 
-            file.type.includes('javascript') ||
-            file.name.toLowerCase().endsWith('.md') ||
-            file.name.toLowerCase().endsWith('.txt')) {
+        if (
+          file.type.startsWith("text/") ||
+          file.type.includes("json") ||
+          file.type.includes("javascript") ||
+          file.name.toLowerCase().endsWith(".md") ||
+          file.name.toLowerCase().endsWith(".txt")
+        ) {
           reader.readAsText(file);
-        } else if (file.type.startsWith('image/')) {
+        } else if (file.type.startsWith("image/")) {
           reader.readAsDataURL(file);
         } else {
           reader.readAsArrayBuffer(file);
@@ -285,124 +277,132 @@ export default {
     const handleRefreshFile = async (event, index) => {
       const file = event.target.files?.[0];
       if (!file) return;
-    
+
       if (isProcessing.value) return;
       isProcessing.value = true;
-    
+
       try {
         const fileData = await readFileContent(file);
-        
+
         // Update the file data
-        localCardData.value.filesData[index] = {
+        localCardData.value.data.filesData[index] = {
           name: file.name,
           type: file.type,
           size: file.size,
-          lastModified: file.lastModified
+          lastModified: file.lastModified,
         };
-    
-        if (localCardData.value.sockets.outputs[index]) {
+
+        if (localCardData.value.data.sockets.outputs[index]) {
           const updatedSocket = {
             ...createSocket({
-              type: 'output',
+              type: "output",
               index,
-              existingId: localCardData.value.sockets.outputs[index].id,
-              value: fileData  // Direct assignment of fileData object
+              existingId: localCardData.value.data.sockets.outputs[index].id,
+              value: fileData, // Direct assignment of fileData object
             }),
-            name: file.name
+            name: file.name,
           };
-    
-          const newSockets = [...localCardData.value.sockets.outputs];
+
+          const newSockets = [...localCardData.value.data.sockets.outputs];
           newSockets[index] = updatedSocket;
-    
+
           const { reindexedSockets, reindexMap } = updateSocketArray({
-            oldSockets: localCardData.value.sockets.outputs,
+            oldSockets: localCardData.value.data.sockets.outputs,
             newSockets,
-            type: 'output',
+            type: "output",
             deletedSocketIds: [],
             socketRegistry,
-            connections: connections.value
+            connections: connections.value,
           });
-    
-          localCardData.value.sockets.outputs = reindexedSockets;
-    
-          emit('sockets-updated', createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets: localCardData.value.sockets.outputs,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type: 'output'
-          }));
+
+          localCardData.value.data.sockets.outputs = reindexedSockets;
+
+          emit(
+            "sockets-updated",
+            createSocketUpdateEvent({
+              cardId: localCardData.value.uuid,
+              oldSockets: localCardData.value.data.sockets.outputs,
+              newSockets: reindexedSockets,
+              reindexMap,
+              deletedSocketIds: [],
+              type: "output",
+            })
+          );
         }
       } finally {
         isProcessing.value = false;
         handleCardUpdate();
-        event.target.value = '';
+        event.target.value = "";
       }
     };
-    
+
     // For processing new files
+    // File processing functions updated to use new structure
     const processFiles = async (files) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
-    
+
       try {
-        const oldSockets = [...(localCardData.value.sockets.outputs || [])];
-        const startIndex = localCardData.value.filesData.length;
-        
-        const processedFiles = await Promise.all(Array.from(files).map(async (file) => {
-          const fileData = await readFileContent(file);
-          return {
-            fileInfo: {
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              lastModified: file.lastModified
-            },
-            fileData
-          };
-        }));
-    
+        const oldSockets = [...localCardData.value.data.sockets.outputs];
+        const startIndex = localCardData.value.data.filesData.length;
+
+        const processedFiles = await Promise.all(
+          Array.from(files).map(async (file) => {
+            const fileData = await readFileContent(file);
+            return {
+              fileInfo: {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified,
+              },
+              fileData,
+            };
+          })
+        );
+
         // Update filesData state
-        localCardData.value.filesData = [
-          ...localCardData.value.filesData,
-          ...processedFiles.map(pf => pf.fileInfo)
+        localCardData.value.data.filesData = [
+          ...localCardData.value.data.filesData,
+          ...processedFiles.map((pf) => pf.fileInfo),
         ];
-    
+
         // Create new sockets for the files
         const newSockets = [
           ...oldSockets,
           ...processedFiles.map((pf, index) => ({
             ...createSocket({
-              type: 'output',
+              type: "output",
               index: startIndex + index,
-              value: pf.fileData  // Direct assignment of fileData object
+              value: pf.fileData,
             }),
-            name: pf.fileInfo.name
-          }))
+            name: pf.fileInfo.name,
+          })),
         ];
-    
+
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'output',
+          type: "output",
           deletedSocketIds: [],
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
-    
-        localCardData.value.sockets.outputs = reindexedSockets;
-    
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: [],
-          type: 'output'
-        }));
-    
+
+        localCardData.value.data.sockets.outputs = reindexedSockets;
         handleCardUpdate();
+
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets,
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds: [],
+            type: "output",
+          })
+        );
       } finally {
         isProcessing.value = false;
       }
@@ -413,43 +413,46 @@ export default {
       isProcessing.value = true;
 
       try {
-        const oldSockets = [...localCardData.value.sockets.outputs];
+        const oldSockets = [...localCardData.value.data.sockets.outputs];
         const deletedSocket = oldSockets[index];
         const deletedSocketIds = deletedSocket ? [deletedSocket.id] : [];
 
         // Remove file and create new sockets array
-        localCardData.value.filesData.splice(index, 1);
+        localCardData.value.data.filesData.splice(index, 1);
         const newSockets = oldSockets.filter((_, i) => i !== index);
 
         // Update socket array with proper remapping
         const { reindexMap, reindexedSockets } = updateSocketArray({
           oldSockets,
           newSockets,
-          type: 'output',
+          type: "output",
           deletedSocketIds,
           socketRegistry,
-          connections: connections.value
+          connections: connections.value,
         });
 
-        // Apply updates
-        localCardData.value.sockets.outputs = reindexedSockets;
+        // Apply updates - this was wrong, using sockets instead of data.sockets
+        localCardData.value.data.sockets.outputs = reindexedSockets;
 
         // Emit the socket update event
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds,
-          type: 'output'
-        }));
+        emit(
+          "sockets-updated",
+          createSocketUpdateEvent({
+            cardId: localCardData.value.uuid,
+            oldSockets, // These parameters need to match what the handler expects
+            newSockets: reindexedSockets,
+            reindexMap,
+            deletedSocketIds,
+            type: "output",
+          })
+        );
 
         handleCardUpdate();
       } finally {
         isProcessing.value = false;
       }
     };
-
+    // File handling functions remain largely the same, but updated to use new structure
     const handleFileSelect = (event) => {
       if (!event.target.files?.length) return;
       processFiles(event.target.files);
@@ -464,72 +467,135 @@ export default {
       fileInput.value?.click();
     };
 
-    const handleCardUpdate = (data) => {
-      if(data) localCardData.value = data; 
+    const handleCardUpdate = () => {
       if (!isProcessing.value) {
-        emit('update-card', Vue.toRaw(localCardData.value));
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value) return;
-      isProcessing.value = true;
+    //Card and socket updates
+    // Helper computed to get a minimal representation of the socket state
+    const socketStateSignature = Vue.computed(() => {
+      const sockets = props.cardData.data?.sockets?.outputs;
+      if (!sockets) return [];
 
-      try {
-        // Update position
-        if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-        if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+      // Return minimal representation of the state we care about
+      return sockets.map((socket) => ({
+        id: socket.id,
+        value: socket.value ?? null, // Ensure value is never undefined
+        name: socket.name ?? "", // Ensure name is never undefined
+      }));
+    });
 
-        // Update sockets if needed
-        if (newData.sockets?.outputs && (!oldData?.sockets || 
-            newData.sockets.outputs.length !== oldData.sockets.outputs?.length)) {
-          const oldSockets = oldData?.sockets?.outputs || [];
-          const newSockets = newData.sockets.outputs.map((socket, index) => 
-            createSocket({
-              type: 'output',
-              index,
-              existingId: socket.id,
-              value: socket.value
-            })
-          );
+    const processingState = Vue.ref(null);
 
-          const { reindexMap, reindexedSockets } = updateSocketArray({
-            oldSockets,
-            newSockets,
-            type: 'output',
-            socketRegistry,
-            connections: connections.value
-          });
+    // Single watcher that handles all socket changes efficiently
 
-          localCardData.value.sockets.outputs = reindexedSockets;
-
-          emit('sockets-updated', createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type: 'output'
-          }));
-        }
-      } finally {
-        isProcessing.value = false;
-      }
-    }, { deep: true });
-    
+    // Update the watcher with safer comparison logic
     Vue.watch(
-      () => localCardData.value.sockets.outputs.length,
+      socketStateSignature,
+      (newState, oldState) => {
+        if (isProcessing.value) return;
+        if (!oldState || !newState) return;
+        if (processingState.value === newState) return;
+
+        const changes = newState
+          .map((socket, index) => {
+            const oldSocket = oldState[index] || { value: null, name: "" };
+            return {
+              id: socket.id,
+              hasValueChange:
+                JSON.stringify(socket.value) !==
+                JSON.stringify(oldSocket.value),
+              hasMetaChange: socket.name !== oldSocket.name,
+            };
+          })
+          .filter((change) => change.hasValueChange || change.hasMetaChange);
+
+        if (changes.length > 0) {
+          isProcessing.value = true;
+          processingState.value = newState;
+          try {
+            // Update local state first
+            localCardData.value.data.sockets.outputs =
+              localCardData.value.data.sockets.outputs.map((socket, index) => {
+                const newStateSocket = newState[index];
+                return {
+                  ...socket,
+                  value: newStateSocket?.value ?? null,
+                  name: newStateSocket?.name ?? "",
+                };
+              });
+
+            // Emit update event
+            emit(
+              "sockets-updated",
+              createSocketUpdateEvent({
+                cardId: localCardData.value.uuid,
+                oldSockets: oldState.map((state, index) => ({
+                  ...localCardData.value.data.sockets.outputs[index],
+                  value: state?.value ?? null,
+                  name: state?.name ?? "",
+                })),
+                newSockets: localCardData.value.data.sockets.outputs,
+                reindexMap: localCardData.value.data.sockets.outputs.map(
+                  (_, i) => i
+                ),
+                deletedSocketIds: [],
+                type: "output",
+              })
+            );
+          } finally {
+            isProcessing.value = false;
+            processingState.value = null;
+          }
+        }
+      },
+      { deep: true }
+    );
+
+    // Watch for specific property changes instead of deep watching
+    Vue.watch(
+      () => props.cardData.ui?.x,
+      (newX) => {
+        if (newX !== undefined && !isProcessing.value) {
+          localCardData.value.ui.x = newX;
+        }
+      }
+    );
+
+    Vue.watch(
+      () => props.cardData.ui?.y,
+      (newY) => {
+        if (newY !== undefined && !isProcessing.value) {
+          localCardData.value.ui.y = newY;
+        }
+      }
+    );
+
+    Vue.watch(
+      () => props.cardData.ui?.display,
+      (newDisplay) => {
+        if (newDisplay !== undefined && !isProcessing.value) {
+          localCardData.value.ui.display = newDisplay;
+        }
+      }
+    );
+
+    // Watch socket count for height adjustment
+    Vue.watch(
+      () => localCardData.value.data.sockets.outputs.length,
       (newSocketCount) => {
-        console.log("newSocketCount", newSocketCount)
-        contentMinHeight.value = 30+ newSocketCount * 36;
+        contentMinHeight.value = 30 + newSocketCount * 36;
       },
       { immediate: true }
     );
 
-    // Cleanup on unmount
+    // Cleanup
     Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
+      socketRegistry.forEach((socket) =>
+        socket.cleanup.forEach((cleanup) => cleanup())
+      );
       socketRegistry.clear();
       connections.value.clear();
     });
@@ -558,5 +624,5 @@ export default {
 
       contentMinHeight,
     };
-  }
+  },
 };

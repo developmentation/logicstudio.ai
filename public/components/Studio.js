@@ -198,15 +198,34 @@ export default {
 
                     <!-- Cards Layer -->
                     <div class="relative" style="pointer-events: none;">
-                        <component v-for="card in activeCards" :key="card.uuid" :is="getCardComponent(card.type)"
-                            :cardData="card" :zoomLevel="zoomLevel" :zIndex="card.zIndex"
-                            :is-selected="selectedCardIds.has(card.uuid)" @update-position="updateCardPosition"
-                            @update-card="updateCard" @update-socket-value="updateSocketValue"
-                            @connection-drag-start="handleConnectionDragStart" @connection-drag="handleConnectionDrag"
-                            @connection-drag-end="handleConnectionDragEnd" @close-card="removeCard"
-                            @clone-card="cloneCard" @manual-trigger="handleManualTrigger"
-                            @sockets-updated="handleSocketsUpdated" @select-card="handleCardSelection"
-                            style="pointer-events: auto;" />
+                  
+                                      
+                <component 
+    v-for="card in activeCards" 
+    :key="card.uuid" 
+    :is="getCardComponent(card.type)"
+    :cardData="card" 
+    :zoomLevel="zoomLevel" 
+    :zIndex="card.ui.zIndex"
+    :is-selected="selectedCardIds.has(card.uuid)" 
+    @update-position="updateCardPosition"
+    @drag-start="handleDragStartCard"
+    @drag="handleDragCard"
+    @drag-end="handleDragEndCard"
+    @update-card="updateCard" 
+    @update-socket-value="updateSocketValue"
+    @connection-drag-start="handleConnectionDragStart" 
+    @connection-drag="handleConnectionDrag"
+    @connection-drag-end="handleConnectionDragEnd" 
+    @close-card="removeCard"
+    @clone-card="cloneCard" 
+    @manual-trigger="handleManualTrigger"
+    @sockets-updated="handleSocketsUpdated" 
+    @select-card="handleCardSelection"
+    style="pointer-events: auto;" 
+/>
+
+
                     </div>
                 </div>
             </div>
@@ -275,6 +294,11 @@ export default {
       handleConnectionDragStart,
       handleConnectionDrag,
       handleConnectionDragEnd,
+
+      handleStartDrag,
+      handleDrag,
+      handleDragEnd,
+
 
       findNearestSocket,
       selectedConnectionId,
@@ -388,46 +412,42 @@ export default {
       }
     };
 
-    // Event handlers
-    // const handleToolbarAction = (action) => {
-
-    //   const cardId = createCard(action, null);
-
-    //   if (cardId) {
-    //     // Clear any existing selections
-    //     selectedCardIds.value.clear();
-    //     // Select the new card
-    //     selectedCardIds.value.add(cardId);
-    //   }
-    // };
-
+    //
     const handleToolbarAction = (action) => {
-      // First deselect all cards and reset their z-indexes
-      // activeCards.value = activeCards.value.map(card => ({
-      //   ...card,
-      //   zIndex: Z_INDEX_LAYERS.DEFAULT
-      // }));
-      // selectedCardIds.value.clear();
-
-      // Now create the new card with a high z-index
       const cardId = createCard(action, null);
-
+    
       if (cardId) {
-        // Find the new card and set its z-index
-        activeCards.value = activeCards.value.map((card) => {
-          if (card.uuid === cardId) {
-            return {
-              ...card,
-              zIndex: Z_INDEX_LAYERS.SELECTED,
-            };
-          }
-          return card;
-        });
-
-        // Select the new card
-        //   selectedCardIds.value.add(cardId);
+        // Update the new card with the proper structure
+        const newCard = activeCards.value.find(card => card.uuid === cardId);
+        if (newCard) {
+          const structuredCard = {
+            uuid: newCard.uuid,
+            type: newCard.type,
+            ui: {
+              name: newCard.name || '',
+              description: newCard.description || '',
+              display: newCard.display || '',
+              x: newCard.x || 0,
+              y: newCard.y || 0,
+              width: newCard.width || 200,
+              height: newCard.height || 200,
+              zIndex: Z_INDEX_LAYERS.SELECTED
+            },
+            data: {
+              files: newCard.files || [],
+              filesData: newCard.filesData || [],
+              sockets: {
+                inputs: newCard.sockets?.inputs || [],
+                outputs: newCard.sockets?.outputs || []
+              }
+            }
+          };
+          
+          updateCard(structuredCard);
+        }
       }
     };
+
 
     const handleAddCanvas = (newCanvas) => {
       canvases.value.push(newCanvas);
@@ -436,20 +456,16 @@ export default {
 
     const handleManualTrigger = (cardData) => {
       const connections = activeConnections.value.filter(
-        (conn) => conn.sourceCardId === cardData.uuid
+        conn => conn.sourceCardId === cardData.uuid
       );
-
-      connections.forEach((conn) => {
-        const sourceCard = activeCards.value.find(
-          (c) => c.uuid === conn.sourceCardId
-        );
-        const targetCard = activeCards.value.find(
-          (c) => c.uuid === conn.targetCardId
-        );
-
+    
+      connections.forEach(conn => {
+        const sourceCard = activeCards.value.find(c => c.uuid === conn.sourceCardId);
+        const targetCard = activeCards.value.find(c => c.uuid === conn.targetCardId);
+    
         if (sourceCard && targetCard) {
-          const sourceSocket = sourceCard.sockets.outputs.find(
-            (s) => s.id === conn.sourceSocketId
+          const sourceSocket = sourceCard.data.sockets.outputs.find(
+            s => s.id === conn.sourceSocketId
           );
           if (sourceSocket && sourceSocket.value !== null) {
             updateSocketValue(
@@ -461,95 +477,145 @@ export default {
         }
       });
     };
+    
 
-    // const updateCard = (cardId, updates) => {
-    //   const card = activeCards.value.find((c) => c.uuid === cardId);
-    //   if (!card) return;
-
-    //   Object.assign(card, {
-    //     ...updates,
-    //     momentUpdated: Date.now(),
-    //   });
-
-    // };
-
-    const updateCard = (updates) => {
-      const cardIndex = activeCards.value.findIndex(
-        (c) => c.uuid === updates.uuid
-      );
-      if (cardIndex === -1) return;
-
-      // Create a new object preserving reactive properties
-      activeCards.value[cardIndex] = {
-        ...activeCards.value[cardIndex],
-        ...updates,
-        momentUpdated: Date.now(),
-      };
-
+  
+    const handleDragStartCard = ({ event, cardId }) => {
+      // console.log('Drag Start Event:', { 
+      //   type: event.type,
+      //   clientX: event.clientX,
+      //   clientY: event.clientY,
+      //   cardId 
+      // });
+    
+      // Ensure we have a valid event
+      if (!event || (!event.clientX && !event.touches)) {
+        console.warn('Invalid event in handleDragStartCard');
+        return;
+      }
+    
+      const result = handleStartDrag(event, cardId);
+      if (!result) return;
+    
+      // console.log('Start Drag Results:', {
+      //   dragOrigin: result.dragOrigin,
+      //   isDragging: result.isDragging,
+      //   selectedCards: Array.from(selectedCardIds.value)
+      // });
+    
+      // Set initial positions for selected cards
+      selectedCardIds.value.forEach((id) => {
+        const card = activeCards.value.find(c => c.uuid === id);
+        if (card) {
+          card.ui = {
+            ...card.ui,
+            zIndex: Z_INDEX_LAYERS.DRAGGING
+          };
+        }
+      });
+    
       // Force reactivity update
       activeCards.value = [...activeCards.value];
     };
-
-    // Was just for Inputs, a new version added for both.
-    /*
-const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap, deletedSocketIds }) => {
-    const card = activeCards.value.find(c => c.uuid === cardId);
-    if (!card) return;
-  
-    // First, remove any connections to deleted sockets
-    activeConnections.value = activeConnections.value.filter(conn => {
-      if (conn.targetCardId === cardId) {
-        return !deletedSocketIds.includes(conn.targetSocketId);
+    
+    const handleDragCard = ({ event }) => {
+      // Ensure we have a valid event
+      if (!event || (!event.clientX && !event.touches)) {
+        console.warn('Invalid event in handleDragCard');
+        return;
       }
-      return true;
-    });
-  
-    // Then update the remaining connections
-    activeConnections.value = activeConnections.value.map(conn => {
-      if (conn.targetCardId === cardId) {
-        // Find the old socket's index
-        const oldIndex = oldSockets.findIndex(s => s.id === conn.targetSocketId);
-        if (oldIndex !== -1) {
-          const newIndex = reindexMap[oldIndex];
-          if (newIndex !== -1) {
-            // Socket still exists, update the connection to point to the new socket
-            const newSocket = newSockets[newIndex];
-            return {
-              ...conn,
-              targetSocketId: newSocket.id
-            };
-          }
-        }
-      }
-      return conn;
-    });
-  
-    // Update the card's sockets
-    card.sockets.inputs = newSockets;
-  
-    // Wait for Vue to update the DOM
-    await Vue.nextTick();
-  
-    // Force a final recalculation of all affected connections
-    requestAnimationFrame(() => {
-      // Recalculate connection points for all connections targeting this card
-      const updatedConnections = activeConnections.value.map(conn => {
-        if (conn.targetCardId === cardId) {
-          const points = calculateConnectionPoints({
-            sourceCardId: conn.sourceCardId,
-            sourceSocketId: conn.sourceSocketId,
-            targetCardId: conn.targetCardId,
-            targetSocketId: conn.targetSocketId
-          });
-          return { ...conn, ...points };
-        }
-        return conn;
+    
+      // console.log('Drag Event:', {
+      //   type: event.type,
+      //   clientX: event.clientX,
+      //   clientY: event.clientY
+      // });
+    
+      const result = handleDrag(event);
+      // console.log('Drag Results:', { 
+      //   hasUpdates: !!result?.updatedCards,
+      //   cardCount: result?.updatedCards?.length
+      // });
+    
+      if (!result?.updatedCards) return;
+    
+      // Update all cards in a batch
+      activeCards.value = result.updatedCards;
+    
+      // Defer connection updates
+      requestAnimationFrame(() => {
+        selectedCardIds.value.forEach(cardId => {
+          updateConnections(cardId);
+        });
       });
-  
-      activeConnections.value = updatedConnections;
-    });
+    };
+    
+    const handleDragEndCard = ({ event }) => {
+      // Ensure we have a valid event
+      if (!event || (!event.clientX && !event.changedTouches)) {
+        console.warn('Invalid event in handleDragEndCard');
+        return;
+      }
+    
+      // console.log('Drag End Event:', {
+      //   type: event.type,
+      //   clientX: event.clientX,
+      //   clientY: event.clientY
+      // });
+    
+      const result = handleDragEnd(event);
+      if (!result?.updatedCards) return;
+    
+      // Batch update the cards
+      activeCards.value = result.updatedCards;
+    
+      // Final connection update
+      requestAnimationFrame(() => {
+        selectedCardIds.value.forEach(cardId => {
+          updateConnections(cardId);
+        });
+      });
+    };
+
+    
+ 
+    
+const updateCard = (updates) => {
+  const cardIndex = activeCards.value.findIndex(c => c.uuid === updates.uuid);
+  if (cardIndex === -1) return;
+
+  // Create a new object preserving the structure
+  const currentCard = activeCards.value[cardIndex];
+  const updatedCard = {
+    uuid: currentCard.uuid,
+    type: currentCard.type,
+    ui: {
+      ...currentCard.ui,
+      ...(updates.ui || {}),
+    },
+    data: {
+      ...currentCard.data,
+      ...(updates.data || {}),
+    }
   };
-  */
+
+  // Handle legacy updates that might come in flat
+  if (updates.x !== undefined) updatedCard.ui.x = updates.x;
+  if (updates.y !== undefined) updatedCard.ui.y = updates.y;
+  if (updates.width !== undefined) updatedCard.ui.width = updates.width;
+  if (updates.height !== undefined) updatedCard.ui.height = updates.height;
+  if (updates.zIndex !== undefined) updatedCard.ui.zIndex = updates.zIndex;
+  
+  // Update timestamp
+  updatedCard.momentUpdated = Date.now();
+  
+  // Update the card in the array
+  activeCards.value[cardIndex] = updatedCard;
+  
+  // Force reactivity update
+  activeCards.value = [...activeCards.value];
+};
+
 
     // Throttle utility
     function useThrottle(fn, delay) {
@@ -591,20 +657,13 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       }
     }, 16);
 
-    const handleSocketsUpdated = async ({
-      oldSockets,
-      newSockets,
-      cardId,
-      reindexMap,
-      deletedSocketIds,
-      type,
-    }) => {
-      const card = activeCards.value.find((c) => c.uuid === cardId);
-      if (!card) return;
 
-      // First, remove any connections to deleted sockets
-      activeConnections.value = activeConnections.value.filter((conn) => {
-        // Check for deleted sockets based on the socket type
+    const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap, deletedSocketIds, type }) => {
+      const card = activeCards.value.find(c => c.uuid === cardId);
+      if (!card) return;
+    
+      // Filter out connections to deleted sockets
+      activeConnections.value = activeConnections.value.filter(conn => {
         if (type === "input" && conn.targetCardId === cardId) {
           return !deletedSocketIds.includes(conn.targetSocketId);
         }
@@ -613,77 +672,54 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
         }
         return true;
       });
-
-      // Then update the remaining connections
-      activeConnections.value = activeConnections.value.map((conn) => {
-        // Handle input socket connections
+    
+      // Update remaining connections
+      activeConnections.value = activeConnections.value.map(conn => {
         if (type === "input" && conn.targetCardId === cardId) {
-          const oldIndex = oldSockets.findIndex(
-            (s) => s.id === conn.targetSocketId
-          );
-          if (oldIndex !== -1) {
-            const newIndex = reindexMap[oldIndex];
-            if (newIndex !== -1) {
-              const newSocket = newSockets[newIndex];
-              return {
-                ...conn,
-                targetSocketId: newSocket.id,
-              };
-            }
+          const oldIndex = oldSockets.findIndex(s => s.id === conn.targetSocketId);
+          if (oldIndex !== -1 && reindexMap[oldIndex] !== -1) {
+            const newSocket = newSockets[reindexMap[oldIndex]];
+            return { ...conn, targetSocketId: newSocket.id };
           }
-        }
-        // Handle output socket connections
-        else if (type === "output" && conn.sourceCardId === cardId) {
-          const oldIndex = oldSockets.findIndex(
-            (s) => s.id === conn.sourceSocketId
-          );
-          if (oldIndex !== -1) {
-            const newIndex = reindexMap[oldIndex];
-            if (newIndex !== -1) {
-              const newSocket = newSockets[newIndex];
-              return {
-                ...conn,
-                sourceSocketId: newSocket.id,
-              };
-            }
+        } else if (type === "output" && conn.sourceCardId === cardId) {
+          const oldIndex = oldSockets.findIndex(s => s.id === conn.sourceSocketId);
+          if (oldIndex !== -1 && reindexMap[oldIndex] !== -1) {
+            const newSocket = newSockets[reindexMap[oldIndex]];
+            return { ...conn, sourceSocketId: newSocket.id };
           }
         }
         return conn;
       });
-
-      // Update the card's sockets based on type
+    
+      // Update card's socket structure
       if (type === "input") {
-        card.sockets.inputs = newSockets;
+        card.data.sockets.inputs = newSockets;
       } else if (type === "output") {
-        card.sockets.outputs = newSockets;
+        card.data.sockets.outputs = newSockets;
       }
-
-      // Wait for Vue to update the DOM
+    
       await Vue.nextTick();
-
-      // Force a final recalculation of all affected connections
+    
+      // Recalculate connection points
       requestAnimationFrame(() => {
-        // Recalculate connection points for all affected connections
-        const updatedConnections = activeConnections.value.map((conn) => {
-          if (
-            (type === "input" && conn.targetCardId === cardId) ||
-            (type === "output" && conn.sourceCardId === cardId)
-          ) {
+        const updatedConnections = activeConnections.value.map(conn => {
+          if ((type === "input" && conn.targetCardId === cardId) ||
+              (type === "output" && conn.sourceCardId === cardId)) {
             const points = calculateConnectionPoints({
               sourceCardId: conn.sourceCardId,
               sourceSocketId: conn.sourceSocketId,
               targetCardId: conn.targetCardId,
-              targetSocketId: conn.targetSocketId,
+              targetSocketId: conn.targetSocketId
             });
             return { ...conn, ...points };
           }
           return conn;
         });
-
+    
         activeConnections.value = updatedConnections;
       });
     };
-
+    
     const handleKeyDown = (event) => {
       // First check if we're in an input element
       const target = event.target;
@@ -728,18 +764,18 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
     };
 
     // Watch for zoom changes to update connections
-    Vue.watch(
-      zoomLevel,
-      () => {
-        Vue.nextTick(() => {
-          if (canvasRef.value) {
-            panOffset.x = canvasRef.value.scrollLeft;
-            panOffset.y = canvasRef.value.scrollTop;
-          }
-        });
-      },
-      { flush: "post" }
-    );
+    // Vue.watch(
+    //   zoomLevel,
+    //   () => {
+    //     Vue.nextTick(() => {
+    //       if (canvasRef.value) {
+    //         panOffset.x = canvasRef.value.scrollLeft;
+    //         panOffset.y = canvasRef.value.scrollTop;
+    //       }
+    //     });
+    //   },
+    //   { flush: "post" }
+    // );
 
     return {
       //Templates
@@ -800,6 +836,11 @@ const handleSocketsUpdated = async ({ oldSockets, newSockets, cardId, reindexMap
       handleConnectionDrag,
       handleConnectionDragEnd,
 
+
+      handleDragStartCard,
+      handleDragCard,
+      handleDragEndCard,
+      
       //   handleSocketDragStart,
       //   handleSocketDrag,
       //   handleSocketDragEnd,
