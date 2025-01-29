@@ -284,6 +284,8 @@ export default {
 
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
 
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
     // Clipboard functionality
     const copyToClipboard = async () => {
       try {

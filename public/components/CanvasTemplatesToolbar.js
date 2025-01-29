@@ -2,7 +2,7 @@
 export default {
     name: "CanvasTemplatesToolbar",
     template: `
-      <div class="fixed right-3 top-[73px] z-50">
+      <div class="fixed right-4 top-[60px] z-50">
         <!-- Expanded State -->
         <template v-if="expanded">
           <div 

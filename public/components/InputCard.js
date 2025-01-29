@@ -294,6 +294,9 @@ export default {
     // Watch display changes
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
 
+    //Watch for width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
     // Set the minimum height of the card
     const contentMinHeight = Vue.computed(() => 
       30 + localCardData.value.data.sockets.outputs.length * 36

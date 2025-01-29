@@ -48,7 +48,7 @@ export default {
   template: `
   <div class="absolute inset-0 flex flex-col overflow-hidden">
     <!-- Top Toolbar -->
-    <div class="flex items-center space-x-2 p-4 bg-gray-800 select-none z-40">
+    <div class="flex items-center space-x-2 p-2 bg-gray-800 select-none z-40">
         <div class="flex items-center gap-2">
             <button
                 class="px-2 py-2 text-sm bg-gray-700 hover:bg-gray-600 text-white rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -389,8 +389,6 @@ export default {
               zIndex: Z_INDEX_LAYERS.SELECTED
             },
             data: {
-              files: newCard.files || [],
-              filesData: newCard.filesData || [],
               sockets: {
                 inputs: newCard.sockets?.inputs || [],
                 outputs: newCard.sockets?.outputs || []
@@ -555,12 +553,12 @@ const updateCard = (updates) => {
     }
   };
 
-  // Handle legacy updates that might come in flat
-  if (updates.x !== undefined) updatedCard.ui.x = updates.x;
-  if (updates.y !== undefined) updatedCard.ui.y = updates.y;
-  if (updates.width !== undefined) updatedCard.ui.width = updates.width;
-  if (updates.height !== undefined) updatedCard.ui.height = updates.height;
-  if (updates.zIndex !== undefined) updatedCard.ui.zIndex = updates.zIndex;
+  // For Legacy: Handle legacy updates that might come in flat
+  // if (updates.x !== undefined) updatedCard.ui.x = updates.x;
+  // if (updates.y !== undefined) updatedCard.ui.y = updates.y;
+  // if (updates.width !== undefined) updatedCard.ui.width = updates.width;
+  // if (updates.height !== undefined) updatedCard.ui.height = updates.height;
+  // if (updates.zIndex !== undefined) updatedCard.ui.zIndex = updates.zIndex;
   
   // Update timestamp
   updatedCard.momentUpdated = Date.now();
@@ -570,6 +568,8 @@ const updateCard = (updates) => {
   
   // Force reactivity update
   activeCards.value = [...activeCards.value];
+
+  updateConnections(updates.uuid);
 };
 
 

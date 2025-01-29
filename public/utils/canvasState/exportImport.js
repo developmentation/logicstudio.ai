@@ -27,8 +27,8 @@ export const createExportImport = (props) => {
         // Validate cards and their sockets
         if (!Array.isArray(data.cards)) return false;
         for (const card of data.cards) {
-            if (!card.uuid || !card.type || !card.sockets) return false;
-            if (!card.sockets.inputs || !card.sockets.outputs) return false;
+            if (!card.uuid || !card.type || !card.data.sockets) return false;
+            if (!card.data.sockets.inputs || !card.data.sockets.outputs) return false;
         }
 
         return true;

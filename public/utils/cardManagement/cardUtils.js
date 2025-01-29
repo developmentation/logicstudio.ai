@@ -118,6 +118,8 @@ export const setupCardDataWatchers = (params) => {
     if (!isProcessing.value) {
       if (newX !== undefined) localCardData.value.ui.x = newX;
       if (newY !== undefined) localCardData.value.ui.y = newY;
+      // Emit update after position change
+      emit('update-card', Vue.toRaw(localCardData.value));      
     }
   };
 
@@ -125,8 +127,20 @@ export const setupCardDataWatchers = (params) => {
   const updateDisplay = (newDisplay) => {
     if (newDisplay !== undefined && !isProcessing.value) {
       localCardData.value.ui.display = newDisplay;
+      // Emit update after display change
+      emit('update-card', Vue.toRaw(localCardData.value));      
     }
   };
+
+  // Watch for changes to display state
+  const updateWidth = (newWidth) => {
+    if (newWidth !== undefined && !isProcessing.value) {
+      localCardData.value.ui.width = newWidth;
+     // Emit update after width change
+     emit('update-card', Vue.toRaw(localCardData.value));      
+    }
+  };
+
 
   return {
     position: (newVal, oldVal) => {
@@ -134,6 +148,7 @@ export const setupCardDataWatchers = (params) => {
       if (newVal?.y !== oldVal?.y) updatePosition(undefined, newVal.y);
     },
     display: updateDisplay,
+    width: updateWidth,
   };
 };
 
