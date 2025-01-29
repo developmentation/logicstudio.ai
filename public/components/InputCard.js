@@ -51,7 +51,7 @@ export default {
             :is-connected="getSocketConnections(socket.id)"
             :has-error="false"
             :zoom-level="zoomLevel"
-            @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+            @connection-drag-start="$emit('connection-drag-start', $event)"
             @connection-drag="$emit('connection-drag', $event)"
             @connection-drag-end="$emit('connection-drag-end', $event)"
             @socket-mounted="handleSocketMount($event)"
@@ -174,45 +174,41 @@ export default {
       })
     );
 
-    // Define emitWithCardId locally instead of using from useCardSetup
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
-    };
-
-    const handleCardUpdate = () => {
+ 
+   const handleCardUpdate = () => {
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
  
+
+        // Custom comparison for file data for the watcher
+        const compareFileData = (a, b) => {
+          if (a === b) return true;
+          if (!a || !b) return false;
+    
+          // For file data, compare content and metadata separately
+          if (a.content !== undefined && b.content !== undefined) {
+            // For text content
+            if (typeof a.content === "string" && typeof b.content === "string") {
+              return (
+                a.content === b.content &&
+                a.metadata?.name === b.metadata?.name &&
+                a.metadata?.type === b.metadata?.type
+              );
+            }
+            // For binary content, compare metadata
+            return (
+              a.metadata?.name === b.metadata?.name &&
+              a.metadata?.type === b.metadata?.type &&
+              a.metadata?.size === b.metadata?.size
+            );
+          }
+          return false;
+        };
+
+        
     // Setup the watchers for the sockets
-
-    // Custom comparison for file data
-    const compareFileData = (a, b) => {
-      if (a === b) return true;
-      if (!a || !b) return false;
-
-      // For file data, compare content and metadata separately
-      if (a.content !== undefined && b.content !== undefined) {
-        // For text content
-        if (typeof a.content === "string" && typeof b.content === "string") {
-          return (
-            a.content === b.content &&
-            a.metadata?.name === b.metadata?.name &&
-            a.metadata?.type === b.metadata?.type
-          );
-        }
-        // For binary content, compare metadata
-        return (
-          a.metadata?.name === b.metadata?.name &&
-          a.metadata?.type === b.metadata?.type &&
-          a.metadata?.size === b.metadata?.size
-        );
-      }
-      return false;
-    };
-
-    // Setup the socket watcher
     setupSocketWatcher({
       props,
       localCardData,
@@ -247,7 +243,6 @@ export default {
           case "removed":
             // File socket removed
             if (localCardData.value.data.filesData[change.position]) {
-              localCardData.value.data.filesData.splice(change.position, 1);
               handleCardUpdate();
             }
             break;
@@ -317,6 +312,8 @@ export default {
 
     //Component Specific Functions
     //Used only in this component for its primary purpose
+    
+
 
     // File content reading
     const readFileContent = async (file) => {
@@ -534,7 +531,6 @@ export default {
       refreshInputs,
       getSocketConnections,
       handleSocketMount,
-      emitWithCardId,
       handleFileSelect,
       handleFileDrop,
       removeFile,

@@ -47,9 +47,9 @@ export default {
           :is-connected="getSocketConnections(localCardData.data.sockets.inputs[0].id)"
           :has-error="false"
           :zoom-level="zoomLevel"
-          @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
-          @connection-drag="emitWithCardId('connection-drag', $event)"
-          @connection-drag-end="emitWithCardId('connection-drag-end', $event)"
+          @connection-drag-start="$emit('connection-drag-start', $event)"
+          @connection-drag="$emit('connection-drag', $event)"
+          @connection-drag-end="$emit('connection-drag-end', $event)"
           @socket-mounted="handleSocketMount($event)"
         />
       </div>
@@ -144,19 +144,58 @@ export default {
       );
     }
 
-    // Define emitWithCardId locally
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
-    };
-
+ 
     const handleCardUpdate = () => {
-      console.log("isProcessing", isProcessing.value)
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
- 
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: (change) => {
+
+        if (change.type === "added") {
+          contentKey.value++; // Force re-render on content change
+          handleCardUpdate(); //Initial emit when the socket is created
+        }
+
+        if (change.type === "modified") {
+          contentKey.value++; // Force re-render on content change
+          handleCardUpdate();
+        }
+
+
+      },
+    });
+
+    // Set up watchers for position and display
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+
+    //Card Specficic Functions
+    // Clipboard functionality
+
+
+
     // Content processing utilities
     const getContentType = (value) => {
       if (!value) return 'empty';
@@ -247,46 +286,6 @@ export default {
       }
     });
 
-    // Setup socket watcher
-    setupSocketWatcher({
-      props,
-      localCardData,
-      isProcessing,
-      emit,
-      onInputChange: (change) => {
-
-        if (change.type === "added") {
-          contentKey.value++; // Force re-render on content change
-          handleCardUpdate(); //Initial emit when the socket is created
-        }
-
-        if (change.type === "modified") {
-          contentKey.value++; // Force re-render on content change
-          handleCardUpdate();
-        }
-
-
-      },
-    });
-
-    // Set up watchers for position and display
-    const watchers = setupCardDataWatchers({
-      props,
-      localCardData,
-      isProcessing,
-      emit,
-    });
-
-    Vue.watch(
-      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
-      watchers.position
-    );
-
-    Vue.watch(() => props.cardData.ui?.display, watchers.display);
-
-    Vue.watch(() => props.cardData.ui?.width, watchers.width);
-
-    // Clipboard functionality
     const copyToClipboard = async () => {
       try {
         if (!editableContent.value) return;
@@ -349,7 +348,6 @@ export default {
       processedContent,
       contentMetadata,
       getSocketConnections,
-      emitWithCardId,
       handleCardUpdate,
       handleSocketMount,
       copyToClipboard,
