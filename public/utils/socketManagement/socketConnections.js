@@ -250,7 +250,7 @@ export const createSocketConnections = (props) => {
 
   // In socketConnections.js
   const createConnection = (connectionData, event, eventType = "mouse") => {
-    console.log("Creating connection with data:", connectionData);
+    // console.log("Creating connection with data:", connectionData);
   
     const freshPoints = calculateConnectionPoints({
       sourceCardId: connectionData.sourceCardId,
@@ -259,7 +259,7 @@ export const createSocketConnections = (props) => {
       targetSocketId: connectionData.targetSocketId,
     });
   
-    console.log("Calculated fresh points:", freshPoints);
+    // console.log("Calculated fresh points:", freshPoints);
   
     const newConnection = {
       id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -272,10 +272,10 @@ export const createSocketConnections = (props) => {
       isActive: false,
     };
   
-    console.log("New connection object:", newConnection);
+    // console.log("New connection object:", newConnection);
     
     connections.value.push(newConnection);
-    console.log("Connections after push:", connections.value);
+    // console.log("Connections after push:", connections.value);
     
     onConnectionCreated?.(newConnection);
     return newConnection.id;
@@ -319,7 +319,7 @@ export const createSocketConnections = (props) => {
   
   const handleConnectionDragStart = ({ startPoint, socket, cardId, type }) => {
   if (!startPoint || !socket || !cardId) {
-    console.log("Missing required drag start data:", { startPoint, socket, cardId, type });
+    // console.log("Missing required drag start data:", { startPoint, socket, cardId, type });
     return null;
   }
 
@@ -343,7 +343,7 @@ export const createSocketConnections = (props) => {
     targetDetails: null
   };
 
-  console.log("Starting new connection:", newConnection);
+  // console.log("Starting new connection:", newConnection);
   // Call the callback to set activeConnection
   onConnectionStart(newConnection);
 
@@ -353,20 +353,20 @@ export const createSocketConnections = (props) => {
 const handleConnectionDrag = ({currentPoint}) => {
 
   if (!activeConnection?.value?.sourceDetails || !currentPoint) {
-    console.log("Missing required drag data:", { activeConnection:activeConnection.value, currentPoint });
+    // console.log("Missing required drag data:", { activeConnection:activeConnection.value, currentPoint });
     return null;
   }
 
-  console.log("currentPount", currentPoint)
+  // console.log("currentPount", currentPoint)
   const scaledPoint = getScaledPoint(currentPoint);
   if (!scaledPoint) return null;
-  console.log("scaledPoint", scaledPoint)
+  // console.log("scaledPoint", scaledPoint)
 
   const nearest = findNearestSocket(scaledPoint, activeConnection.value.sourceDetails.type);
-  console.log("nearest", nearest)
+  // console.log("nearest", nearest)
   // If we found a valid snap target
   if (nearest && nearest.distance < SNAP_RADIUS) {
-    console.log("Found snap target:", nearest);
+    // console.log("Found snap target:", nearest);
     return {
       ...activeConnection.value,
       currentPoint: nearest.center,
@@ -392,7 +392,7 @@ const handleConnectionDrag = ({currentPoint}) => {
 
 const handleConnectionDragEnd = (event) => {
 
-  console.log('handleDragEnd', event)
+  // console.log('handleDragEnd', event)
   // // console.log("End", event)
   // // console.log("DragEnd full state:", activeConnection);
 
@@ -432,7 +432,7 @@ const handleConnectionDragEnd = (event) => {
   const handleConnectionClick = (event, connectionId) => {
 
     selectedConnectionId.value = connectionId;
-    console.log("handleConnectionClick",     selectedConnectionId.value )
+    // console.log("handleConnectionClick",     selectedConnectionId.value )
     event.preventDefault();
     event.stopPropagation();
     selectedCardIds.value.clear();

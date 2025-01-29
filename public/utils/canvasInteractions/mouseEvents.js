@@ -106,7 +106,6 @@ export const createMouseEvents = (props) => {
                 };
             }
 
-            console.log("handleMouseMove activeConnection", activeConnection.value)
 
         }
     };

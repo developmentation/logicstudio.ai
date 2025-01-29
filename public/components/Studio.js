@@ -92,10 +92,7 @@ export default {
                 @click="exportToJSON">
                 <i class="pi pi-cloud-download mt-1"></i>
             </button>
-
-
         </div>
-
 
         <div class="flex-1"></div>
         <button
@@ -121,118 +118,75 @@ export default {
 
     <!-- Main Content Area -->
     <div class="relative flex-1 bg-gray-900">
-        <!-- Left Side Toolbar -->
+        <!-- Toolbars stay the same -->
         <CanvasToolbar class="z-50" @add-card="handleToolbarAction" @export-png="exportToPNG"
             @export-json="exportToJSON" @import-json="importFromJSON" @update:expanded="(val) => toolbarExpanded = val"
             @update:show-text="(val) => toolbarShowText = val" />
-
-        <!-- Right Side Toolbar -->
         <CanvasTemplatesToolbar :canvas-templates="canvasTemplates" @add-canvas="handleAddCanvas" />
 
 
-
         <!-- Scrollable Canvas Container -->
-<div class="absolute inset-0 canvas-container" 
-     ref="canvasRef" 
-     @wheel.prevent="handleWheel"
-     @scroll="handleScroll"
-     @touchstart.prevent="handleTouchStart" 
-     @touchmove.prevent="handleTouchMove"
-     @touchend.prevent="handleTouchEnd" 
-     :style="{
-       overflow: 'scroll',
-       position: 'absolute',
-       width: '100%',
-       height: '100%'
-     }">
-            <!-- Pan Background -->
- <div class="absolute pan-background" 
-       ref="panBackground" 
-       @mousedown="handleBackgroundMouseDown"
-       @mousemove="handleMouseMove" 
-       @mouseup="handleMouseUp" 
-       @mouseleave="handleMouseLeave" 
-       :style="{
-         cursor: isPanning ? 'grabbing' : isOverBackground ? 'grab' : 'default',
-         width: \`\${8000 * zoomLevel}px\`,
-         height: \`\${8000 * zoomLevel}px\`,
-         position: 'absolute',
-         top: '0',
-         left: '0',
-         minWidth: '8000px',
-         minHeight: '8000px'
-       }">
+        <div class="absolute inset-0 canvas-container overflow-auto" ref="canvasRef" @wheel.prevent="handleWheel"
+            @scroll="handleScroll" @touchstart.prevent="handleTouchStart" @touchmove.prevent="handleTouchMove"
+            @touchend.prevent="handleTouchEnd">
+
+            <!-- Pan Background - Fixed 8000x8000 -->
+            <div class="absolute pan-background" ref="panBackground" @mousedown="handleBackgroundMouseDown"
+                @mousemove="handleMouseMove" @mouseup="handleMouseUp" @mouseleave="handleMouseLeave" :style="{
+           cursor: isPanning ? 'grabbing' : isOverBackground ? 'grab' : 'default',
+           width: '8000px',
+           height: '8000px',
+           position: 'absolute',
+           top: '0',
+           left: '0'
+         }">
                 <!-- Grid Background -->
                 <div class="absolute inset-0" :style="{
-                backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
-                backgroundSize: \`\${20 * zoomLevel}px \${20 * zoomLevel}px\`,
-                backgroundPosition: '50% 50%',
-                pointerEvents: 'none',
-                width: '100%',
-                height: '100%'
-            }"></div>
+            backgroundImage: 'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
+            backgroundSize: \`\${20 * zoomLevel}px \${20 * zoomLevel}px\`,
+            backgroundPosition: 'center center',
+            pointerEvents: 'none',
+            width: '100%',
+            height: '100%'
+        }"></div>
 
                 <!-- Content Layer -->
-    <div class="absolute" :style="{
-      transform: \`scale(\${zoomLevel})\`,
-      top: '4000px',
-      left: '4000px',
-      transformOrigin: '0 0'
-    }">
-                    <!-- Connections Layer -->
+                <div class="absolute" :style="{
+          transform: \`scale(\${zoomLevel})\`,
+          top: '4000px',
+          left: '4000px',
+          transformOrigin: '0 0'
+        }">
+                    <!-- Rest of content -->
+                    <ConnectionsLayer v-if="canvasRef" :connections="activeConnections"
+                        :active-connection="activeConnection" :selected-connection-id="selectedConnectionId"
+                        :zoom-level="zoomLevel" :canvas-ref="canvasRef" :pan-offset-x="panOffset.x"
+                        :pan-offset-y="panOffset.y" @connection-click="handleConnectionClick" />
 
-
-       <ConnectionsLayer 
-        v-if="canvasRef"
-        :connections="activeConnections"
-        :active-connection="activeConnection"
-        :selected-connection-id="selectedConnectionId"
-        :zoom-level="zoomLevel"
-        :canvas-ref="canvasRef"
-        :pan-offset-x="panOffset.x"
-        :pan-offset-y="panOffset.y"
-        @connection-click="handleConnectionClick"
-      />
-                    
-
-
-                    <!-- Cards Layer -->
                     <div class="relative" style="pointer-events: none;">
-                  
-                                      
-                <component 
-    v-for="card in activeCards" 
-    :key="card.uuid" 
-    :is="getCardComponent(card.type)"
-    :cardData="card" 
-    :zoomLevel="zoomLevel" 
-    :zIndex="card.ui.zIndex"
-    :is-selected="selectedCardIds.has(card.uuid)" 
-    @update-position="updateCardPosition"
-    @drag-start="handleDragStartCard"
-    @drag="handleDragCard"
-    @drag-end="handleDragEndCard"
-    @update-card="updateCard" 
-    @update-socket-value="updateSocketValue"
-    @connection-drag-start="handleConnectionDragStart" 
-    @connection-drag="handleConnectionDrag"
-    @connection-drag-end="handleConnectionDragEnd" 
-    @close-card="removeCard"
-    @clone-card="cloneCard" 
-    @manual-trigger="handleManualTrigger"
-    @sockets-updated="handleSocketsUpdated" 
-    @select-card="handleCardSelection"
-    style="pointer-events: auto;" 
-/>
+
+
+                        <component v-for="card in activeCards" :key="card.uuid" :is="getCardComponent(card.type)"
+                            :cardData="card" :zoomLevel="zoomLevel" :zIndex="card.ui.zIndex"
+                            :is-selected="selectedCardIds.has(card.uuid)" @update-position="updateCardPosition"
+                            @drag-start="handleDragStartCard" @drag="handleDragCard" @drag-end="handleDragEndCard"
+                            @update-card="updateCard" @update-socket-value="updateSocketValue"
+                            @connection-drag-start="handleConnectionDragStart" @connection-drag="handleConnectionDrag"
+                            @connection-drag-end="handleConnectionDragEnd" @close-card="removeCard"
+                            @clone-card="cloneCard" @manual-trigger="handleManualTrigger"
+                            @sockets-updated="handleSocketsUpdated" @select-card="handleCardSelection"
+                            style="pointer-events: auto;" />
 
 
                     </div>
+
                 </div>
             </div>
         </div>
+
     </div>
 </div>
-    `,
+  `,
 
   setup() {
     // Get canvas functionality from composable
@@ -417,9 +371,10 @@ export default {
       const cardId = createCard(action, null);
     
       if (cardId) {
-        // Update the new card with the proper structure
+        // Find the newly created card
         const newCard = activeCards.value.find(card => card.uuid === cardId);
         if (newCard) {
+          // Preserve the position that was set in createCard
           const structuredCard = {
             uuid: newCard.uuid,
             type: newCard.type,
@@ -427,8 +382,8 @@ export default {
               name: newCard.name || '',
               description: newCard.description || '',
               display: newCard.display || '',
-              x: newCard.x || 0,
-              y: newCard.y || 0,
+              x: newCard.ui.x,  // Preserve the x position
+              y: newCard.ui.y,  // Preserve the y position
               width: newCard.width || 200,
               height: newCard.height || 200,
               zIndex: Z_INDEX_LAYERS.SELECTED
@@ -444,11 +399,8 @@ export default {
           };
           
           updateCard(structuredCard);
-
-
         }
       }
-
     };
 
 
@@ -585,7 +537,6 @@ export default {
     
 const updateCard = (updates) => {
 
-  console.log("updateCard Studio.js", updates)
   const cardIndex = activeCards.value.findIndex(c => c.uuid === updates.uuid);
   if (cardIndex === -1) return;
 

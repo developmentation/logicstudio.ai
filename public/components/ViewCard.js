@@ -255,7 +255,6 @@ export default {
       emit,
       onInputChange: (change) => {
 
-        console.log("onInputChange")
         if (change.type === "added") {
           contentKey.value++; // Force re-render on content change
           handleCardUpdate(); //Initial emit when the socket is created

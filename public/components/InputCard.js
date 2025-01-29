@@ -180,10 +180,7 @@ export default {
     };
 
     const handleCardUpdate = () => {
-      console.log("handleCardUpdate InputCard")
-      console.log("isProcessing", isProcessing.value)
       if (!isProcessing.value) {
-        console.log("InputCard emitting updateCard", Vue.toRaw(localCardData.value))
         emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
@@ -304,7 +301,7 @@ export default {
 
 
     Vue.onMounted(() => {
-      console.log("ViewCard mounted, emitting initial state");
+      console.log("InputCard mounted, emitting initial state");
       Vue.nextTick(() => {
         // Ensure all reactivity is set up before emitting
         handleCardUpdate();
@@ -406,7 +403,6 @@ export default {
         ];
 
 
-        console.log("localCardData InputCard", localCardData.value)
 
       } finally {
         isProcessing.value = false;

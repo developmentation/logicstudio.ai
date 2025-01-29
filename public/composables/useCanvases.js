@@ -473,14 +473,10 @@ const propagateValueThroughConnection = (connection, canvas) => {
   const sourceCard = canvas.cards.find(card => card.uuid === connection.sourceCardId);
   const targetCard = canvas.cards.find(card => card.uuid === connection.targetCardId);
   
-  console.log("sourceCard", sourceCard)
-  console.log("targetCard", targetCard)
   if (!sourceCard || !targetCard) return;
 
   const sourceResult = findSocketInCard(sourceCard, connection.sourceSocketId);
   const targetResult = findSocketInCard(targetCard, connection.targetSocketId);
-  console.log("sourceResult", sourceResult)
-  console.log("targetResult", targetResult)
   
   //Ive temporarily removed this. Sometimes null is valid.
   // if (!sourceResult || !targetResult) return; // Only update if not null
