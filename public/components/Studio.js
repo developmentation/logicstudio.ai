@@ -384,8 +384,8 @@ export default {
               display: newCard.display || '',
               x: newCard.ui.x,  // Preserve the x position
               y: newCard.ui.y,  // Preserve the y position
-              width: newCard.width || 200,
-              height: newCard.height || 200,
+              width: newCard.width ,
+              height: newCard.height ,
               zIndex: Z_INDEX_LAYERS.SELECTED
             },
             data: {

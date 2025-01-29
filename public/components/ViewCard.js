@@ -132,8 +132,7 @@ export default {
     const localCardData = Vue.ref(initializeCardData(props.cardData, {
       defaultName: "View",
       defaultDescription: "View Node",
-      defaultWidth: 400,
-      defaultHeight: 300,
+ 
     }));
 
     // console.log("localCardData", localCardData.value)

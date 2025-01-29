@@ -207,7 +207,7 @@ export default {
 
     const handleDragStart = (event) => {
 
-      console.log("BaseCard", event)
+    
       const isTouch = event.type === "touchstart";
       const isHeaderDrag = event.isHeader;
     

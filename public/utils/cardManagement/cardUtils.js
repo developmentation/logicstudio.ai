@@ -15,19 +15,33 @@ export const SOCKET_TYPES = {
   OUTPUT: "output",
 };
 
-const initializeSocket = (socketData, type = SOCKET_TYPES.INPUT) => {
-  if (!socketData) return null;
 
-  return {
-    ...socketData,
-    type: socketData.type || type, // Ensure type is preserved or defaulted
-    id:
-      socketData.id ||
-      `socket-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    value: socketData.value ?? null,
-    momentUpdated: Date.now(),
-  };
+
+const initializeSockets = (socketData = [], type = SOCKET_TYPES.INPUT, startIndex = 0) => {
+  return socketData.map((socket, idx) => {
+    const name = socket.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${idx + 1}`;
+    return createSocket({
+      ...socket,
+      type,
+      name,
+      index: startIndex + idx
+    });
+  });
 };
+
+// const initializeSocket = (socketData, type = SOCKET_TYPES.INPUT) => {
+//   if (!socketData) return null;
+
+//   return {
+//     ...socketData,
+//     type: socketData.type || type, // Ensure type is preserved or defaulted
+//     id:
+//       socketData.id ||
+//       `socket-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+//     value: socketData.value ?? null,
+//     momentUpdated: Date.now(),
+//   };
+// };
 
 export const initializeCardData = (data, defaultConfig = {}) => {
   const {
@@ -36,17 +50,22 @@ export const initializeCardData = (data, defaultConfig = {}) => {
     defaultWidth = 300,
     defaultHeight = 150,
     defaultDisplay = "default",
+    defaultData = {},
+    defaultSockets = { inputs: [], outputs: [] }  // Add default socket configuration
   } = defaultConfig;
 
-  // Initialize socket arrays with proper typing
-  const inputs = (data.data?.sockets?.inputs || []).map((socket) =>
-    initializeSocket(socket, SOCKET_TYPES.INPUT)
+  // Initialize socket arrays with proper typing and indexing
+  const inputs = initializeSockets(
+    data.data?.sockets?.inputs || defaultSockets.inputs,
+    SOCKET_TYPES.INPUT
   );
 
-  const outputs = (data.data?.sockets?.outputs || []).map((socket) =>
-    initializeSocket(socket, SOCKET_TYPES.OUTPUT)
+  const outputs = initializeSockets(
+    data.data?.sockets?.outputs || defaultSockets.outputs,
+    SOCKET_TYPES.OUTPUT
   );
 
+  // Initialize the base card structure
   return {
     uuid: data.uuid,
     type: data.type,
@@ -61,7 +80,8 @@ export const initializeCardData = (data, defaultConfig = {}) => {
       zIndex: data.ui?.zIndex || 1,
     },
     data: {
-      ...data.data,
+      ...defaultData,
+      ...(data.data || {}),
       sockets: {
         inputs,
         outputs,
