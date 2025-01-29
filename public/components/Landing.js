@@ -78,11 +78,11 @@ export default {
        <section class="py-24 bg-gray-800">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
             <div class="flex flex-col items-center gap-6 p-6 bg-gray-900 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-              <img 
+              <!--<img 
                 :src="albertaLogoRef" 
                 alt="Alberta Logo" 
                 class="h-12 w-auto opacity-90"
-              />
+              />-->
               <h2 class="text-3xl font-bold text-white">Built in Alberta</h2>
               <span class="text-gray-400 text-lg">Let's get building.</span>
             </div>
