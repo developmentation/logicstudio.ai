@@ -17,7 +17,9 @@ export const createMouseEvents = (props) => {
         getScaledPoint,
         SNAP_RADIUS,
         createConnection,
-        dragState  // Add dragState to props
+        dragState,  // Add dragState to props
+        handleConnectionDrag,
+        handleConnectionDragEnd,
     } = props;
 
     // Throttling for mouse move events
@@ -65,6 +67,9 @@ export const createMouseEvents = (props) => {
         }
     };
 
+ 
+
+    // These worked fine, but are now legacy, using socketConnections
     const handleMouseMove = (event) => {
         if (event.target === event.currentTarget) {
             isOverBackground.value = true;
@@ -100,24 +105,29 @@ export const createMouseEvents = (props) => {
                     snappedSocket: null
                 };
             }
+
+            console.log("handleMouseMove activeConnection", activeConnection.value)
+
         }
     };
    
     const handleMouseUp = (event) => {
         if (activeConnection.value) {
             const rawActiveConnection = Vue.toRaw(activeConnection.value);
-            let snappedSocket = rawActiveConnection.snappedSocket;
             
-            if (!snappedSocket) {
-                const point = { x: event.clientX, y: event.clientY };
-                snappedSocket = findNearestSocket(point, rawActiveConnection.sourceType);
+            // Use the existing snapped socket from active connection if available
+            if (rawActiveConnection.snappedSocket) {
+                const connectionData = {
+                    sourceCardId: rawActiveConnection.sourceCardId,
+                    sourceSocketId: rawActiveConnection.sourceSocket.id,
+                    targetCardId: rawActiveConnection.snappedSocket.cardId,
+                    targetSocketId: rawActiveConnection.snappedSocket.socketId
+                };
+                
+                createConnection(connectionData, event);
             }
-    
-            if (snappedSocket && snappedSocket.distance < SNAP_RADIUS) {
-                // Connection creation logic...
-                // Existing connection handling code stays the same
-            }
-    
+            
+            // Clean up
             if (nearestSocket.value?.element) {
                 nearestSocket.value.element.classList.remove('socket-highlight');
             }
@@ -125,7 +135,7 @@ export const createMouseEvents = (props) => {
             nearestSocket.value = null;
         }
     
-        // Clear drag state instead of dragStartPositions
+        // Clear drag state
         dragState.value = {
             isDragging: false,
             dragOrigin: { x: 0, y: 0 },
@@ -135,6 +145,7 @@ export const createMouseEvents = (props) => {
         isPanning.value = false;
         document.body.style.cursor = isOverBackground.value ? 'grab' : '';
     };
+
 
     const handleMouseLeave = () => {
         isOverBackground.value = false;

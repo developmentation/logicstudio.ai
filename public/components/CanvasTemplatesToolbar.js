@@ -15,7 +15,7 @@ export default {
               <button 
                 class="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
                 @click="toggleExpanded"
-                v-tooltip.left="'Close Menu'"
+                 
               >
                 <i class="pi pi-times"></i>
               </button>
@@ -30,7 +30,7 @@ export default {
                   <button
                     class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
                     @click="addCanvas(template)"
-                    v-tooltip.left="'Add Canvas'"
+                    
                   >
                     <i class="pi pi-plus"></i>
                   </button>
@@ -45,7 +45,7 @@ export default {
           <button 
             class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
             @click="toggleExpanded"
-            v-tooltip.left="'Templates Menu'"
+             
           >
             <i class="pi pi-list"></i>
           </button>

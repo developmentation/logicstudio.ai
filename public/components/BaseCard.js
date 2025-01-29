@@ -206,6 +206,8 @@ export default {
     };
 
     const handleDragStart = (event) => {
+
+      console.log("BaseCard", event)
       const isTouch = event.type === "touchstart";
       const isHeaderDrag = event.isHeader;
     
@@ -221,8 +223,8 @@ export default {
     
       if (!isTouch && event.button !== 0) return;
     
-      event.stopPropagation();
-      event.preventDefault();
+      // event.stopPropagation();
+      // event.preventDefault();
     
       isDragging.value = true;
       wasDragging.value = false;

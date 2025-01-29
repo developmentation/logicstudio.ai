@@ -2,11 +2,12 @@
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import {
-  updateSocketArray,
-  createSocketUpdateEvent,
-  generateSocketId,
-  createSocket,
-} from "../utils/socketManagement/socketRemapping.js";
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+import { createSocket } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "InputCard",
@@ -17,13 +18,17 @@ export default {
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
   },
+
   template: `
+    <div class = "card">
     <BaseCard
       :card-data="localCardData"
       :zoom-level="zoomLevel"
       :z-index="zIndex"
       :is-selected="isSelected"
-      @update-position="$emit('update-position', $event)"
+      @drag-start="$emit('drag-start', $event)"   
+      @drag="$emit('drag', $event)"
+      @drag-end="$emit('drag-end', $event)"
       @update-card="handleCardUpdate"
       @close-card="$emit('close-card', $event)"
       @clone-card="uuid => $emit('clone-card', uuid)"
@@ -82,159 +87,244 @@ export default {
         </div>
 
         <!-- File List -->
-        <div class="space-y-2">
-          <div 
-            v-for="(fileData, index) in localCardData.data.filesData" 
-            :key="fileData.name + index"
-            class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
-          >
-            <span class="text-xs text-gray-400 w-4">{{ index + 1 }}</span>
-            <div class="flex-1 min-w-0">
-              <div v-if="editingIndex === index" class="flex items-center">
-                <input
-                  type="text"
-                  v-model="editingName"
-                  @blur="saveFileName(index)"
-                  @keyup.enter="saveFileName(index)"
-                  @keyup.esc="cancelEdit"
-                  ref="fileNameInput"
-                  class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  @mousedown.stop
-                  @click.stop
-                />
-              </div>
-              <div 
-                v-else
-                @click.stop="startEditing(index, fileData.name)"
-                class="truncate cursor-text hover:text-gray-100 text-xs"
-                :title="fileData.name"
-              >
-                {{ fileData.name }}
-              </div>
-            </div>
-            <input
-              type="file"
-              :ref="el => { if (el) refreshInputs[index] = el }"
-              class="hidden"
-              @change="(e) => handleRefreshFile(e, index)"
-            />
-            <button 
-              class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
-              @click.stop="triggerRefreshFile(index)"
-              @mousedown.stop
-              @touchstart.stop
-              title="Update file"
-            >
-              <i class="pi pi-refresh text-xs"></i>
-            </button>
-            <button 
-              class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
-              @click.stop="removeFile(index)"
-              @mousedown.stop
-              @touchstart.stop
-            >×</button>
-          </div>
+         <div class="space-y-2">
+    <div 
+      v-for="(fileData, index) in localCardData.data.filesData" 
+      :key="localCardData.data.sockets.outputs[index]?.id || index"
+      class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
+    >
+      <span class="text-xs text-gray-400 w-4">{{ index + 1 }}</span>
+      <div class="flex-1 min-w-0">
+        <div v-if="editingIndex === index" class="flex items-center">
+          <input
+            type="text"
+            v-model="editingName"
+            @blur="saveFileName(index)"
+            @keyup.enter="saveFileName(index)"
+            @keyup.esc="cancelEdit"
+            ref="fileNameInput"
+            class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @mousedown.stop
+            @click.stop
+          />
+        </div>
+        <div 
+          v-else
+          @click.stop="startEditing(index, fileData.name)"
+          class="truncate cursor-text hover:text-gray-100 text-xs"
+          :title="fileData.name"
+        >
+          {{ fileData.name }}
         </div>
       </div>
+      <input
+        type="file"
+        :ref="el => { if (el) refreshInputs[index] = el }"
+        class="hidden"
+        @change="(e) => handleRefreshFile(e, index)"
+      />
+      <button 
+        class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+        @click.stop="triggerRefreshFile(index)"
+        @mousedown.stop
+        @touchstart.stop
+        title="Update file"
+      >
+        <i class="pi pi-refresh text-xs"></i>
+      </button>
+      <button 
+        class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+        @click.stop="removeFile(index)"
+        @mousedown.stop
+        @touchstart.stop
+      >×</button>
+    </div>
+  </div>
+
+
+      </div>
     </BaseCard>
+  </div>
   `,
 
   setup(props, { emit }) {
+    // Initialize refs and state
     const fileInput = Vue.ref(null);
     const fileNameInput = Vue.ref(null);
     const refreshInputs = Vue.ref([]);
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
     const editingIndex = Vue.ref(-1);
     const editingName = Vue.ref("");
-    const contentMinHeight = Vue.ref(0);
 
-    const initializeCardData = (data) => {
-      return {
-        uuid: data.uuid,
-        type: data.type,
-        ui: {
-          name: data.ui?.name || "Input Card",
-          description: data.ui?.description || "File Input Node",
-          display: data.ui?.display || "default",
-          x: data.ui?.x || 0,
-          y: data.ui?.y || 0,
-          width: data.ui?.width || 300,
-          height: data.ui?.height || 150,
-          zIndex: data.ui?.zIndex || 1,
-        },
-        data: {
-          filesData: data.data?.filesData || [],
-          files: data.data?.files || [],
-          sockets: {
-            inputs: data.data?.sockets?.inputs || [],
-            outputs: data.data?.sockets?.outputs || [],
-          },
-        },
-      };
-    };
 
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
+    // Initialize card setup utilities
+    const {
+      socketRegistry,
+      connections,
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
 
-    // Socket handling
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
+    // Initialize local card data
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        defaultName: "Input Card",
+        defaultDescription: "File Input Node",
+      })
+    );
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
-      });
-    };
-
-    const triggerRefreshFile = (index) => {
-      if (refreshInputs.value[index]) {
-        refreshInputs.value[index].click();
-      }
-    };
-
-    // File name editing functions
-    const startEditing = (index, name) => {
-      editingIndex.value = index;
-      editingName.value = name;
-      Vue.nextTick(() => {
-        if (fileNameInput.value) {
-          fileNameInput.value.focus();
-          fileNameInput.value.select();
-        }
-      });
-    };
-
-    const saveFileName = (index) => {
-      if (editingName.value.trim()) {
-        const newName = editingName.value.trim();
-        localCardData.value.data.filesData[index].name = newName;
-        // Update the socket name as well
-        if (localCardData.value.data.sockets.outputs[index]) {
-          localCardData.value.data.sockets.outputs[index].name = newName;
-        }
-        handleCardUpdate();
-      }
-      cancelEdit();
-    };
-
-    const cancelEdit = () => {
-      editingIndex.value = -1;
-      editingName.value = "";
-    };
-
+    // Define emitWithCardId locally instead of using from useCardSetup
     const emitWithCardId = (eventName, event) => {
       emit(eventName, { ...event, cardId: localCardData.value.uuid });
     };
 
+    const handleCardUpdate = () => {
+      console.log("handleCardUpdate InputCard")
+      console.log("isProcessing", isProcessing.value)
+      if (!isProcessing.value) {
+        console.log("InputCard emitting updateCard", Vue.toRaw(localCardData.value))
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
+    };
+ 
+    // Setup the watchers for the sockets
+
+    // Custom comparison for file data
+    const compareFileData = (a, b) => {
+      if (a === b) return true;
+      if (!a || !b) return false;
+
+      // For file data, compare content and metadata separately
+      if (a.content !== undefined && b.content !== undefined) {
+        // For text content
+        if (typeof a.content === "string" && typeof b.content === "string") {
+          return (
+            a.content === b.content &&
+            a.metadata?.name === b.metadata?.name &&
+            a.metadata?.type === b.metadata?.type
+          );
+        }
+        // For binary content, compare metadata
+        return (
+          a.metadata?.name === b.metadata?.name &&
+          a.metadata?.type === b.metadata?.type &&
+          a.metadata?.size === b.metadata?.size
+        );
+      }
+      return false;
+    };
+
+    // Setup the socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      compareFunction: compareFileData,
+      // Input sockets are rarely used in InputCard, but we can handle them if needed
+      onInputChange: (change) => {
+        if (change.type === "modified") {
+          // Handle any input value changes if needed
+          handleCardUpdate();
+        }
+      },
+      // Handle output socket changes
+      onOutputChange: (change) => {
+        switch (change.type) {
+          case "added":
+            // New file socket added
+            if (!localCardData.value.data.filesData[change.position]) {
+              localCardData.value.data.filesData[change.position] = {
+                name:
+                  change.value?.metadata?.name || `File ${change.position + 1}`,
+                type: change.value?.metadata?.type || "text/plain",
+                size: change.value?.metadata?.size || 0,
+                lastModified:
+                  change.value?.metadata?.lastModified || Date.now(),
+              };
+              handleCardUpdate();
+            }
+            break;
+
+          case "removed":
+            // File socket removed
+            if (localCardData.value.data.filesData[change.position]) {
+              localCardData.value.data.filesData.splice(change.position, 1);
+              handleCardUpdate();
+            }
+            break;
+
+          case "modified":
+            // File content or metadata updated
+            if (localCardData.value.data.filesData[change.position]) {
+              const fileData = change.newValue;
+              if (fileData?.metadata) {
+                localCardData.value.data.filesData[change.position] = {
+                  name:
+                    fileData.metadata.name ||
+                    localCardData.value.data.filesData[change.position].name,
+                  type:
+                    fileData.metadata.type ||
+                    localCardData.value.data.filesData[change.position].type,
+                  size:
+                    fileData.metadata.size ||
+                    localCardData.value.data.filesData[change.position].size,
+                  lastModified: fileData.metadata.lastModified || Date.now(),
+                };
+                handleCardUpdate();
+              }
+            }
+            break;
+        }
+      },
+    });
+
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Set the minimum height of the card
+    const contentMinHeight = Vue.computed(() => 
+      30 + localCardData.value.data.sockets.outputs.length * 36
+    );
+
+
+    Vue.onMounted(() => {
+      console.log("ViewCard mounted, emitting initial state");
+      Vue.nextTick(() => {
+        // Ensure all reactivity is set up before emitting
+        handleCardUpdate();
+      });
+    });
+
+
+    // Cleanup
+    Vue.onUnmounted(cleanup);
+
+    //Component Specific Functions
+    //Used only in this component for its primary purpose
+
+    // File content reading
     const readFileContent = async (file) => {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
           let content = reader.result;
 
-          // Handle JSON files
           if (
             file.type.includes("json") ||
             file.name.toLowerCase().endsWith(".json")
@@ -257,7 +347,6 @@ export default {
           });
         };
 
-        // Determine how to read the file
         if (
           file.type.startsWith("text/") ||
           file.type.includes("json") ||
@@ -274,78 +363,12 @@ export default {
       });
     };
 
-    const handleRefreshFile = async (event, index) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const fileData = await readFileContent(file);
-
-        // Update the file data
-        localCardData.value.data.filesData[index] = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          lastModified: file.lastModified,
-        };
-
-        if (localCardData.value.data.sockets.outputs[index]) {
-          const updatedSocket = {
-            ...createSocket({
-              type: "output",
-              index,
-              existingId: localCardData.value.data.sockets.outputs[index].id,
-              value: fileData, // Direct assignment of fileData object
-            }),
-            name: file.name,
-          };
-
-          const newSockets = [...localCardData.value.data.sockets.outputs];
-          newSockets[index] = updatedSocket;
-
-          const { reindexedSockets, reindexMap } = updateSocketArray({
-            oldSockets: localCardData.value.data.sockets.outputs,
-            newSockets,
-            type: "output",
-            deletedSocketIds: [],
-            socketRegistry,
-            connections: connections.value,
-          });
-
-          localCardData.value.data.sockets.outputs = reindexedSockets;
-
-          emit(
-            "sockets-updated",
-            createSocketUpdateEvent({
-              cardId: localCardData.value.uuid,
-              oldSockets: localCardData.value.data.sockets.outputs,
-              newSockets: reindexedSockets,
-              reindexMap,
-              deletedSocketIds: [],
-              type: "output",
-            })
-          );
-        }
-      } finally {
-        isProcessing.value = false;
-        handleCardUpdate();
-        event.target.value = "";
-      }
-    };
-
-    // For processing new files
-    // File processing functions updated to use new structure
+    // Process multiple files
     const processFiles = async (files) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
 
       try {
-        const oldSockets = [...localCardData.value.data.sockets.outputs];
-        const startIndex = localCardData.value.data.filesData.length;
-
         const processedFiles = await Promise.all(
           Array.from(files).map(async (file) => {
             const fileData = await readFileContent(file);
@@ -361,98 +384,37 @@ export default {
           })
         );
 
-        // Update filesData state
+        // Add new files
+        const newFilesData = processedFiles.map((pf) => pf.fileInfo);
         localCardData.value.data.filesData = [
           ...localCardData.value.data.filesData,
-          ...processedFiles.map((pf) => pf.fileInfo),
+          ...newFilesData,
         ];
 
-        // Create new sockets for the files
-        const newSockets = [
-          ...oldSockets,
-          ...processedFiles.map((pf, index) => ({
-            ...createSocket({
-              type: "output",
-              index: startIndex + index,
-              value: pf.fileData,
-            }),
-            name: pf.fileInfo.name,
-          })),
-        ];
-
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          deletedSocketIds: [],
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        localCardData.value.data.sockets.outputs = reindexedSockets;
-        handleCardUpdate();
-
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
+        // Create corresponding sockets
+        const newSockets = processedFiles.map((pf) => ({
+          ...createSocket({
             type: "output",
-          })
-        );
+            value: pf.fileData,
+          }),
+          name: pf.fileInfo.name,
+        }));
+
+        localCardData.value.data.sockets.outputs = [
+          ...localCardData.value.data.sockets.outputs,
+          ...newSockets,
+        ];
+
+
+        console.log("localCardData InputCard", localCardData.value)
+
       } finally {
         isProcessing.value = false;
+        handleCardUpdate();
       }
     };
 
-    const removeFile = (index) => {
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const oldSockets = [...localCardData.value.data.sockets.outputs];
-        const deletedSocket = oldSockets[index];
-        const deletedSocketIds = deletedSocket ? [deletedSocket.id] : [];
-
-        // Remove file and create new sockets array
-        localCardData.value.data.filesData.splice(index, 1);
-        const newSockets = oldSockets.filter((_, i) => i !== index);
-
-        // Update socket array with proper remapping
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          deletedSocketIds,
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        // Apply updates - this was wrong, using sockets instead of data.sockets
-        localCardData.value.data.sockets.outputs = reindexedSockets;
-
-        // Emit the socket update event
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets, // These parameters need to match what the handler expects
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds,
-            type: "output",
-          })
-        );
-
-        handleCardUpdate();
-      } finally {
-        isProcessing.value = false;
-      }
-    };
-    // File handling functions remain largely the same, but updated to use new structure
+    // File handling event handlers
     const handleFileSelect = (event) => {
       if (!event.target.files?.length) return;
       processFiles(event.target.files);
@@ -462,143 +424,110 @@ export default {
       processFiles(event.dataTransfer.files);
     };
 
+    // File name editing methods
+    const startEditing = (index, name) => {
+      editingIndex.value = index;
+      editingName.value = name;
+      Vue.nextTick(() => {
+        if (fileNameInput.value) {
+          fileNameInput.value.focus();
+          fileNameInput.value.select();
+        }
+      });
+    };
+
+    const saveFileName = (index) => {
+      if (editingName.value.trim()) {
+        const newName = editingName.value.trim();
+
+        // Update file data name
+        localCardData.value.data.filesData[index].name = newName;
+
+        // Update corresponding socket name
+        if (localCardData.value.data.sockets.outputs[index]) {
+          localCardData.value.data.sockets.outputs[index].name = newName;
+        }
+
+        handleCardUpdate();
+      }
+      cancelEdit();
+    };
+
+    const cancelEdit = () => {
+      editingIndex.value = -1;
+      editingName.value = "";
+    };
+
+    // File operations
+
+    const handleRefreshFile = async (event, index) => {
+      const file = event.target.files?.[0];
+      if (!file || isProcessing.value) return;
+
+      isProcessing.value = true;
+      try {
+        const fileData = await readFileContent(file);
+
+        // Update file data
+        localCardData.value.data.filesData[index] = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          lastModified: file.lastModified,
+        };
+
+        // Update corresponding socket
+        if (localCardData.value.data.sockets.outputs[index]) {
+          const existingSocket =
+            localCardData.value.data.sockets.outputs[index];
+          localCardData.value.data.sockets.outputs[index] = {
+            ...existingSocket,
+            name: file.name,
+            value: fileData,
+          };
+        }
+
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
+        event.target.value = "";
+      }
+    };
+
+    const removeFile = (index) => {
+      if (isProcessing.value) return;
+      isProcessing.value = true;
+
+      try {
+        // Get socket ID before removing
+        const socketId = localCardData.value.data.sockets.outputs[index]?.id;
+
+        // Remove file data
+        localCardData.value.data.filesData.splice(index, 1);
+
+        // Remove corresponding socket
+        localCardData.value.data.sockets.outputs =
+          localCardData.value.data.sockets.outputs.filter(
+            (_, i) => i !== index
+          );
+
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
+      }
+    };
+
+    // UI helper methods
     const triggerFileInput = (event) => {
       event.stopPropagation();
       fileInput.value?.click();
     };
 
-    const handleCardUpdate = () => {
-      if (!isProcessing.value) {
-        emit("update-card", Vue.toRaw(localCardData.value));
+    const triggerRefreshFile = (index) => {
+      if (refreshInputs.value[index]) {
+        refreshInputs.value[index].click();
       }
     };
-
-    //Card and socket updates
-    // Helper computed to get a minimal representation of the socket state
-    const socketStateSignature = Vue.computed(() => {
-      const sockets = props.cardData.data?.sockets?.outputs;
-      if (!sockets) return [];
-
-      // Return minimal representation of the state we care about
-      return sockets.map((socket) => ({
-        id: socket.id,
-        value: socket.value ?? null, // Ensure value is never undefined
-        name: socket.name ?? "", // Ensure name is never undefined
-      }));
-    });
-
-    const processingState = Vue.ref(null);
-
-    // Single watcher that handles all socket changes efficiently
-
-    // Update the watcher with safer comparison logic
-    Vue.watch(
-      socketStateSignature,
-      (newState, oldState) => {
-        if (isProcessing.value) return;
-        if (!oldState || !newState) return;
-        if (processingState.value === newState) return;
-
-        const changes = newState
-          .map((socket, index) => {
-            const oldSocket = oldState[index] || { value: null, name: "" };
-            return {
-              id: socket.id,
-              hasValueChange:
-                JSON.stringify(socket.value) !==
-                JSON.stringify(oldSocket.value),
-              hasMetaChange: socket.name !== oldSocket.name,
-            };
-          })
-          .filter((change) => change.hasValueChange || change.hasMetaChange);
-
-        if (changes.length > 0) {
-          isProcessing.value = true;
-          processingState.value = newState;
-          try {
-            // Update local state first
-            localCardData.value.data.sockets.outputs =
-              localCardData.value.data.sockets.outputs.map((socket, index) => {
-                const newStateSocket = newState[index];
-                return {
-                  ...socket,
-                  value: newStateSocket?.value ?? null,
-                  name: newStateSocket?.name ?? "",
-                };
-              });
-
-            // Emit update event
-            emit(
-              "sockets-updated",
-              createSocketUpdateEvent({
-                cardId: localCardData.value.uuid,
-                oldSockets: oldState.map((state, index) => ({
-                  ...localCardData.value.data.sockets.outputs[index],
-                  value: state?.value ?? null,
-                  name: state?.name ?? "",
-                })),
-                newSockets: localCardData.value.data.sockets.outputs,
-                reindexMap: localCardData.value.data.sockets.outputs.map(
-                  (_, i) => i
-                ),
-                deletedSocketIds: [],
-                type: "output",
-              })
-            );
-          } finally {
-            isProcessing.value = false;
-            processingState.value = null;
-          }
-        }
-      },
-      { deep: true }
-    );
-
-    // Watch for specific property changes instead of deep watching
-    Vue.watch(
-      () => props.cardData.ui?.x,
-      (newX) => {
-        if (newX !== undefined && !isProcessing.value) {
-          localCardData.value.ui.x = newX;
-        }
-      }
-    );
-
-    Vue.watch(
-      () => props.cardData.ui?.y,
-      (newY) => {
-        if (newY !== undefined && !isProcessing.value) {
-          localCardData.value.ui.y = newY;
-        }
-      }
-    );
-
-    Vue.watch(
-      () => props.cardData.ui?.display,
-      (newDisplay) => {
-        if (newDisplay !== undefined && !isProcessing.value) {
-          localCardData.value.ui.display = newDisplay;
-        }
-      }
-    );
-
-    // Watch socket count for height adjustment
-    Vue.watch(
-      () => localCardData.value.data.sockets.outputs.length,
-      (newSocketCount) => {
-        contentMinHeight.value = 30 + newSocketCount * 36;
-      },
-      { immediate: true }
-    );
-
-    // Cleanup
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach((socket) =>
-        socket.cleanup.forEach((cleanup) => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
-    });
 
     return {
       fileInput,
@@ -612,8 +541,6 @@ export default {
       removeFile,
       triggerFileInput,
       handleCardUpdate,
-
-      // File editing
       editingIndex,
       editingName,
       startEditing,
@@ -621,7 +548,6 @@ export default {
       cancelEdit,
       triggerRefreshFile,
       handleRefreshFile,
-
       contentMinHeight,
     };
   },

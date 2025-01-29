@@ -57,7 +57,7 @@ export default {
             </button>
 
 
-            <InputText v-if="activeCanvas" v-model="activeCanvas.name" placeholder="Canvas Name"
+            <input type="text" v-if="activeCanvas" v-model="activeCanvas.name" placeholder="Canvas Name"
                 class="w-[32rem] !px-3 !py-2 !bg-gray-800 !text-gray-100 border-gray-700 !rounded-md" :class="[
                   'hover:border-gray-600',
                   'focus:!ring-2 focus:!ring-green-500 focus:!border-transparent !outline-none'
@@ -444,8 +444,11 @@ export default {
           };
           
           updateCard(structuredCard);
+
+
         }
       }
+
     };
 
 
@@ -581,6 +584,8 @@ export default {
  
     
 const updateCard = (updates) => {
+
+  console.log("updateCard Studio.js", updates)
   const cardIndex = activeCards.value.findIndex(c => c.uuid === updates.uuid);
   if (cardIndex === -1) return;
 
@@ -677,15 +682,25 @@ const updateCard = (updates) => {
       activeConnections.value = activeConnections.value.map(conn => {
         if (type === "input" && conn.targetCardId === cardId) {
           const oldIndex = oldSockets.findIndex(s => s.id === conn.targetSocketId);
-          if (oldIndex !== -1 && reindexMap[oldIndex] !== -1) {
-            const newSocket = newSockets[reindexMap[oldIndex]];
-            return { ...conn, targetSocketId: newSocket.id };
+          if (oldIndex !== -1) {
+            const newIndex = reindexMap.get(conn.targetSocketId); // Use Map.get() instead of array indexing
+            if (newIndex !== undefined) {  // Check if we got a valid index
+              const newSocket = newSockets[newIndex];
+              if (newSocket) {  // Verify we have a valid socket
+                return { ...conn, targetSocketId: newSocket.id };
+              }
+            }
           }
         } else if (type === "output" && conn.sourceCardId === cardId) {
           const oldIndex = oldSockets.findIndex(s => s.id === conn.sourceSocketId);
-          if (oldIndex !== -1 && reindexMap[oldIndex] !== -1) {
-            const newSocket = newSockets[reindexMap[oldIndex]];
-            return { ...conn, sourceSocketId: newSocket.id };
+          if (oldIndex !== -1) {
+            const newIndex = reindexMap.get(conn.sourceSocketId); // Use Map.get() instead of array indexing
+            if (newIndex !== undefined) {  // Check if we got a valid index
+              const newSocket = newSockets[newIndex];
+              if (newSocket) {  // Verify we have a valid socket
+                return { ...conn, sourceSocketId: newSocket.id };
+              }
+            }
           }
         }
         return conn;

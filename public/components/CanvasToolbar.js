@@ -11,7 +11,7 @@ export default {
           :class="{ 'w-52': showText, 'w-10': !showText }"
         >
           <!-- Close Button -->
-          <button v-tooltip="'Close'"
+          <button  
             class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleExpanded"
           >
@@ -19,7 +19,7 @@ export default {
           </button>
   
           <!-- Text Toggle Button -->
-          <button  v-tooltip="'Toggle Text'"
+          <button  
             class="w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleText"
           >
@@ -35,7 +35,7 @@ export default {
               </div>
               
               <!-- Add Tools -->
-              <button v-tooltip="showText ? null : item.label"
+              <button  
               :disabled = "item.disabled"
                 v-for="item in addTools"
                 :key="item.id"
@@ -77,7 +77,7 @@ export default {
   
       <!-- Collapsed State - Just the menu button -->
       <template v-else>
-        <button  v-tooltip="'Toggle Menu'"
+        <button  
           class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           @click="toggleExpanded"
         >

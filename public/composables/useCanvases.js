@@ -328,6 +328,10 @@ export const useCanvases = () => {
     zoomLevel,
 
 
+    handleConnectionDrag: socketConnections.handleConnectionDrag,
+    handleConnectionDragEnd: socketConnections.handleConnectionDragEnd,
+
+
     createConnection: socketConnections.createConnection,
     validateConnection: socketConnections.validateConnection,
 
@@ -456,10 +460,10 @@ export const useCanvases = () => {
   /////////////// The Orchestrator
 // Helper functions remain the same
 const findSocketInCard = (card, socketId) => {
-  const inputSocket = card.sockets.inputs.find(s => s.id === socketId);
+  const inputSocket = card.data.sockets.inputs.find(s => s.id === socketId);
   if (inputSocket) return { socket: inputSocket, type: 'input' };
   
-  const outputSocket = card.sockets.outputs.find(s => s.id === socketId);
+  const outputSocket = card.data.sockets.outputs.find(s => s.id === socketId);
   if (outputSocket) return { socket: outputSocket, type: 'output' };
   
   return null;
@@ -469,10 +473,14 @@ const propagateValueThroughConnection = (connection, canvas) => {
   const sourceCard = canvas.cards.find(card => card.uuid === connection.sourceCardId);
   const targetCard = canvas.cards.find(card => card.uuid === connection.targetCardId);
   
+  console.log("sourceCard", sourceCard)
+  console.log("targetCard", targetCard)
   if (!sourceCard || !targetCard) return;
 
   const sourceResult = findSocketInCard(sourceCard, connection.sourceSocketId);
   const targetResult = findSocketInCard(targetCard, connection.targetSocketId);
+  console.log("sourceResult", sourceResult)
+  console.log("targetResult", targetResult)
   
   //Ive temporarily removed this. Sometimes null is valid.
   // if (!sourceResult || !targetResult) return; // Only update if not null
@@ -493,27 +501,25 @@ const clearTargetSocket = (connection, canvas) => {
   targetResult.socket.momentUpdated = Date.now();
 };
 
-// Create a computed that only extracts the data we need to watch
-// Create a computed that only extracts the data we need to watch
-// const socketAndConnectionState = Vue.computed(() => 
-//   canvases.value.map(canvas => ({
-//     id: canvas.id,
-//     connections: canvas.connections.map(conn => ({
-//       id: conn.id,
-//       sourceCardId: conn.sourceCardId,
-//       sourceSocketId: conn.sourceSocketId,
-//       targetCardId: conn.targetCardId,
-//       targetSocketId: conn.targetSocketId
-//     })),
-//     socketValues: canvas.cards.map(card => ({
-//       cardId: card.uuid,
-//       outputs: card.data?.sockets?.outputs?.map(socket => ({
-//         id: socket.id,
-//         value: socket.value
-//       })) || []  // Add fallback empty array
-//     }))
-//   }))
-// );
+const socketAndConnectionState = Vue.computed(() => 
+  canvases.value.map(canvas => ({
+    id: canvas.id,
+    connections: canvas.connections.map(conn => ({
+      id: conn.id,
+      sourceCardId: conn.sourceCardId,
+      sourceSocketId: conn.sourceSocketId,
+      targetCardId: conn.targetCardId,
+      targetSocketId: conn.targetSocketId
+    })),
+    socketValues: canvas.cards.map(card => ({
+      cardId: card.uuid,
+      outputs: card.data?.sockets?.outputs?.map(socket => ({
+        id: socket.id,
+        value: socket.value
+      })) || []  // Add fallback empty array
+    }))
+  }))
+);
 
 
 
@@ -588,53 +594,53 @@ const canvasModels = Vue.computed(() => {
 
 
 // Watch the computed instead of the entire canvases array
-// Vue.watch(
-//   socketAndConnectionState,
-//   (newState, oldState) => {
-//     if (!newState?.length) return;
+Vue.watch(
+  socketAndConnectionState,
+  (newState, oldState) => {
+    if (!newState?.length) return;
     
-//     newState.forEach((canvasState, canvasIndex) => {
-//       const canvas = canvases.value[canvasIndex];
-//       const oldCanvasState = oldState?.[canvasIndex];
+    newState.forEach((canvasState, canvasIndex) => {
+      const canvas = canvases.value[canvasIndex];
+      const oldCanvasState = oldState?.[canvasIndex];
       
-//       if (oldCanvasState) {
-//         // Check for deleted connections
-//         oldCanvasState.connections.forEach(oldConnection => {
-//           const stillExists = canvasState.connections.some(conn => conn.id === oldConnection.id);
-//           if (!stillExists) {
-//             clearTargetSocket(oldConnection, canvas);
-//           }
-//         });
-//       }
+      if (oldCanvasState) {
+        // Check for deleted connections
+        oldCanvasState.connections.forEach(oldConnection => {
+          const stillExists = canvasState.connections.some(conn => conn.id === oldConnection.id);
+          if (!stillExists) {
+            clearTargetSocket(oldConnection, canvas);
+          }
+        });
+      }
 
-//       // Check for new connections
-//       canvasState.connections.forEach(connection => {
-//         const oldConnection = oldCanvasState?.connections.find(c => c.id === connection.id);
-//         if (!oldConnection) {
-//           propagateValueThroughConnection(connection, canvas);
-//         }
-//       });
+      // Check for new connections
+      canvasState.connections.forEach(connection => {
+        const oldConnection = oldCanvasState?.connections.find(c => c.id === connection.id);
+        if (!oldConnection) {
+          propagateValueThroughConnection(connection, canvas);
+        }
+      });
 
-//       // Check for socket value changes
-//       canvasState.socketValues.forEach((cardState) => {
-//         const oldCardState = oldCanvasState?.socketValues.find(c => c.cardId === cardState.cardId);
+      // Check for socket value changes
+      canvasState.socketValues.forEach((cardState) => {
+        const oldCardState = oldCanvasState?.socketValues.find(c => c.cardId === cardState.cardId);
         
-//         cardState.outputs.forEach(output => {
-//           const oldOutput = oldCardState?.outputs.find(o => o.id === output.id);
-//           if (oldOutput && output.value !== oldOutput.value) {
-//             canvas.connections
-//               .filter(conn => conn.sourceCardId === cardState.cardId && conn.sourceSocketId === output.id)
-//               .forEach(conn => propagateValueThroughConnection(conn, canvas));
-//           }
-//         });
-//       });
-//     });
-//   },
-//   { 
-//     deep: true,
-//     immediate: true
-//   }
-// );
+        cardState.outputs.forEach(output => {
+          const oldOutput = oldCardState?.outputs.find(o => o.id === output.id);
+          if (oldOutput && output.value !== oldOutput.value) {
+            canvas.connections
+              .filter(conn => conn.sourceCardId === cardState.cardId && conn.sourceSocketId === output.id)
+              .forEach(conn => propagateValueThroughConnection(conn, canvas));
+          }
+        });
+      });
+    });
+  },
+  { 
+    deep: true,
+    immediate: true
+  }
+);
 
   // Comprehensive return statement:
   return {
