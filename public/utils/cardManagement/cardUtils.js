@@ -15,33 +15,31 @@ export const SOCKET_TYPES = {
   OUTPUT: "output",
 };
 
-
-
-const initializeSockets = (socketData = [], type = SOCKET_TYPES.INPUT, startIndex = 0) => {
-  return socketData.map((socket, idx) => {
-    const name = socket.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${idx + 1}`;
-    return createSocket({
+const initializeSockets = (existingSockets = [], defaultSockets = [], type = SOCKET_TYPES.INPUT) => {
+  // If we have existing sockets, preserve them completely
+  if (existingSockets.length > 0) {
+    return existingSockets.map((socket, idx) => ({
       ...socket,
-      type,
-      name,
-      index: startIndex + idx
-    });
-  });
+      type: type,  // Ensure type is set
+      index: idx   // Update index
+    }));
+  }
+
+  // If no existing sockets but we have defaults, create new sockets from defaults
+  if (defaultSockets.length > 0) {
+    return defaultSockets.map((socketData, idx) => 
+      createSocket({
+        type,
+        name: socketData.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${idx + 1}`,
+        value: socketData.value || null,
+        index: idx
+      })
+    );
+  }
+
+  // Return empty array if no sockets
+  return [];
 };
-
-// const initializeSocket = (socketData, type = SOCKET_TYPES.INPUT) => {
-//   if (!socketData) return null;
-
-//   return {
-//     ...socketData,
-//     type: socketData.type || type, // Ensure type is preserved or defaulted
-//     id:
-//       socketData.id ||
-//       `socket-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-//     value: socketData.value ?? null,
-//     momentUpdated: Date.now(),
-//   };
-// };
 
 export const initializeCardData = (data, defaultConfig = {}) => {
   const {
@@ -51,17 +49,23 @@ export const initializeCardData = (data, defaultConfig = {}) => {
     defaultHeight = 150,
     defaultDisplay = "default",
     defaultData = {},
-    defaultSockets = { inputs: [], outputs: [] }  // Add default socket configuration
+    defaultSockets = { inputs: [], outputs: [] }
   } = defaultConfig;
 
-  // Initialize socket arrays with proper typing and indexing
+  // Get existing sockets from data if they exist
+  const existingInputs = data.data?.sockets?.inputs || [];
+  const existingOutputs = data.data?.sockets?.outputs || [];
+
+  // Initialize sockets, preserving existing ones or creating from defaults
   const inputs = initializeSockets(
-    data.data?.sockets?.inputs || defaultSockets.inputs,
+    existingInputs,
+    defaultSockets.inputs,
     SOCKET_TYPES.INPUT
   );
 
   const outputs = initializeSockets(
-    data.data?.sockets?.outputs || defaultSockets.outputs,
+    existingOutputs,
+    defaultSockets.outputs,
     SOCKET_TYPES.OUTPUT
   );
 

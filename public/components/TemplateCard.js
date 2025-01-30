@@ -1,11 +1,13 @@
-// New TemplateCard.js
+// TemplateCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import {
-  createSocket,
-  updateSocketArray,
-  createSocketUpdateEvent,
-} from "../utils/socketManagement/socketRemapping.js";
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+import { createSocket } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "TemplateCard",
@@ -16,315 +18,393 @@ export default {
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
   },
+
   template: `
-  <div>
-    <BaseCard
-      :card-data="localCardData"
-      :zoom-level="zoomLevel"
-      :z-index="zIndex"
-      :is-selected="isSelected"
-      @update-position="$emit('update-position', $event)"
-      @update-card="handleCardUpdate"
-      @close-card="$emit('close-card', $event)"
-      @clone-card="$emit('clone-card', $event)"
-      @select-card="$emit('select-card', $event)"
-    >
-      <!-- Socket List Component - Reused for both inputs and outputs -->
-      <template v-for="type in ['input', 'output']">
-        <div 
-          :class="type === 'input' ? 'absolute -left-[12px]' : 'absolute -right-[12px]'"
-          class="flex flex-col gap-1"
-          style="top: 16px;"
-        >
+    <div class="card">
+      <BaseCard
+        :card-data="localCardData"
+        :zoom-level="zoomLevel"
+        :z-index="zIndex"
+        :is-selected="isSelected"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
+        @update-card="handleCardUpdate"
+        @close-card="$emit('close-card', $event)"
+        @clone-card="uuid => $emit('clone-card', uuid)"
+        @select-card="$emit('select-card', $event)"
+      >
+        <!-- Input Sockets -->
+        <div class="absolute -left-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
           <div 
-            v-for="(socket, index) in localCardData.sockets[type + 's']"
+            v-for="(socket, index) in localCardData.data.sockets.inputs"
             :key="socket.id"
-            class="flex items-center"
-            :style="{ transform: 'translateY(' + (index * 4) + 'px)' }"
+            class="flex items-center justify-start"
           >
             <BaseSocket
-              v-if="socket"
-              :type="type"
+              type="input"
               :socket-id="socket.id"
               :card-id="localCardData.uuid"
-              :name="socket.name"
+              :name="socket.name || 'Input ' + (index + 1)"
               :value="socket.value"
               :is-connected="getSocketConnections(socket.id)"
               :has-error="false"
               :zoom-level="zoomLevel"
-              @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
               @connection-drag="$emit('connection-drag', $event)"
               @connection-drag-end="$emit('connection-drag-end', $event)"
               @socket-mounted="handleSocketMount($event)"
             />
           </div>
         </div>
-      </template>
 
-      <!-- Content -->
-      <div class="space-y-4 text-gray-300 p-4">
-        <!-- Socket Configuration Tables -->
-        <template v-for="type in ['input', 'output']">
+        <!-- Output Sockets -->
+        <div class="absolute -right-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
+          <div 
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
+            :key="socket.id"
+            class="flex items-center justify-end"
+          >
+            <BaseSocket
+              type="output"
+              :socket-id="socket.id"
+              :card-id="localCardData.uuid"
+              :name="socket.name || 'Output ' + (index + 1)"
+              :value="socket.value"
+              :is-connected="getSocketConnections(socket.id)"
+              :has-error="false"
+              :zoom-level="zoomLevel"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
+              @connection-drag="$emit('connection-drag', $event)"
+              @connection-drag-end="$emit('connection-drag-end', $event)"
+              @socket-mounted="handleSocketMount($event)"
+            />
+          </div>
+        </div>
+
+        <!-- Content -->
+        <div 
+          class="p-4 space-y-4" 
+          v-show="localCardData.ui.display === 'default'"
+        >
+          <!-- Action Buttons -->
+          <div class="flex justify-between gap-4">
+            <button 
+              @click="addInput"
+              @mousedown.stop
+              class="flex-1 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
+            >
+              Add Input
+            </button>
+            <button 
+              @click="addOutput"
+              @mousedown.stop
+              class="flex-1 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
+            >
+              Add Output
+            </button>
+          </div>
+
+          <!-- Input Sockets Table -->
           <div class="space-y-2">
-            <div class="flex justify-between items-center">
-              <label class="text-xs font-medium text-gray-400">{{ type.charAt(0).toUpperCase() + type.slice(1) }}s</label>
-              <button 
-                class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
-                @click="addSocket(type)"
-                @mousedown.stop
-              >+ Add {{ type.charAt(0).toUpperCase() + type.slice(1) }}</button>
-            </div>
-            
-            <div class="bg-gray-800 rounded overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-900">
-                  <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-400">Name</th>
-                    <th class="px-4 py-2 w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="(socket, index) in localCardData.sockets[type + 's']" 
-                    :key="socket.id"
-                    class="border-t border-gray-700"
+            <div class="text-sm font-medium text-gray-400">Input Sockets</div>
+            <div class="space-y-1">
+              <div 
+                v-for="(socket, index) in localCardData.data.sockets.inputs" 
+                :key="socket.id"
+                class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
+              >
+                <span class="text-xs text-gray-400 w-4">{{ index + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                  <div v-if="editingSocket?.id === socket.id" class="flex items-center">
+                    <input
+                      type="text"
+                      v-model="editingSocket.name"
+                      @blur="saveSocketName(socket, 'input')"
+                      @keyup.enter="saveSocketName(socket, 'input')"
+                      @keyup.esc="cancelEdit"
+                      :ref="el => { if (el) socketInputRefs['input-' + index] = el }"
+                      class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      @mousedown.stop
+                      @click.stop
+                    />
+                  </div>
+                  <div 
+                    v-else
+                    @click.stop="startEditing(socket, index, 'input')"
+                    class="truncate cursor-text text-gray-100 text-xs"
                   >
-                    <td class="px-4 py-2">
-                      <input
-                        type="text"
-                        v-model="socket.name"
-                        @input="handleSocketNameUpdate(socket)"
-                        class="w-full bg-gray-700 text-xs px-2 py-1 rounded"
-                        @mousedown.stop
-                      />
-                    </td>
-                    <td class="px-4 py-2">
-                      <button 
-                        class="text-gray-400 hover:text-white"
-                        @click.stop="removeSocket(type, index)"
-                        @mousedown.stop
-                      >×</button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    {{ socket.name || 'Input ' + (index + 1) }}
+                  </div>
+                </div>
+                <button 
+                  class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+                  @click.stop="removeSocket(index, 'input')"
+                  @mousedown.stop
+                  @touchstart.stop
+                >×</button>
+              </div>
             </div>
           </div>
-        </template>
 
-        <!-- Extendable Content Area -->
-        <slot name="content"></slot>
-      </div>
-    </BaseCard>
+          <!-- Output Sockets Table -->
+          <div class="space-y-2">
+            <div class="text-sm font-medium text-gray-400">Output Sockets</div>
+            <div class="space-y-1">
+              <div 
+                v-for="(socket, index) in localCardData.data.sockets.outputs" 
+                :key="socket.id"
+                class="flex items-center gap-2 bg-gray-900 p-2 rounded group"
+              >
+                <span class="text-xs text-gray-400 w-4">{{ index + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                  <div v-if="editingSocket?.id === socket.id" class="flex items-center">
+                    <input
+                      type="text"
+                      v-model="editingSocket.name"
+                      @blur="saveSocketName(socket, 'output')"
+                      @keyup.enter="saveSocketName(socket, 'output')"
+                      @keyup.esc="cancelEdit"
+                      :ref="el => { if (el) socketInputRefs['output-' + index] = el }"
+                      class="w-full bg-gray-800 text-white px-2 py-1 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      @mousedown.stop
+                      @click.stop
+                    />
+                  </div>
+                  <div 
+                    v-else
+                    @click.stop="startEditing(socket, index, 'output')"
+                    class="truncate cursor-text text-gray-100 text-xs"
+                  >
+                    {{ socket.name || 'Output ' + (index + 1) }}
+                  </div>
+                </div>
+                <button 
+                  class="text-gray-400 hover:text-white w-6 h-6 flex items-center justify-center"
+                  @click.stop="removeSocket(index, 'output')"
+                  @mousedown.stop
+                  @touchstart.stop
+                >×</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </BaseCard>
     </div>
   `,
-
   setup(props, { emit }) {
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
+    // Initialize card setup utilities
+    const {
+      socketRegistry,
+      connections,
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
 
-    // Initialize card data
-    const localCardData = Vue.ref({
-      ...props.cardData,
-    });
+    // Initialize refs for editing
+    const editingSocket = Vue.ref(null);
+    const socketInputRefs = Vue.ref([]);
 
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
+    // Initialize local card data with default sockets
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        defaultName: "Template Card",
+        defaultDescription: "Template Node",
+        defaultSockets: {
+          inputs: [{ name: "Initial Input 1" }, { name: "Initial Input 2" }],
+          outputs: [{ name: "Initial Output 1" }, { name: "Initial Output 2" }],
+        },
+      })
+    );
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
-      });
-    };
-
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
-    };
-
-    const addSocket = (type) => {
-      if (isProcessing.value) return;
-      isProcessing.value = true;
-
-      try {
-        const socketType = type + "s";
-        const oldSockets = [...localCardData.value.sockets[socketType]];
-        const newSocket = createSocket({
-          type,
-          index: oldSockets.length,
-        });
-
-        const newSockets = [...oldSockets, newSocket];
-
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type,
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        // Update local state
-        localCardData.value.sockets[socketType] = reindexedSockets;
-
-        // Emit update event
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type,
-          })
-        );
-
-        Vue.nextTick(() => handleCardUpdate());
-      } finally {
-        isProcessing.value = false;
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
     };
 
-    const removeSocket = (type, index) => {
-      if (isProcessing.value) return;
-      isProcessing.value = true;
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
 
-      try {
-        const socketType = type + "s";
-        const oldSockets = [...localCardData.value.sockets[socketType]];
-        const deletedSocket = oldSockets[index];
-
-        if (deletedSocket) {
-          const newSockets = oldSockets.filter((_, i) => i !== index);
-          const deletedSocketIds = [deletedSocket.id];
-
-          const { reindexMap, reindexedSockets } = updateSocketArray({
-            oldSockets,
-            newSockets,
-            type,
-            deletedSocketIds,
-            socketRegistry,
-            connections: connections.value,
-          });
-
-          // Update local state
-          localCardData.value.sockets[socketType] = reindexedSockets;
-
-          // Emit update event
-          emit(
-            "sockets-updated",
-            createSocketUpdateEvent({
-              cardId: localCardData.value.uuid,
-              oldSockets,
-              newSockets: reindexedSockets,
-              reindexMap,
-              deletedSocketIds,
-              type,
-            })
-          );
+      onInputChange: (change) => {
+        if (change.type === "added") {
+          console.log("Input Socket Added", change);
+          handleCardUpdate();
         }
 
-        handleCardUpdate();
-      } finally {
-        isProcessing.value = false;
-      }
-    };
+        if (change.type === "modified") {
+          // When input value changes, update corresponding output
+          const outputSocket =
+            localCardData.value.data.sockets.inputs[change.position];
+          if (outputSocket) {
+            console.log("Input Socket Modified", change);
+            outputSocket.value = change.newValue;
+            handleCardUpdate();
+          }
+        }
 
-    const handleSocketNameUpdate = (socket) => {
+        if (change.type === "removed") {
+          //Socket removed
+          console.log("Input Socket Removed", change);
+          handleCardUpdate();
+        }
+      },
+
+      onOutputChange: (change) => {
+        if (change.type === "added") {
+          console.log("Output Socket Added", change);
+          handleCardUpdate();
+        }
+
+        if (change.type === "modified") {
+          // When input value changes, update corresponding output
+          const outputSocket =
+            localCardData.value.data.sockets.outputs[change.position];
+          if (outputSocket) {
+            console.log("Output Socket Modified", change);
+            outputSocket.value = change.newValue;
+            handleCardUpdate();
+          }
+        }
+
+        if (change.type === "removed") {
+          //Socket removed
+          console.log("Output Socket  Removed", change);
+          handleCardUpdate();
+        }
+      },
+    });
+
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Socket management functions
+    const addInput = () => {
       if (isProcessing.value) return;
-      socket.momentUpdated = Date.now();
+      const newIndex = localCardData.value.data.sockets.inputs.length;
+      const newSocket = createSocket({
+        type: "input",
+        name: "Input " + (newIndex + 1),
+        index: newIndex,
+      });
+      localCardData.value.data.sockets.inputs.push(newSocket);
       handleCardUpdate();
     };
 
-    const handleCardUpdate = () => {
+    const addOutput = () => {
       if (isProcessing.value) return;
-      emit("update-card", Vue.toRaw(localCardData.value));
+      const newIndex = localCardData.value.data.sockets.outputs.length;
+      const newSocket = createSocket({
+        type: "output",
+        name: "Output " + (newIndex + 1),
+        index: newIndex,
+      });
+      localCardData.value.data.sockets.outputs.push(newSocket);
+      handleCardUpdate();
     };
 
-    // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value) return;
-        isProcessing.value = true;
+    const removeSocket = (index, type) => {
+      if (isProcessing.value) return;
+      const socketArray =
+        type === "input"
+          ? localCardData.value.data.sockets.inputs
+          : localCardData.value.data.sockets.outputs;
 
-        try {
-          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
+      socketArray.splice(index, 1);
 
-          if (
-            newData.sockets &&
-            (!oldData?.sockets ||
-              newData.sockets.inputs?.length !==
-                oldData.sockets.inputs?.length ||
-              newData.sockets.outputs?.length !==
-                oldData.sockets.outputs?.length)
-          ) {
-            ["inputs", "outputs"].forEach((socketType) => {
-              if (newData.sockets[socketType]) {
-                const type = socketType.slice(0, -1);
-                const oldSockets = oldData?.sockets?.[socketType] || [];
-                const newSockets = newData.sockets[socketType].map(
-                  (socket, index) =>
-                    createSocket({
-                      type,
-                      index,
-                      existingId: socket.id,
-                      value: socket.value,
-                    })
-                );
+      // Reindex remaining sockets
+      socketArray.forEach((socket, i) => {
+        socket.index = i;
+        socket.name =
+          socket.name || `${type === "input" ? "Input" : "Output"} ${i + 1}`;
+      });
 
-                const { reindexMap, reindexedSockets } = updateSocketArray({
-                  oldSockets,
-                  newSockets,
-                  type,
-                  socketRegistry,
-                  connections: connections.value,
-                });
+      handleCardUpdate();
+    };
 
-                localCardData.value.sockets[socketType] = reindexedSockets;
-
-                emit(
-                  "sockets-updated",
-                  createSocketUpdateEvent({
-                    cardId: localCardData.value.uuid,
-                    oldSockets,
-                    newSockets: reindexedSockets,
-                    reindexMap,
-                    deletedSocketIds: [],
-                    type,
-                  })
-                );
-              }
-            });
-          }
-        } finally {
-          isProcessing.value = false;
+    // Socket name editing functions
+    const startEditing = (socket, index, type) => {
+      editingSocket.value = {
+        id: socket.id,
+        name: socket.name || `${type} ${index + 1}`,
+        index,
+        type,
+      };
+      // Using nextTick to ensure the input is mounted
+      Vue.nextTick(() => {
+        const inputRef = socketInputRefs.value[`${type}-${index}`];
+        if (inputRef) {
+          inputRef.focus();
+          inputRef.select();
         }
-      },
-      { deep: true }
-    );
+      });
+    };
 
-    // Cleanup on unmount
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach((socket) =>
-        socket.cleanup.forEach((cleanup) => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
+    const saveSocketName = (socket, type) => {
+      if (!editingSocket.value) return;
+
+      const socketArray =
+        type === "input"
+          ? localCardData.value.data.sockets.inputs
+          : localCardData.value.data.sockets.outputs;
+
+      const targetSocket = socketArray.find((s) => s.id === socket.id);
+      if (targetSocket) {
+        targetSocket.name = editingSocket.value.name;
+        handleCardUpdate();
+      }
+
+      cancelEdit();
+    };
+
+    const cancelEdit = () => {
+      editingSocket.value = null;
+    };
+
+    // Mounted hook
+    Vue.onMounted(() => {
+      handleCardUpdate();
     });
+
+    // Cleanup
+    Vue.onUnmounted(cleanup);
 
     return {
       localCardData,
+      socketInputRefs,
+      editingSocket,
       getSocketConnections,
-      emitWithCardId,
-      addSocket,
-      removeSocket,
-      handleCardUpdate,
       handleSocketMount,
-      handleSocketNameUpdate,
+      handleCardUpdate,
+      addInput,
+      addOutput,
+      removeSocket,
+      startEditing,
+      saveSocketName,
+      cancelEdit,
     };
   },
 };

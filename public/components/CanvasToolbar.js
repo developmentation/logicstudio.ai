@@ -113,7 +113,7 @@ export default {
         // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
         // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
         // { id: 'tool', label: 'Tool', icon: 'pi pi-cog', type: 'tool' },
-        // { id: 'template', label: 'Template (Tester)', icon: 'pi pi-circle', type: 'template' },
+        { id: 'template', label: 'Template', icon: 'pi pi-circle', type: 'template' },
 
       ];
   
