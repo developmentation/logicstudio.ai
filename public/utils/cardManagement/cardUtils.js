@@ -199,41 +199,28 @@ function defaultCompare(a, b) {
 // In cardUtils.js - Updated setupSocketWatcher
 
 export const setupSocketWatcher = (params) => {
-  const {
-    props,
-    localCardData,
-    isProcessing,
-    emit,
-    onInputChange,
-    onOutputChange,
-  } = params;
+  const { props, localCardData, isProcessing, emit, onInputChange, onOutputChange } = params;
 
   const isDestroyed = Vue.ref(false);
   const isMounted = Vue.ref(false);
   const lastEmittedChange = Vue.ref({
     socketId: null,
     momentUpdated: null,
-    processingSource: null, // Add tracking for the source of the change
+    processingSource: null,
   });
 
-  Vue.onBeforeUnmount(() => {
-    isDestroyed.value = true;
-  });
-
-  Vue.onMounted(() => {
-    isMounted.value = true;
-  });
-
-  // Track previous state with source awareness
+  // Initialize with empty arrays to ensure first sockets trigger events
   const previousSockets = Vue.ref({
-    inputs: [...(props.cardData.data?.sockets?.inputs || [])],
-    outputs: [...(props.cardData.data?.sockets?.outputs || [])],
-    lastSource: null, // Track the last source of change
+    inputs: [],
+    outputs: [],
+    lastSource: null,
   });
 
   const isDuplicateChange = (change, source) => {
-    const currentMoment =
-      change.content?.momentUpdated || change.content?.new?.momentUpdated;
+    // Don't consider initialization events as duplicates
+    if (source === "initialization") return false;
+    
+    const currentMoment = change.content?.momentUpdated || change.content?.new?.momentUpdated;
     return (
       change.socketId === lastEmittedChange.value.socketId &&
       currentMoment === lastEmittedChange.value.momentUpdated &&
@@ -242,12 +229,13 @@ export const setupSocketWatcher = (params) => {
   };
 
   const recordChange = (change, source) => {
-    lastEmittedChange.value = {
-      socketId: change.socketId,
-      momentUpdated:
-        change.content?.momentUpdated || change.content?.new?.momentUpdated,
-      processingSource: source,
-    };
+    if (source !== "initialization") {
+      lastEmittedChange.value = {
+        socketId: change.socketId,
+        momentUpdated: change.content?.momentUpdated || change.content?.new?.momentUpdated,
+        processingSource: source,
+      };
+    }
   };
 
   const handleSocketChanges = (
@@ -257,36 +245,53 @@ export const setupSocketWatcher = (params) => {
     onChange,
     source = "unknown"
   ) => {
-    if (isDestroyed.value || !isMounted.value) return;
-    if (!newSockets || !oldSockets) return;
-    if (isProcessing.value) return; // Prevent processing during card updates
+    if (isDestroyed.value) return;
+    // Allow initialization events before mount
+    if (!isMounted.value && source !== "initialization") return;
+    if (!newSockets) return;
+    if (isProcessing.value && source !== "initialization") return;
 
-    // Prevent processing if this is a reflection of a change we just handled
-    if (source === previousSockets.value.lastSource) {
+    // Allow initialization events through
+    if (source === previousSockets.value.lastSource && source !== "initialization") {
       return;
     }
 
-    const currentSockets =
-      type === "inputs"
-        ? localCardData.value.data.sockets.inputs
-        : localCardData.value.data.sockets.outputs;
+    const currentSockets = type === "inputs" ? 
+      localCardData.value.data.sockets.inputs : 
+      localCardData.value.data.sockets.outputs;
 
     const prevSockets = previousSockets.value[type];
 
     try {
       let hasChanges = false;
 
-      // Handle socket removal first
-      // Handle socket removal first
+      // First pass - detect all added sockets
+      const addedSockets = currentSockets.filter(
+        socket => !prevSockets.some(prev => prev.id === socket.id)
+      );
 
-      // Handle socket removal first
+      // Handle additions first since this is most common for initialization
+      addedSockets.forEach(socket => {
+        const change = {
+          type: "added",
+          socketId: socket.id,
+          content: socket,
+          source,
+        };
+        if (!isDuplicateChange(change, source)) {
+          onChange(change);
+          recordChange(change, source);
+          hasChanges = true;
+        }
+      });
+
+      // Then handle removals
       const removedSockets = prevSockets.filter(
-        (socket) => !currentSockets.some((curr) => curr.id === socket.id)
+        socket => !currentSockets.some(curr => curr.id === socket.id)
       );
 
       if (removedSockets.length > 0) {
-        // First reindex the remaining sockets
-        const deletedSocketIds = removedSockets.map((socket) => socket.id);
+        const deletedSocketIds = removedSockets.map(socket => socket.id);
         const { reindexedSockets } = updateSocketArray({
           oldSockets: prevSockets,
           newSockets: currentSockets,
@@ -294,21 +299,13 @@ export const setupSocketWatcher = (params) => {
           deletedSocketIds,
         });
 
-        // Update the socket array with reindexed sockets
         if (type === "inputs") {
           localCardData.value.data.sockets.inputs = reindexedSockets;
         } else {
           localCardData.value.data.sockets.outputs = reindexedSockets;
         }
 
-        
-
-        // Then handle the removal notifications with the original positions
-        removedSockets.forEach((socket) => {
-          const originalIndex = prevSockets.findIndex(
-            (s) => s.id === socket.id
-          );
-          console.log("originalIndex", originalIndex)
+        removedSockets.forEach(socket => {
           const change = {
             type: "removed",
             socketId: socket.id,
@@ -324,60 +321,35 @@ export const setupSocketWatcher = (params) => {
         });
       }
 
-      // Handle additions and modifications only if we haven't processed removals
-      if (!hasChanges) {
-        // Handle additions
-        const addedSockets = currentSockets.filter(
-          (socket) => !prevSockets.some((prev) => prev.id === socket.id)
-        );
-
-        addedSockets.forEach((socket) => {
+      // Finally handle modifications
+      currentSockets.forEach(socket => {
+        const prevSocket = prevSockets.find(s => s.id === socket.id);
+        if (prevSocket && (!defaultCompare(prevSocket.value, socket.value) ||
+            prevSocket.name !== socket.name)) {
           const change = {
-            type: "added",
+            type: "modified",
             socketId: socket.id,
-            content: socket,
+            content: {
+              old: prevSocket,
+              new: socket,
+            },
             source,
           };
-          onChange(change);
-          hasChanges = true;
-        });
 
-        // Handle modifications
-        currentSockets.forEach((socket, index) => {
-          const prevSocket = prevSockets.find((s) => s.id === socket.id);
-          if (
-            prevSocket &&
-            (!defaultCompare(prevSocket.value, socket.value) ||
-              prevSocket.name !== socket.name)
-          ) {
-            const change = {
-              type: "modified",
-              socketId: socket.id,
-              content: {
-                old: prevSocket,
-                new: socket,
-              },
-              source,
-            };
-
-            if (!isDuplicateChange(change, source)) {
-              onChange(change);
-              recordChange(change, source);
-              hasChanges = true;
-            }
+          if (!isDuplicateChange(change, source)) {
+            onChange(change);
+            recordChange(change, source);
+            hasChanges = true;
           }
-        });
-      }
+        }
+      });
 
-      // Update previous state after all changes are processed
       if (hasChanges) {
         previousSockets.value = {
           ...previousSockets.value,
           [type]: JSON.parse(JSON.stringify(currentSockets)),
           lastSource: source,
         };
-
-        // Emit card update only once per change cycle
         emit("update-card", Vue.toRaw(localCardData.value));
       }
     } catch (error) {
@@ -385,16 +357,14 @@ export const setupSocketWatcher = (params) => {
     }
   };
 
-  // Set up watchers
+  // Set up watchers with immediate: true to catch initial values
   const watchLocalSockets = (socketType, onChange) => {
     return Vue.watch(
       () => localCardData.value.data.sockets[socketType],
       (newVal, oldVal) => {
-        if (!isProcessing.value) {
-          handleSocketChanges(newVal, oldVal, socketType, onChange, "local");
-        }
+        handleSocketChanges(newVal, oldVal, socketType, onChange, "local");
       },
-      { deep: true }
+      { deep: true, immediate: true }
     );
   };
 
@@ -402,13 +372,31 @@ export const setupSocketWatcher = (params) => {
     return Vue.watch(
       () => props.cardData.data?.sockets?.[socketType],
       (newVal, oldVal) => {
-        if (!isProcessing.value) {
-          handleSocketChanges(newVal, oldVal, socketType, onChange, "props");
-        }
+        handleSocketChanges(newVal, oldVal, socketType, onChange, "props");
       },
-      { deep: true }
+      { deep: true, immediate: true }
     );
   };
+
+  // Call immediate initialization
+  Vue.onMounted(() => {
+    isMounted.value = true;
+    // Force initialization events for existing sockets
+    handleSocketChanges(
+      localCardData.value.data.sockets.inputs,
+      [],
+      "inputs",
+      onInputChange,
+      "initialization"
+    );
+    handleSocketChanges(
+      localCardData.value.data.sockets.outputs,
+      [],
+      "outputs", 
+      onOutputChange,
+      "initialization"
+    );
+  });
 
   // Set up all watchers
   const stopWatchers = [
@@ -418,8 +406,8 @@ export const setupSocketWatcher = (params) => {
     watchPropSockets("outputs", onOutputChange),
   ];
 
-  // Cleanup
   Vue.onBeforeUnmount(() => {
-    stopWatchers.forEach((stop) => stop());
+    isDestroyed.value = true;
+    stopWatchers.forEach(stop => stop());
   });
 };
