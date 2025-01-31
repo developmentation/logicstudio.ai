@@ -1,4 +1,3 @@
-// cardUtils.js
 
 import {
   updateSocketArray,
@@ -15,24 +14,30 @@ export const SOCKET_TYPES = {
   OUTPUT: "output",
 };
 
-const initializeSockets = (existingSockets = [], defaultSockets = [], type = SOCKET_TYPES.INPUT) => {
+const initializeSockets = (
+  existingSockets = [],
+  defaultSockets = [],
+  type = SOCKET_TYPES.INPUT
+) => {
   // If we have existing sockets, preserve them completely
   if (existingSockets.length > 0) {
     return existingSockets.map((socket, idx) => ({
       ...socket,
-      type: type,  // Ensure type is set
-      index: idx   // Update index
+      type: type, // Ensure type is set
+      index: idx, // Update index
     }));
   }
 
   // If no existing sockets but we have defaults, create new sockets from defaults
   if (defaultSockets.length > 0) {
-    return defaultSockets.map((socketData, idx) => 
+    return defaultSockets.map((socketData, idx) =>
       createSocket({
         type,
-        name: socketData.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${idx + 1}`,
+        name:
+          socketData.name ||
+          `${type.charAt(0).toUpperCase() + type.slice(1)} ${idx + 1}`,
         value: socketData.value || null,
-        index: idx
+        index: idx,
       })
     );
   }
@@ -49,7 +54,7 @@ export const initializeCardData = (data, defaultConfig = {}) => {
     defaultHeight = 150,
     defaultDisplay = "default",
     defaultData = {},
-    defaultSockets = { inputs: [], outputs: [] }
+    defaultSockets = { inputs: [], outputs: [] },
   } = defaultConfig;
 
   // Get existing sockets from data if they exist
@@ -129,7 +134,6 @@ export const useCardSetup = (props, emit) => {
   };
 };
 
-
 /**
  * Setup watchers for card data updates
  */
@@ -143,7 +147,7 @@ export const setupCardDataWatchers = (params) => {
       if (newX !== undefined) localCardData.value.ui.x = newX;
       if (newY !== undefined) localCardData.value.ui.y = newY;
       // Emit update after position change
-      emit('update-card', Vue.toRaw(localCardData.value));      
+      emit("update-card", Vue.toRaw(localCardData.value));
     }
   };
 
@@ -152,7 +156,7 @@ export const setupCardDataWatchers = (params) => {
     if (newDisplay !== undefined && !isProcessing.value) {
       localCardData.value.ui.display = newDisplay;
       // Emit update after display change
-      emit('update-card', Vue.toRaw(localCardData.value));      
+      emit("update-card", Vue.toRaw(localCardData.value));
     }
   };
 
@@ -160,11 +164,10 @@ export const setupCardDataWatchers = (params) => {
   const updateWidth = (newWidth) => {
     if (newWidth !== undefined && !isProcessing.value) {
       localCardData.value.ui.width = newWidth;
-     // Emit update after width change
-     emit('update-card', Vue.toRaw(localCardData.value));      
+      // Emit update after width change
+      emit("update-card", Vue.toRaw(localCardData.value));
     }
   };
-
 
   return {
     position: (newVal, oldVal) => {
@@ -190,6 +193,9 @@ function defaultCompare(a, b) {
   }
 }
 
+// cardUtils.js - Updated setupSocketWatcher
+// cardUtils.js - Fixed setupSocketWatcher
+// cardUtils.js - Fixed setupSocketWatcher
 export const setupSocketWatcher = (params) => {
   const {
     props,
@@ -198,119 +204,158 @@ export const setupSocketWatcher = (params) => {
     emit,
     onInputChange,
     onOutputChange,
-    compareFunction = defaultCompare,
   } = params;
+ 
+  const isDestroyed = Vue.ref(false);
+  const isMounted = Vue.ref(false);
+  const lastEmittedChange = Vue.ref({
+    socketId: null,
+    momentUpdated: null
+  });
+ 
+  Vue.onBeforeUnmount(() => {
+    isDestroyed.value = true;
+  });
+ 
+  Vue.onMounted(() => {
+    isMounted.value = true;
+  });
 
-  const processingState = Vue.ref(null);
+  // Track previous state
+  const previousSockets = Vue.ref({
+    inputs: [...(props.cardData.data?.sockets?.inputs || [])],
+    outputs: [...(props.cardData.data?.sockets?.outputs || [])]
+  });
 
-  // Track socket states by ID instead of index
-  const socketStateSignature = (sockets = []) => {
-    return sockets.map((socket) => ({
-      id: socket.id,
-      value: socket.value ?? null,
-      name: socket.name ?? "",
-      index: socket.index,
-    }));
+  const isDuplicateChange = (change) => {
+    const currentMoment = change.content?.momentUpdated || change.content?.new?.momentUpdated;
+    return (
+      change.socketId === lastEmittedChange.value.socketId && 
+      currentMoment === lastEmittedChange.value.momentUpdated
+    );
   };
 
-  // Compute states with IDs
-  const inputStateSignature = Vue.computed(() =>
-    socketStateSignature(props.cardData.data?.sockets?.inputs)
-  );
+  const recordChange = (change) => {
+    lastEmittedChange.value = {
+      socketId: change.socketId,
+      momentUpdated: change.content?.momentUpdated || change.content?.new?.momentUpdated
+    };
+  };
+ 
+  const handleSocketChanges = (newSockets, oldSockets, type, onChange, source = 'unknown') => {
+    if (isDestroyed.value || !isMounted.value) return;
+    if (!newSockets || !oldSockets) return;
 
-  const outputStateSignature = Vue.computed(() =>
-    socketStateSignature(props.cardData.data?.sockets?.outputs)
-  );
+    const currentSockets = type === 'inputs' 
+      ? localCardData.value.data.sockets.inputs 
+      : localCardData.value.data.sockets.outputs;
+    
+    const prevSockets = previousSockets.value[type];
 
-  const handleSocketUpdates = (newState, oldState, type) => {
-    if (isProcessing.value) return;
-    if (!oldState || !newState) return;
-    if (processingState.value === newState) return;
+    try {
+      // Handle socket removal first
+      const removedSockets = prevSockets.filter(socket => 
+        !currentSockets.some(curr => curr.id === socket.id)
+      );
+      
+      removedSockets.forEach(socket => {
+        const change = {
+          type: 'removed',
+          socketId: socket.id,
+          content: socket,
+          position: prevSockets.findIndex(s => s.id === socket.id),
+          source
+        };
 
-    // Track socket changes
-    const oldIds = new Set(oldState.map((s) => s.id));
-    const newIds = new Set(newState.map((s) => s.id));
+        if (!isDuplicateChange(change)) {
+          onChange(change);
+          recordChange(change);
+        }
+      });
 
-    const addedSockets = newState.filter((s) => !oldIds.has(s.id));
-    const removedSockets = oldState.filter((s) => !newIds.has(s.id));
+      // Then handle additions
+      const addedSockets = currentSockets.filter(socket => 
+        !prevSockets.some(prev => prev.id === socket.id)
+      );
+      
+      addedSockets.forEach(socket => {
+        const change = {
+          type: 'added',
+          socketId: socket.id,
+          content: socket,
+          position: currentSockets.findIndex(s => s.id === socket.id),
+          source
+        };
+        onChange(change);
+      });
 
-    const modifiedSockets = newState.filter((newSocket) => {
-      const oldSocket = oldState.find((s) => s.id === newSocket.id);
-      return oldSocket && !compareFunction(newSocket.value, oldSocket.value);
-    });
+      // Finally handle modifications
+      currentSockets.forEach((socket, index) => {
+        const prevSocket = prevSockets.find(s => s.id === socket.id);
+        if (prevSocket && (
+          !defaultCompare(prevSocket.value, socket.value) ||
+          prevSocket.name !== socket.name
+        )) {
+          const change = {
+            type: 'modified',
+            socketId: socket.id,
+            content: {
+              old: prevSocket,
+              new: socket
+            },
+            position: index,
+            source
+          };
 
-    if (
-      addedSockets.length > 0 ||
-      removedSockets.length > 0 ||
-      modifiedSockets.length > 0
-    ) {
-      isProcessing.value = true;
-      processingState.value = newState;
-
-      try {
-        // Just do the socket update event
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets: oldState,
-            newSockets: newState,
-            reindexMap: new Map(newState.map((s, i) => [s.id, i])),
-            deletedSocketIds: removedSockets.map((s) => s.id),
-            type,
-          })
-        );
-      } finally {
-        isProcessing.value = false;
-        processingState.value = null;
-
-        Vue.nextTick(() => {
-          // Now after isProcessing is false, call the callbacks
-          const callback = type === "input" ? onInputChange : onOutputChange;
-          if (callback) {
-            addedSockets.forEach((socket) => {
-              callback({
-                type: "added",
-                socketId: socket.id,
-                value: socket.value,
-                position: socket.index,
-              });
-            });
-
-            removedSockets.forEach((socket) => {
-              callback({
-                type: "removed",
-                socketId: socket.id,
-                position: socket.index,
-              });
-            });
-
-            modifiedSockets.forEach((socket) => {
-              const oldSocket = oldState.find((s) => s.id === socket.id);
-              callback({
-                type: "modified",
-                socketId: socket.id,
-                oldValue: oldSocket?.value,
-                newValue: socket.value,
-                position: socket.index,
-              });
-            });
+          if (!isDuplicateChange(change)) {
+            onChange(change);
+            recordChange(change);
           }
-        });
-      }
+        }
+      });
+
+      // Update previous state after all changes are processed
+      previousSockets.value[type] = JSON.parse(JSON.stringify(currentSockets));
+    } catch (error) {
+      console.error('Error in socket change handler:', error);
     }
   };
 
   // Set up watchers
-  Vue.watch(
-    inputStateSignature,
-    (newState, oldState) => handleSocketUpdates(newState, oldState, "input"),
-    { deep: true }
-  );
+  const watchLocalSockets = (socketType, onChange) => {
+    return Vue.watch(
+      () => localCardData.value.data.sockets[socketType],
+      (newVal, oldVal) => {
+        if (!isProcessing.value) {
+          handleSocketChanges(newVal, oldVal, socketType, onChange, 'local');
+        }
+      },
+      { deep: true, immediate: true }
+    );
+  };
 
-  Vue.watch(
-    outputStateSignature,
-    (newState, oldState) => handleSocketUpdates(newState, oldState, "output"),
-    { deep: true }
-  );
+  const watchPropSockets = (socketType, onChange) => {
+    return Vue.watch(
+      () => props.cardData.data?.sockets?.[socketType],
+      (newVal, oldVal) => {
+        if (!isProcessing.value) {
+          handleSocketChanges(newVal, oldVal, socketType, onChange, 'props');
+        }
+      },
+      { deep: true, immediate: true }  // Add immediate: true and remove the newVal !== oldVal check
+    );
+  };
+
+  // Set up all watchers
+  const stopWatchers = [
+    watchLocalSockets('inputs', onInputChange),
+    watchLocalSockets('outputs', onOutputChange),
+    watchPropSockets('inputs', onInputChange),
+    watchPropSockets('outputs', onOutputChange)
+  ];
+
+  // Cleanup
+  Vue.onBeforeUnmount(() => {
+    stopWatchers.forEach(stop => stop());
+  });
 };

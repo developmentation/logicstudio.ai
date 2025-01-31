@@ -231,54 +231,46 @@ export default {
       localCardData,
       isProcessing,
       emit,
-
-      onInputChange: (change) => {
-        if (change.type === "added") {
-          console.log("Input Socket Added", change);
-          handleCardUpdate();
-        }
-
-        if (change.type === "modified") {
-          // When input value changes, update corresponding output
-          const outputSocket =
-            localCardData.value.data.sockets.inputs[change.position];
-          if (outputSocket) {
-            console.log("Input Socket Modified", change);
-            outputSocket.value = change.newValue;
-            handleCardUpdate();
-          }
-        }
-
-        if (change.type === "removed") {
-          //Socket removed
-          console.log("Input Socket Removed", change);
-          handleCardUpdate();
+      onInputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value) {
+              console.log("Input Socket Value Changed", content)
+              // Handle input value change
+            }
+            if (content.old.name !== content.new.name) {
+              console.log("Input Socket Name Changed", content)
+              // Handle input name change
+            }
+            break;
+          case "added":
+            // Handle input socket addition
+            console.log("Input Socket Added", content)
+            break;
+          case "removed":
+            // Handle input socket removal
+            console.log("Input Socket Removed", content)
+            break;
         }
       },
-
-      onOutputChange: (change) => {
-        if (change.type === "added") {
-          console.log("Output Socket Added", change);
-          handleCardUpdate();
+      onOutputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value) {
+              // Handle output value change
+            }
+            if (content.old.name !== content.new.name) {
+              // Handle output name change
+            }
+            break;
+          case "added":
+            // Handle output socket addition
+            break;
+          case "removed":
+            // Handle output socket removal
+            break;
         }
-
-        if (change.type === "modified") {
-          // When input value changes, update corresponding output
-          const outputSocket =
-            localCardData.value.data.sockets.outputs[change.position];
-          if (outputSocket) {
-            console.log("Output Socket Modified", change);
-            outputSocket.value = change.newValue;
-            handleCardUpdate();
-          }
-        }
-
-        if (change.type === "removed") {
-          //Socket removed
-          console.log("Output Socket  Removed", change);
-          handleCardUpdate();
-        }
-      },
+      }
     });
 
     // Set up watchers

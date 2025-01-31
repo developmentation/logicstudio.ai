@@ -529,9 +529,6 @@ export default {
         });
       });
     };
-
-    
- 
     
 const updateCard = (updates) => {
 
