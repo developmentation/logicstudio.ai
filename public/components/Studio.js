@@ -474,7 +474,7 @@ export default {
     const handleDragCard = ({ event }) => {
       // Ensure we have a valid event
       if (!event || (!event.clientX && !event.touches)) {
-        console.warn('Invalid event in handleDragCard');
+        // console.warn('Invalid event in handleDragCard');
         return;
       }
     
