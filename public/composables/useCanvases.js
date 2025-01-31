@@ -149,6 +149,17 @@ export const useCanvases = () => {
     const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } =
       connectionData;
 
+
+          // First check if the socket elements still exist in the DOM
+    const sourceElement = document.querySelector(`[data-socket-id="${sourceSocketId}"]`);
+    const targetElement = document.querySelector(`[data-socket-id="${targetSocketId}"]`);
+
+    // If either socket is missing from the DOM, return null immediately
+    if (!sourceElement || !targetElement) {
+        return null;
+    }
+
+    
     const sourcePoint = calculateConnectionPoint(
       sourceCardId,
       sourceSocketId,

@@ -563,32 +563,74 @@ const handleConnectionDragEnd = (event) => {
   };
 
   // Card cleanup
-  const cleanupCardConnections = (cardId) => {
-    const cardConnections = connections.value.filter(
-      (conn) => conn.sourceCardId === cardId || conn.targetCardId === cardId
-    );
+// In socketConnections.js
+const cleanupCardConnections = (cardId) => {
+  // First, find all connections that reference this card
+  const connectionsToRemove = connections.value.filter(conn =>
+    conn.sourceCardId === cardId || conn.targetCardId === cardId
+  );
 
-    cardConnections.forEach((conn) => removeConnection(conn.id));
-    return cardConnections.length > 0;
-  };
+  // Remove each connection
+  connectionsToRemove.forEach(conn => {
+    const index = connections.value.findIndex(c => c.id === conn.id);
+    if (index !== -1) {
+      connections.value.splice(index, 1);
+      onConnectionRemoved?.(conn);
+    }
+  });
+};
 
+// Add this new function
+const cleanupSocketConnections = (socketId) => {
+  if (!socketId) return;
+  
+  // Find all connections that use this socket
+  const connectionsToRemove = connections.value.filter(conn =>
+    conn.sourceSocketId === socketId || conn.targetSocketId === socketId
+  );
+
+  // Remove each connection
+  connectionsToRemove.forEach(conn => {
+    const index = connections.value.findIndex(c => c.id === conn.id);
+    if (index !== -1) {
+      connections.value.splice(index, 1);
+      onConnectionRemoved?.(conn);
+    }
+  });
+};
+
+
+  
   const updateCanvasConnections = (newConnections) => {
     if (activeCanvas.value) {
       activeCanvas.value.connections = newConnections;
       activeCanvas.value.momentUpdated = Date.now();
     }
   };
-
-const updateConnections = async (cardId) => {
-    // First wait for Vue to update
+  const updateConnections = async (cardId) => {
     await Vue.nextTick();
     
-    // Then wait for browser to paint
     await new Promise(resolve => requestAnimationFrame(() => {
-        // And one more frame to be really sure DOM is ready
         requestAnimationFrame(() => {
-            // Now get fresh connection points from the actual DOM positions
-            const updatedConnections = connections.value.map(conn => {
+            // Filter out connections where sockets no longer exist
+            const validConnections = connections.value.filter(conn => {
+                if (conn.sourceCardId === cardId || conn.targetCardId === cardId) {
+                    // Try to calculate points - this will return null if sockets don't exist
+                    const points = calculateConnectionPoints({
+                        sourceCardId: conn.sourceCardId,
+                        sourceSocketId: conn.sourceSocketId,
+                        targetCardId: conn.targetCardId,
+                        targetSocketId: conn.targetSocketId
+                    });
+
+                    // If points is null, the sockets don't exist anymore, so filter out this connection
+                    return points !== null;
+                }
+                return true; // Keep connections not related to this card
+            });
+
+            // Now update the points for remaining valid connections
+            const updatedConnections = validConnections.map(conn => {
                 if (conn.sourceCardId === cardId || conn.targetCardId === cardId) {
                     const points = calculateConnectionPoints({
                         sourceCardId: conn.sourceCardId,
@@ -597,24 +639,22 @@ const updateConnections = async (cardId) => {
                         targetSocketId: conn.targetSocketId
                     });
 
-                    if (points) {
-                        return {
-                            ...conn,
-                            sourcePoint: points.sourcePoint,
-                            targetPoint: points.targetPoint
-                        };
-                    }
+                    // We know points exists because we filtered above
+                    return {
+                        ...conn,
+                        sourcePoint: points.sourcePoint,
+                        targetPoint: points.targetPoint
+                    };
                 }
                 return conn;
             });
 
-            // Update the connections with new positions
+            // Update connections with only the valid ones
             connections.value = [...updatedConnections];
             resolve();
         });
     }));
 };
-
    // Update card sockets with new structure
   const updateCardSockets = (cardId, { inputs, outputs }) => {
     const card = cards.value.find((c) => c.uuid === cardId);
@@ -658,6 +698,7 @@ const updateConnections = async (cardId) => {
     propagateValue,
     activateConnection,
     cleanupCardConnections,
+    cleanupSocketConnections,
     findNearestSocket,
     getSocketValue,
     handleConnectionDragStart,
