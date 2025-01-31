@@ -32,7 +32,7 @@ export const createSocketRemapping = ({
   // Create reindexed sockets using their new array positions
   const reindexedSockets = newSockets.map((socket, index) => ({
     ...socket,
-    sourceIndex: index, // Use new array position as sourceIndex
+    index, // Use new array position as sourceIndex
     name:
       socket.name ||
       `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
