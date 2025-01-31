@@ -92,6 +92,7 @@ export default {
             <button 
               @click="addInput"
               @mousedown.stop
+              @touchstart.stop
               class="flex-1 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
             >
               Add Input
@@ -99,6 +100,7 @@ export default {
             <button 
               @click="addOutput"
               @mousedown.stop
+              @touchstart.stop
               class="flex-1 px-3 py-2 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded"
             >
               Add Output
@@ -195,8 +197,6 @@ export default {
   setup(props, { emit }) {
     // Initialize card setup utilities
     const {
-      socketRegistry,
-      connections,
       isProcessing,
       getSocketConnections,
       handleSocketMount,
@@ -210,8 +210,8 @@ export default {
     // Initialize local card data with default sockets
     const localCardData = Vue.ref(
       initializeCardData(props.cardData, {
-        defaultName: "Template Card",
-        defaultDescription: "Template Node",
+        name: "Template Card",           // Changed from defaultName
+        description: "Template Node",    // Changed from defaultDescription
         defaultSockets: {
           inputs: [{ name: "Initial Input 1" }, { name: "Initial Input 2" }],
           outputs: [{ name: "Initial Output 1" }, { name: "Initial Output 2" }],
@@ -356,7 +356,7 @@ export default {
     };
 
     const saveSocketName = (socket, type) => {
-      if (!editingSocket.value) return;
+      if (!editingSocket.value || !editingSocket.value.name?.trim()) return;
 
       const socketArray =
         type === "input"

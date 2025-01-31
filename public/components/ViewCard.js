@@ -130,8 +130,8 @@ export default {
 
     // Initialize local card data with a single input socket
     const localCardData = Vue.ref(initializeCardData(props.cardData, {
-      defaultName: "View",
-      defaultDescription: "View Node",
+      name: "View",
+      description: "View Node",
  
     }));
 

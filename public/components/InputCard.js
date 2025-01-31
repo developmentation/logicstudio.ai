@@ -169,8 +169,8 @@ export default {
     // Initialize local card data
     const localCardData = Vue.ref(
       initializeCardData(props.cardData, {
-        defaultName: "Input Card",
-        defaultDescription: "File Input Node",
+        name: "Input Card",
+        description: "File Input Node",
       })
     );
 
