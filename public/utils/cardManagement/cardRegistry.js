@@ -89,15 +89,7 @@ export const createCardRegistry = (props) => {
         },
         sockets: {
           inputs: [],
-          outputs: [
-            {
-              id: uuidv4(),
-              name: "Output",
-              type: SOCKET_TYPES.OUTPUT,
-              value: null,
-              momentUpdated: Date.now(),
-            }
-          ]
+          outputs: []
         }
       }
     },
@@ -441,7 +433,7 @@ export const createCardRegistry = (props) => {
 
       position = {
         x: (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value - defaultConfig.ui.width / 2,
-        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 50,
+        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 100,
       };
     }
 
