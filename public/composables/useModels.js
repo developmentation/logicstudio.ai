@@ -1,7 +1,7 @@
 // composables/useModels.js
 
 const modelRegistry = Vue.ref(new Map());  // Canvas model cards registry
-const serverModels = Vue.ref([]);  // Models from API
+const serverModels = Vue.ref([]); // Initialize as empty array
 const lastModelConfig = Vue.ref(null);
 
 export const useModels = () => {
@@ -31,12 +31,17 @@ export const useModels = () => {
   // Server Model Functions
   const fetchServerModels = async () => {
     try {
-      const response = await axios.get("/api/models");  // New dedicated models endpoint
-      serverModels.value = response.data.payload;
-      console.log("Loaded the following models", serverModels.value)
+      const response = await axios.get("/api/models");
+      if (response.data?.payload && Array.isArray(response.data.payload)) {
+        serverModels.value = response.data.payload;
+      } else {
+        console.warn("Invalid server models response format", response.data);
+        serverModels.value = [];
+      }
+      console.log("Loaded the following models", serverModels.value);
     } catch (error) {
       console.error("Error fetching models:", error);
-      // Keep existing models on error
+      serverModels.value = []; // Ensure it's always an array
     }
   };
 
@@ -81,20 +86,27 @@ export const useModels = () => {
     // Create a Map to track unique models by model ID
     const uniqueModels = new Map();
     
+    // Ensure serverModels.value is an array before attempting to iterate
+    const currentServerModels = Array.isArray(serverModels.value) ? serverModels.value : [];
+    
     // Add server models first (these will be overridden by canvas models if they exist)
-    serverModels.value.forEach(model => {
-      uniqueModels.set(model.model, model);
+    currentServerModels.forEach(model => {
+      if (model && model.model) { // Add validation
+        uniqueModels.set(model.model, model);
+      }
     });
     
     // Add canvas models (these will override server models with the same ID)
     canvasModels.forEach(model => {
-      uniqueModels.set(model.model, model);
+      if (model && model.model) { // Add validation
+        uniqueModels.set(model.model, model);
+      }
     });
     
     return Array.from(uniqueModels.values());
   });
 
-
+ 
 
   return {
     // Core functions

@@ -182,12 +182,13 @@ export const generateSocketId = () =>
 export const createSocket = ({
   type,
   index,
+  name,
   existingId = null,
   value = null,
 }) => ({
   id: existingId || generateSocketId(),
   type,
-  name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
+  name: name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
   index,
   value,
   momentUpdated: Date.now(),

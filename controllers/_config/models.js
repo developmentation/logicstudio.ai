@@ -5,8 +5,7 @@ const logger = require("../../middleware/logger");
 exports.getModels = async function (req, res, next) {
   try {
     //Get the node version for troubleshooting
-    const payload = {
-
+    const payload = [
       //Come here and set your own models as you prefer.
       //Make sure that you add the associated API keys for:
       /*
@@ -18,7 +17,7 @@ exports.getModels = async function (req, res, next) {
             X
       */
 
-      models: [
+  
 
         {
           name: { en: "Gemini 2 Flash", fr: "Gemini 2 Flash" },
@@ -35,6 +34,12 @@ exports.getModels = async function (req, res, next) {
           model: "o1-preview",
           provider: "openAi",
         },
+        {
+          name: { en: "o3-mini", fr: "o3-mini" },
+          model: "o3-mini-2025-01-31",
+          provider: "openAi",
+        },
+
         {
           name: { en: "GPT 4o", fr: "GPT 4o" },
           model: "gpt-4o",
@@ -63,8 +68,7 @@ exports.getModels = async function (req, res, next) {
           model: "o1-mini-2024-09-12",
           provider: "openAi",
         },
-      ],
-    };
+      ];
 
     // Send the counts as JSON response
     res.status(200).json({

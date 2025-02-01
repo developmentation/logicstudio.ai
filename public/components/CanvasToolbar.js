@@ -91,15 +91,15 @@ export default {
       const showText = Vue.ref(false);
   
       const addTools = [
-        { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model' },
-        { id: 'trigger', label: 'Trigger', icon: 'pi pi-play-circle', type: 'trigger' },
+        { id: 'model', label: 'Model ✔', icon: 'pi pi-box', type: 'model' },
+        { id: 'trigger', label: 'Trigger ✔', icon: 'pi pi-play-circle', type: 'trigger' },
         { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
         { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },
-        { id: 'chat', label: 'Chat', icon: 'pi pi-comments', type: 'chat'  },
-        { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },
+        { id: 'chat', label: 'Chat ✔', icon: 'pi pi-comments', type: 'chat'  },
+        { id: 'fileInput', label: 'File Input ✔', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
         { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
-        { id: 'view', label: 'View', icon: 'pi pi-desktop', type: 'view'},
+        { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
         { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
         { id: 'github', label: 'GitHub', icon: 'pi pi-github', type: 'github' },
@@ -113,7 +113,7 @@ export default {
         // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
         // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
         // { id: 'tool', label: 'Tool', icon: 'pi pi-cog', type: 'tool' },
-        { id: 'template', label: 'Template', icon: 'pi pi-circle', type: 'template' },
+        { id: 'template', label: 'Template ✔', icon: 'pi pi-circle', type: 'template' },
 
       ];
   
