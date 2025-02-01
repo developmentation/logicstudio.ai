@@ -1,4 +1,5 @@
 import { useConfigs } from "./composables/useConfigs.js";
+import { useModels } from "./composables/useModels.js";
 import { useRealTime } from "./composables/useRealTime.js";
 import router from "../router/index.js";
 
@@ -90,6 +91,7 @@ export default {
     </div>
     `,
     setup() {
+        const { fetchServerModels } = useModels();
         const { getConfigs } = useConfigs();
         const { socketIoConnection } = useRealTime();
 
@@ -111,6 +113,7 @@ export default {
 
         Vue.onMounted(async ()=>{
            await getConfigs();
+           await fetchServerModels();
            await socketIoConnection();
         });
 

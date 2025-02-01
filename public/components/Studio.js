@@ -166,16 +166,34 @@ export default {
                     <div class="relative" style="pointer-events: none;">
 
 
-                        <component v-for="card in activeCards" :key="card.uuid" :is="getCardComponent(card.type)"
-                            :cardData="card" :zoomLevel="zoomLevel" :zIndex="card.ui.zIndex"
-                            :is-selected="selectedCardIds.has(card.uuid)" @update-position="updateCardPosition"
-                            @drag-start="handleDragStartCard" @drag="handleDragCard" @drag-end="handleDragEndCard"
-                            @update-card="updateCard" @update-socket-value="updateSocketValue"
-                            @connection-drag-start="handleConnectionDragStart" @connection-drag="handleConnectionDrag"
-                            @connection-drag-end="handleConnectionDragEnd" @close-card="removeCard"
-                            @clone-card="cloneCard" @manual-trigger="handleManualTrigger"
-                            @sockets-updated="handleSocketsUpdated" @select-card="handleCardSelection"
-                            style="pointer-events: auto;" />
+                        <component v-for="card in activeCards" 
+                        :key="card.uuid" 
+                        :is="getCardComponent(card.type)"
+                        :cardData="card" 
+                        :zoomLevel="zoomLevel" 
+                        :zIndex="card.ui.zIndex"
+                        :is-selected="selectedCardIds.has(card.uuid)" 
+
+                        :active-cards="activeCards" 
+                        :active-connections="activeConnections" 
+                        
+                        @update-position="updateCardPosition"
+                        @drag-start="handleDragStartCard" 
+                        @drag="handleDragCard" 
+                        @drag-end="handleDragEndCard"
+                        
+                        @update-card="updateCard" 
+                        @update-socket-value="updateSocketValue"
+                        
+                        @connection-drag-start="handleConnectionDragStart" 
+                        @connection-drag="handleConnectionDrag"
+                        @connection-drag-end="handleConnectionDragEnd" 
+                        @close-card="removeCard"
+                        @clone-card="cloneCard" 
+                        @manual-trigger="handleManualTrigger"
+                        @sockets-updated="handleSocketsUpdated" 
+                        @select-card="handleCardSelection"
+                        style="pointer-events: auto;" />
 
 
                     </div>
@@ -370,35 +388,35 @@ export default {
     const handleToolbarAction = (action) => {
       const cardId = createCard(action, null);
     
-      if (cardId) {
-        // Find the newly created card
-        const newCard = activeCards.value.find(card => card.uuid === cardId);
-        if (newCard) {
-          // Preserve the position that was set in createCard
-          const structuredCard = {
-            uuid: newCard.uuid,
-            type: newCard.type,
-            ui: {
-              name: newCard.name || '',
-              description: newCard.description || '',
-              display: newCard.display || '',
-              x: newCard.ui.x,  // Preserve the x position
-              y: newCard.ui.y,  // Preserve the y position
-              width: newCard.width ,
-              height: newCard.height ,
-              zIndex: Z_INDEX_LAYERS.SELECTED
-            },
-            data: {
-              sockets: {
-                inputs: newCard.sockets?.inputs || [],
-                outputs: newCard.sockets?.outputs || []
-              }
-            }
-          };
+      // if (cardId) {
+      //   // Find the newly created card
+      //   const newCard = activeCards.value.find(card => card.uuid === cardId);
+      //   if (newCard) {
+      //     // Preserve the position that was set in createCard
+      //     const structuredCard = {
+      //       uuid: newCard.uuid,
+      //       type: newCard.type,
+      //       ui: {
+      //         name: newCard.name || '',
+      //         description: newCard.description || '',
+      //         display: newCard.display || '',
+      //         x: newCard.ui.x,  // Preserve the x position
+      //         y: newCard.ui.y,  // Preserve the y position
+      //         width: newCard.width ,
+      //         height: newCard.height ,
+      //         zIndex: Z_INDEX_LAYERS.SELECTED
+      //       },
+      //       data: {
+      //         sockets: {
+      //           inputs: newCard.sockets?.inputs || [],
+      //           outputs: newCard.sockets?.outputs || []
+      //         }
+      //       }
+      //     };
           
-          updateCard(structuredCard);
-        }
-      }
+      //     updateCard(structuredCard);
+      //   }
+      // }
     };
 
 

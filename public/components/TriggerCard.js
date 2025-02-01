@@ -1,7 +1,7 @@
 // TriggerCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
-import { useCanvases } from "../composables/useCanvases.js";
+import { useModels } from "../composables/useModels.js";
 import {
   initializeCardData,
   useCardSetup,
@@ -18,6 +18,8 @@ export default {
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
+    activeCards: { type: Array, required: true },
+    activeConnections: { type: Array, required: true }
   },
 
   template: `
@@ -32,7 +34,7 @@ export default {
         @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
-        @clone-card="uuid => $emit('clone-card', uuid)"
+        @clone-card="$emit('clone-card', $event)"
         @select-card="$emit('select-card', $event)"
       >
         <!-- Input Socket -->
@@ -153,12 +155,8 @@ export default {
   `,
 
   setup(props, { emit }) {
-    const { activeCards, activeConnections, removeConnection } = useCanvases();
-
     // Initialize card setup utilities
     const {
-      socketRegistry,
-      connections,
       isProcessing,
       getSocketConnections,
       handleSocketMount,
@@ -174,12 +172,12 @@ export default {
     // Initialize local card data with proper defaults
     const localCardData = Vue.ref(
       initializeCardData(props.cardData, {
-        defaultName: "Trigger",
-        defaultDescription: "Trigger Node",
+        name: "Trigger",
+        description: "Trigger Node",
         defaultWidth: 300,
         defaultData: {
           sequence: props.cardData.data?.sequence || [],
-          status: "idle",
+          status: "idle"
         },
         defaultSockets: {
           inputs: [{ name: "Trigger Input" }],
@@ -190,21 +188,21 @@ export default {
 
     // Computed properties
     const hasSequence = Vue.computed(
-      () => (localCardData.value.data?.sequence || []).length > 0
+      () => (localCardData.value.data.sequence || []).length > 0
+    );
+
+    const availableCards = Vue.computed(() =>
+      props.activeCards.filter(
+        (card) =>
+          card.uuid !== localCardData.value.uuid &&
+          (card.type === "agent" || card.type === "web")
+      )
     );
 
     // Remove output socket if sequence exists
     if (hasSequence.value) {
       localCardData.value.data.sockets.outputs = [];
     }
-
-    const availableCards = Vue.computed(() =>
-      activeCards.value.filter(
-        (card) =>
-          card.uuid !== localCardData.value.uuid &&
-          (card.type === "agent" || card.type === "web")
-      )
-    );
 
     // Setup socket watcher
     setupSocketWatcher({
@@ -213,13 +211,16 @@ export default {
       isProcessing,
       emit,
       onInputChange: (change) => {
-        if (change.type === "modified" && change.newValue !== null) {
+        if (change.type === "modified" && change.content.new.value !== null) {
           handleInputTrigger();
         }
       },
+      onOutputChange: () => {
+        // Empty handler for output changes
+      }
     });
 
-    // Watch for card data changes
+    // Setup watchers
     const watchers = setupCardDataWatchers({
       props,
       localCardData,
@@ -227,51 +228,33 @@ export default {
       emit,
     });
 
-    // Watch position changes
-    Vue.watch(
-      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
-      watchers.position
-    );
-
-    // Watch display changes
+    // Watch position and display changes
+    Vue.watch(() => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }), watchers.position);
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
-
-    //Watch for width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
-    // Watch for status changes
+    // Watch for status changes in sequence cards
     Vue.watch(
-      () =>
-        activeCards.value.map((card) => ({
-          id: card.uuid,
-          status: card.status,
-        })),
+      () => props.activeCards.map((card) => ({
+        id: card.uuid,
+        status: card.status,
+      })),
       () => {
-        if (
-          isRunning.value &&
-          hasSequence.value &&
-          currentSequenceIndex.value >= 0 &&
-          !isTransitioning.value
-        ) {
+        if (isRunning.value && hasSequence.value && 
+            currentSequenceIndex.value >= 0 && !isTransitioning.value) {
           handleCardStatusChange();
         }
       },
       { deep: true }
     );
 
-    // Emit initial state
+    // Lifecycle hooks
     Vue.onMounted(() => {
-      console.log("TriggerCard mounted, emitting initial state");
-      Vue.nextTick(() => {
-        handleCardUpdate();
-      });
+      Vue.nextTick(() => handleCardUpdate());
     });
 
-    // Cleanup
     Vue.onUnmounted(() => {
-      if (retryTimeout.value) {
-        clearTimeout(retryTimeout.value);
-      }
+      if (retryTimeout.value) clearTimeout(retryTimeout.value);
       cleanup();
     });
 
@@ -286,7 +269,7 @@ export default {
     };
 
     const triggerCard = (cardId) => {
-      const card = activeCards.value.find((c) => c.uuid === cardId);
+      const card = props.activeCards.find((c) => c.uuid === cardId);
       if (card) {
         emit("update-card", {
           ...Vue.toRaw(card),
@@ -298,18 +281,15 @@ export default {
     const handleDirectTrigger = () => {
       updateOutputSocketValue();
 
-      const connections = activeConnections.value.filter(
+      const connections = props.activeConnections.filter(
         (conn) => conn.sourceCardId === localCardData.value.uuid
       );
 
       connections.forEach((conn) => {
-        const targetCard = activeCards.value.find(
+        const targetCard = props.activeCards.find(
           (card) => card.uuid === conn.targetCardId
         );
-        if (
-          targetCard &&
-          (targetCard.type === "agent" || targetCard.type === "web")
-        ) {
+        if (targetCard && (targetCard.type === "agent" || targetCard.type === "web")) {
           triggerCard(targetCard.uuid);
         }
       });
@@ -325,20 +305,21 @@ export default {
     };
 
     const addSequenceItem = () => {
-      if (
-        localCardData.value.data.sequence.length === 0 &&
-        localCardData.value.data.sockets.outputs?.[0]
-      ) {
+      if (localCardData.value.data.sequence.length === 0 && 
+          localCardData.value.data.sockets.outputs?.[0]) {
+        // Remove existing connections from the output socket
         const outputSocketId = localCardData.value.data.sockets.outputs[0].id;
-        const existingConnections = activeConnections.value.filter(
-          (conn) =>
-            conn.sourceCardId === localCardData.value.uuid &&
-            conn.sourceSocketId === outputSocketId
+        const existingConnections = props.activeConnections.filter(
+          conn => conn.sourceCardId === localCardData.value.uuid &&
+                 conn.sourceSocketId === outputSocketId
         );
 
-        existingConnections.forEach((conn) => {
-          removeConnection(conn.id);
+        existingConnections.forEach(conn => {
+          emit("remove-connection", conn.id);
         });
+
+        // Remove the output socket
+        localCardData.value.data.sockets.outputs = [];
       }
 
       localCardData.value.data.sequence.push({
@@ -346,10 +327,6 @@ export default {
         cardId: "",
         errorCount: 0,
       });
-
-      if (localCardData.value.data.sequence.length === 1) {
-        localCardData.value.data.sockets.outputs = [];
-      }
 
       handleCardUpdate();
     };
@@ -370,19 +347,11 @@ export default {
     };
 
     const findNextValidSequenceItem = (currentIndex) => {
-      for (
-        let i = currentIndex + 1;
-        i < localCardData.value.data.sequence.length;
-        i++
-      ) {
+      for (let i = currentIndex + 1; i < localCardData.value.data.sequence.length; i++) {
         const item = localCardData.value.data.sequence[i];
         if (item.cardId && item.cardId.trim() !== "") {
-          const cardExists = activeCards.value.some(
-            (card) => card.uuid === item.cardId
-          );
-          if (cardExists) {
-            return i;
-          }
+          const cardExists = props.activeCards.some(card => card.uuid === item.cardId);
+          if (cardExists) return i;
         }
       }
       return -1;
@@ -407,7 +376,7 @@ export default {
 
       localCardData.value.data.sequence.forEach((item) => {
         item.errorCount = 0;
-        const card = activeCards.value.find((c) => c.uuid === item.cardId);
+        const card = props.activeCards.find((c) => c.uuid === item.cardId);
         if (card && card.status !== "idle") {
           emit("update-card", {
             ...Vue.toRaw(card),
@@ -417,10 +386,6 @@ export default {
         }
       });
 
-      if (localCardData.value.data.sockets.outputs?.[0]) {
-        localCardData.value.data.sockets.outputs[0].value = null;
-      }
-
       handleCardUpdate();
     };
 
@@ -428,23 +393,23 @@ export default {
       if (isTransitioning.value) return;
       isTransitioning.value = true;
 
-      // Reset all items' error counts
-      localCardData.value.data.sequence.forEach((item) => {
+      // Reset error counts and clear timeouts
+      localCardData.value.data.sequence.forEach(item => {
         item.errorCount = 0;
       });
 
-      // Clear any existing timeouts
       if (retryTimeout.value) {
         clearTimeout(retryTimeout.value);
         retryTimeout.value = null;
       }
 
-      // Find first valid item to start with
+      // Find and validate first sequence item
       let startIndex = -1;
+      
       for (let i = 0; i < localCardData.value.data.sequence.length; i++) {
         const item = localCardData.value.data.sequence[i];
         if (item.cardId && item.cardId.trim() !== "") {
-          const cardExists = activeCards.value.some(
+          const cardExists = props.activeCards.some(
             (card) => card.uuid === item.cardId
           );
           if (cardExists) {
@@ -465,12 +430,12 @@ export default {
         localCardData.value.data.sequence
           .filter((item) => {
             if (!item.cardId || item.cardId.trim() === "") return false;
-            return activeCards.value.some((card) => card.uuid === item.cardId);
+            return props.activeCards.some((card) => card.uuid === item.cardId);
           })
           .map((item) => item.cardId)
       );
 
-      activeCards.value
+      props.activeCards
         .filter((card) => validCardIds.has(card.uuid) && card.status !== "idle")
         .forEach((card) => {
           emit("update-card", {
@@ -483,9 +448,7 @@ export default {
       // Start sequence execution
       currentSequenceIndex.value = startIndex;
       const firstCardId = localCardData.value.data.sequence[startIndex].cardId;
-      const cardToTrigger = activeCards.value.find(
-        (c) => c.uuid === firstCardId
-      );
+      const cardToTrigger = props.activeCards.find((c) => c.uuid === firstCardId);
 
       if (cardToTrigger) {
         triggerCard(firstCardId);
@@ -522,8 +485,8 @@ export default {
           retryTimeout.value = null;
         }, 5000);
       } else {
-        const nextIndex = currentSequenceIndex.value + 1;
-        if (nextIndex < localCardData.value.data.sequence.length) {
+        const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
+        if (nextIndex !== -1) {
           currentSequenceIndex.value = nextIndex;
           triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
         } else {
@@ -533,9 +496,8 @@ export default {
     };
 
     const handleCardStatusChange = () => {
-      const currentItem =
-        localCardData.value.data.sequence[currentSequenceIndex.value];
-      const currentCard = activeCards.value.find(
+      const currentItem = localCardData.value.data.sequence[currentSequenceIndex.value];
+      const currentCard = props.activeCards.find(
         (card) => card.uuid === currentItem?.cardId
       );
 
@@ -568,6 +530,8 @@ export default {
         } else {
           completeSequence();
         }
+      } else if (currentCard.status === "error") {
+        retryCard(currentCard.uuid, currentSequenceIndex.value);
       }
     };
 
@@ -587,7 +551,7 @@ export default {
 
     const getCardStatus = (cardId) => {
       if (!cardId || cardId.trim() === "") return "idle";
-      const card = activeCards.value.find((c) => c.uuid === cardId);
+      const card = props.activeCards.find((c) => c.uuid === cardId);
       return card?.status || "idle";
     };
 

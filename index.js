@@ -33,6 +33,7 @@ app.use((req, res, next) => {
 // We are only assuming endpoints stating with /api/ 
 app.use("/api/healthcheck", require("./routes/healthcheck")); // Healthcheck route
 app.use("/api/configs", require("./routes/configs")); // Configuration values
+app.use("/api/models", require("./routes/models")); // Server side defined models
 app.use("/api/transcribe", require("./routes/transcribe")); // Perform transcripts
 app.use("/api/webContent", require("./routes/webContent")); // Load web content (web processing)
 app.use("/api/gitHubContent", require("./routes/gitHubContent")); // Load GitHub repo file structures content
