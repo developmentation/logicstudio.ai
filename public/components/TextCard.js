@@ -38,7 +38,7 @@ export default {
   },
 
   template: `
-    <div>
+    <div class = "card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"

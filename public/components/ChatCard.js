@@ -39,21 +39,21 @@ export default {
   },
 
   template: `
-    <div class = "card">
-<BaseCard
-  :card-data="localCardData"
-  :zoom-level="zoomLevel"
-  :z-index="zIndex"
-  :is-selected="isSelected"
-  @drag-start="$emit('drag-start', $event)"   
-  @drag="$emit('drag', $event)"
-  @drag-end="$emit('drag-end', $event)"
-  @update-position="$emit('update-position', $event)"
-  @update-card="handleCardUpdate"
-  @close-card="$emit('close-card', $event)"
-  @clone-card="uuid => $emit('clone-card', uuid)"
-  @select-card="$emit('select-card', $event)"
->
+        <div class = "card"> <!-- Required Class-->
+
+      <BaseCard
+        :card-data="localCardData"
+        :zoom-level="zoomLevel"
+        :z-index="zIndex"
+        :is-selected="isSelected"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
+        @update-card="handleCardUpdate"
+        @close-card="$emit('close-card', $event)"
+        @clone-card="uuid => $emit('clone-card', uuid)"
+        @select-card="$emit('select-card', $event)"
+      >
         <!-- Model Selection -->
         <div class="w-full" v-show="localCardData.ui.display === 'default'">
           <select
@@ -324,10 +324,17 @@ const syncInputSocketToMessageHistory = (socket) => {
     });
 
     // Set up all necessary watchers
-    Vue.watch(() => props.cardData.ui?.x, watchers.position);
-    Vue.watch(() => props.cardData.ui?.y, watchers.position);
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
 
     // Session status watcher
     const sessionStatus = Vue.computed(() => {
