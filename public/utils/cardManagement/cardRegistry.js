@@ -9,6 +9,7 @@ export const createCardRegistry = (props) => {
     canvasRef,
     selectedCardIds,
     Z_INDEX_LAYERS,
+    createSocket
   } = props;
 
   // Enhanced card type definitions
@@ -476,49 +477,182 @@ export const createCardRegistry = (props) => {
   };
 
 
-  const cloneCard = (uuid) => {
-    let clonedCards = [];
-  
-    console.log("CloneCard:", uuid)
-    console.log("SelectedCards:", selectedCardIds.value)
-    
-    if(selectedCardIds?.value?.size == 1) {
-      selectedCardIds.value.clear()
-      selectedCardIds.value.add(uuid);
-    }
-  
-    selectedCardIds.value.forEach((id) => {
-      const card = activeCards.value.find((c) => c.uuid === id);
-      if (card) {
-        let clonedCard = JSON.parse(JSON.stringify(card));
-        clonedCard.uuid = uuidv4();
-        clonedCard.ui.x += 50;
-        clonedCard.ui.y += 50;
-        clonedCard.ui.zIndex = Z_INDEX_LAYERS.SELECTED;
-  
-        // Socket handling code remains the same...
-        
-        clonedCards.push(clonedCard);
-      }
-    });
-  
-    // Fix: Properly spread all properties when resetting z-index
-    activeCards.value = activeCards.value.map((card) => ({
-      ...card,
-      ui: {
-        ...card.ui,
-        zIndex: Z_INDEX_LAYERS.DEFAULT
-      }
-    }));
-    
+ // Enhanced cloneCard function for new card architecture
+ const cloneCard = (uuid) => {
+  let clonedCards = [];
+
+  // If only one card selected, use the triggered card
+  if (selectedCardIds?.value?.size === 1) {
     selectedCardIds.value.clear();
-  
-    // Add cloned cards
-    activeCards.value = [...activeCards.value, ...clonedCards];
-    clonedCards.forEach(card => selectedCardIds.value.add(card.uuid));
-  
-    return selectedCardIds.value;
+    selectedCardIds.value.add(uuid);
+  }
+
+  selectedCardIds.value.forEach((id) => {
+    const card = activeCards.value.find((c) => c.uuid === id);
+    if (!card) return;
+
+    // Create deep clone of card
+    let clonedCard = JSON.parse(JSON.stringify(card));
+
+    // Update core properties
+    clonedCard.uuid = uuidv4();
+    clonedCard.ui = {
+      ...clonedCard.ui,
+      x: clonedCard.ui.x + 50,
+      y: clonedCard.ui.y + 50,
+      zIndex: Z_INDEX_LAYERS.SELECTED
+    };
+
+    // Socket remapping process
+    const socketIdMap = remapSockets(clonedCard.data.sockets);
+
+    // Update HTML content based on card type
+    switch (clonedCard.type) {
+      case "agent":
+        updateAgentCardContent(clonedCard, socketIdMap);
+        break;
+      case "text":
+        updateTextCardContent(clonedCard, socketIdMap);
+        break;
+      // Add other card types as needed
+    }
+
+    clonedCards.push(clonedCard);
+  });
+
+  // Reset z-index for all existing cards
+  activeCards.value = activeCards.value.map((card) => ({
+    ...card,
+    ui: {
+      ...card.ui,
+      zIndex: Z_INDEX_LAYERS.DEFAULT
+    }
+  }));
+
+  // Clear selection and add new cards
+  selectedCardIds.value.clear();
+  clonedCards.forEach((newCard) => {
+    activeCards.value = [...activeCards.value, newCard];
+    selectedCardIds.value.add(newCard.uuid);
+  });
+
+  return selectedCardIds.value;
+};
+
+/**
+ * Remaps socket IDs for a cloned card's sockets
+ * @param {Object} sockets - The sockets object containing inputs and outputs arrays
+ * @returns {Map} Map of old socket IDs to new socket IDs
+ */
+const remapSockets = (sockets) => {
+  const socketIdMap = new Map();
+
+  // Helper to create new socket with preserved properties
+  const createNewSocket = (socket) => {
+    const oldId = socket.id;
+    const newSocket = createSocket({
+      type: socket.type,
+      name: socket.name,
+      index: socket.index,
+      value: socket.value
+    });
+    socketIdMap.set(oldId, newSocket.id);
+    return newSocket;
   };
+
+  // Remap input sockets
+  if (Array.isArray(sockets.inputs)) {
+    sockets.inputs = sockets.inputs.map(createNewSocket);
+  }
+
+  // Remap output sockets
+  if (Array.isArray(sockets.outputs)) {
+    sockets.outputs = sockets.outputs.map(createNewSocket);
+  }
+
+  return socketIdMap;
+};
+
+/**
+ * Updates HTML content for agent cards
+ * @param {Object} card - The card object to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ */
+const updateAgentCardContent = (card, socketIdMap) => {
+  if (!card.data) return;
+
+  // Update systemPromptHtml if it exists
+  if (card.data.systemPromptHtml) {
+    card.data.systemPromptHtml = updateSocketIdsInHtml(
+      card.data.systemPromptHtml,
+      socketIdMap
+    );
+  }
+
+  // Update userPromptHtml if it exists
+  if (card.data.userPromptHtml) {
+    card.data.userPromptHtml = updateSocketIdsInHtml(
+      card.data.userPromptHtml,
+      socketIdMap
+    );
+  }
+};
+
+/**
+ * Updates HTML content for text cards
+ * @param {Object} card - The card object to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ */
+const updateTextCardContent = (card, socketIdMap) => {
+  if (!card.data) return;
+
+  // Update contentHtml if it exists
+  if (card.data.contentHtml) {
+    card.data.contentHtml = updateSocketIdsInHtml(
+      card.data.contentHtml,
+      socketIdMap
+    );
+  }
+
+  // Update any break points or segments if they exist
+  if (card.data.segments) {
+    card.data.segments = card.data.segments.map(segment => ({
+      ...segment,
+      precedingBreak: segment.precedingBreak ? {
+        ...segment.precedingBreak,
+        id: socketIdMap.get(segment.precedingBreak.id) || segment.precedingBreak.id
+      } : null,
+      followingBreak: segment.followingBreak ? {
+        ...segment.followingBreak,
+        id: socketIdMap.get(segment.followingBreak.id) || segment.followingBreak.id
+      } : null
+    }));
+  }
+};
+
+/**
+ * Updates socket IDs in HTML content
+ * @param {string} html - The HTML content to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ * @returns {string} Updated HTML content
+ */
+const updateSocketIdsInHtml = (html, socketIdMap) => {
+  if (!html) return html;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  // Update socket tags
+  doc.querySelectorAll(".text-editor-tag").forEach((tag) => {
+    const oldSocketId = tag.getAttribute("data-socket-id");
+    const newSocketId = socketIdMap.get(oldSocketId);
+    if (newSocketId) {
+      tag.setAttribute("data-socket-id", newSocketId);
+    }
+  });
+
+  return doc.body.innerHTML;
+};
 
   const removeCard = (cardId) => {
     // console.log("removeCard", cardId)

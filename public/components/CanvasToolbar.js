@@ -93,8 +93,8 @@ export default {
       const addTools = [
         { id: 'model', label: 'Model ✔', icon: 'pi pi-box', type: 'model' },
         { id: 'trigger', label: 'Trigger ✔', icon: 'pi pi-play-circle', type: 'trigger' },
-        { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
-        { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },
+        { id: 'agent', label: 'Agent ✔', icon: 'pi pi-microchip-ai', type: 'agent' },
+        { id: 'text', label: 'Text ✔', icon: 'pi pi-pen-to-square', type: 'text'  },
         { id: 'chat', label: 'Chat ✔', icon: 'pi pi-comments', type: 'chat'  },
         { id: 'fileInput', label: 'File Input ✔', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },

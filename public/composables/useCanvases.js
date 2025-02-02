@@ -3,6 +3,7 @@
 import { createCanvasRegistry } from "../utils/canvasState/canvasRegistry.js";
 import { createExportImport } from "../utils/canvasState/exportImport.js";
 import { createSocketConnections } from "../utils/socketManagement/socketConnections.js";
+import { createSocketRemapping } from "../utils/socketManagement/socketRemapping.js";
 import { createPointCalculation } from "../utils/canvasInteractions/pointCalculation.js";
 import { createMouseEvents } from "../utils/canvasInteractions/mouseEvents.js";
 import { createTouchEvents } from "../utils/canvasInteractions/touchEvents.js";
@@ -266,7 +267,9 @@ export const useCanvases = () => {
     getScaledPoint: pointCalculation.getScaledPoint,
   });
 
-  //OK
+  //Create the socket remapping to get access to createSockets
+  const socketRemapping = createSocketRemapping();
+
   const cardRegistry = createCardRegistry({
     updateCardSockets: socketConnections.updateCardSockets,
     activeCards,
@@ -275,6 +278,8 @@ export const useCanvases = () => {
     activeConnections,
     zoomLevel,
     canvasRef,
+    createSocket: socketRemapping.createSocket, 
+
   });
 
   const cardSelection = createCardSelection({
