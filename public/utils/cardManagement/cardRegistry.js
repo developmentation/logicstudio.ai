@@ -1,5 +1,12 @@
 // utils/cardManagement/cardRegistry.js
 
+
+
+import {
+  createSocket,
+} from "../socketManagement/socketRemapping.js";
+
+
 export const createCardRegistry = (props) => {
   const {
     // State refs
@@ -9,7 +16,7 @@ export const createCardRegistry = (props) => {
     canvasRef,
     selectedCardIds,
     Z_INDEX_LAYERS,
-    createSocket
+    
   } = props;
 
   // Enhanced card type definitions

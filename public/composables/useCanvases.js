@@ -267,9 +267,7 @@ export const useCanvases = () => {
     getScaledPoint: pointCalculation.getScaledPoint,
   });
 
-  //Create the socket remapping to get access to createSockets
-  const socketRemapping = createSocketRemapping();
-
+ 
   const cardRegistry = createCardRegistry({
     updateCardSockets: socketConnections.updateCardSockets,
     activeCards,
@@ -278,7 +276,7 @@ export const useCanvases = () => {
     activeConnections,
     zoomLevel,
     canvasRef,
-    createSocket: socketRemapping.createSocket, 
+    
 
   });
 

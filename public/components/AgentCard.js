@@ -42,13 +42,16 @@ export default {
   },
 
   template: `
-    <div>
+        <div class = "card"> <!-- Required Class-->
+
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
@@ -439,7 +442,7 @@ const handleSocketUpdate = (event) => {
         name: decl.name,
         source: decl.source,
         index,
-        value: (existingSocket || {}).value || null,
+        value: existingSocket?.value || null,
         momentUpdated: Date.now()
       };
     });
@@ -450,7 +453,7 @@ const handleSocketUpdate = (event) => {
       .map(s => s.id);
 
     // Use updateSocketArray to handle reindexing
-    const { reindexedSockets } = updateSocketArray({
+    const { reindexedSockets, reindexMap } = updateSocketArray({
       oldSockets,
       newSockets, 
       type: 'input',
@@ -460,10 +463,18 @@ const handleSocketUpdate = (event) => {
     });
 
     // Update inputs while preserving outputs
-    localCardData.value.data.sockets = {
-      inputs: reindexedSockets,
-      outputs: localCardData.value.data.sockets.outputs
-    };
+    localCardData.value.data.sockets.inputs = reindexedSockets;
+
+    // Emit socket update event for any parent components that need to know
+    emit('sockets-updated', {
+      cardId: localCardData.value.uuid,
+      oldSockets,
+      newSockets: reindexedSockets,
+      reindexMap,
+      deletedSocketIds,
+      type: 'input'
+    });
+
   } finally {
     isProcessing.value = false;
     Vue.nextTick(() => handleCardUpdate());

@@ -20,7 +20,7 @@ export default {
   },
 
   template: `
-    <div class="card">
+    <div class="card">  <!-- Required class for parent DIV for drag effects-->
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"

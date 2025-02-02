@@ -39,18 +39,21 @@ export default {
   },
 
   template: `
-    <div>
-      <BaseCard
-        :card-data="localCardData"
-        :zoom-level="zoomLevel"
-        :z-index="zIndex"
-        :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
-        @update-card="handleCardUpdate"
-        @close-card="$emit('close-card', $event)"
-        @clone-card="uuid => $emit('clone-card', uuid)"
-        @select-card="$emit('select-card', $event)"
-      >
+    <div class = "card">
+<BaseCard
+  :card-data="localCardData"
+  :zoom-level="zoomLevel"
+  :z-index="zIndex"
+  :is-selected="isSelected"
+  @drag-start="$emit('drag-start', $event)"   
+  @drag="$emit('drag', $event)"
+  @drag-end="$emit('drag-end', $event)"
+  @update-position="$emit('update-position', $event)"
+  @update-card="handleCardUpdate"
+  @close-card="$emit('close-card', $event)"
+  @clone-card="uuid => $emit('clone-card', uuid)"
+  @select-card="$emit('select-card', $event)"
+>
         <!-- Model Selection -->
         <div class="w-full" v-show="localCardData.ui.display === 'default'">
           <select
