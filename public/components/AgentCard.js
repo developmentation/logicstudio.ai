@@ -233,9 +233,12 @@ export default {
         ]
       },
       defaultData: {
+
         model: null,
+        temperature : 0.4,
         systemPrompt: '<socket name="System Socket"/>',
         userPrompt: '<socket name="User Socket"/>',
+        
         systemPromptHtml: '',
         userPromptHtml: '',
         output: '',
@@ -291,83 +294,6 @@ export default {
       }))
     );
 
-    // Setup socket watcher
-    setupSocketWatcher({
-      props,
-      localCardData,
-      isProcessing,
-      emit,
-      onInputChange: ({ type, content }) => {
-        if (type === 'modified' && content.old.value !== content.new.value) {
-          if (localCardData.value.data.triggerOnInput) {
-            if (sessionStatus.value === "inProgress") {
-              triggerPending.value = true;
-            } else {
-              triggerAgent();
-            }
-          }
-        }
-      },
-      onOutputChange: ({ type, content }) => {
-        if (type === 'modified' && content.old.value !== content.new.value) {
-          handleCardUpdate();
-        }
-      }
-    });
-
-    // Set up watchers
-    const watchers = setupCardDataWatchers({
-      props,
-      localCardData,
-      isProcessing,
-      emit,
-    });
-
-    // Watch position changes
-    Vue.watch(
-      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
-      watchers.position
-    );
-
-    // Watch display changes
-    Vue.watch(() => props.cardData.ui?.display, watchers.display);
-
-    // Watch width changes
-    Vue.watch(() => props.cardData.ui?.width, watchers.width);
-
-    // Message watchers
-    Vue.watch(sessionStatus, (newValue) => {
-      localCardData.value.data.status = newValue;
-    });
-
-    Vue.watch(partialMessage, (newValue) => {
-      if (newValue && newValue.length) {
-        localCardData.value.data.status = 'inProgress';
-        localCardData.value.data.output = newValue;
-      }
-    });
-
-    Vue.watch(completedMessage, (newValue) => {
-      if (newValue) {
-        localCardData.value.data.output = newValue;
-        localCardData.value.data.sockets.outputs[0].value = newValue;
-        localCardData.value.data.status = 'complete';
-        handleCardUpdate();
-
-        if (triggerPending.value && sessionStatus.value === "complete") {
-          Vue.nextTick(() => triggerAgent());
-        }
-      }
-    });
-
-    Vue.watch(errorMessage, (newValue, oldValue) => {
-      if (!oldValue?.length && newValue?.length) {
-        localCardData.value.data.output = null;
-        localCardData.value.data.sockets.outputs[0].value = null;
-        localCardData.value.data.status = 'error';
-        handleCardUpdate();
-      }
-    });
 
     // Card-specific functions
     const handleCardUpdate = (data) => {
@@ -612,6 +538,90 @@ const handleSocketUpdate = (event) => {
         false
       );
     };
+
+
+    
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        if (type === 'modified' && content.old.value !== content.new.value) {
+          if (localCardData.value.data.triggerOnInput) {
+            if (sessionStatus.value === "inProgress") {
+              triggerPending.value = true;
+            } else {
+              triggerAgent();
+            }
+          }
+        }
+      },
+      onOutputChange: ({ type, content }) => {
+        if (type === 'modified' && content.old.value !== content.new.value) {
+          handleCardUpdate();
+        }
+      }
+    });
+
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onTrigger: triggerAgent // Pass your triggerAgent function
+    });
+    
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Message watchers
+    Vue.watch(sessionStatus, (newValue) => {
+      localCardData.value.data.status = newValue;
+    });
+
+    // Add trigger watcher
+    Vue.watch(() => props.cardData.data?.trigger, watchers.trigger);
+
+    Vue.watch(partialMessage, (newValue) => {
+      if (newValue && newValue.length) {
+        localCardData.value.data.status = 'inProgress';
+        localCardData.value.data.output = newValue;
+      }
+    });
+
+    Vue.watch(completedMessage, (newValue) => {
+      if (newValue) {
+        localCardData.value.data.output = newValue;
+        localCardData.value.data.sockets.outputs[0].value = newValue;
+        localCardData.value.data.status = 'complete';
+        handleCardUpdate();
+
+        if (triggerPending.value && sessionStatus.value === "complete") {
+          Vue.nextTick(() => triggerAgent());
+        }
+      }
+    });
+
+    Vue.watch(errorMessage, (newValue, oldValue) => {
+      if (!oldValue?.length && newValue?.length) {
+        localCardData.value.data.output = null;
+        localCardData.value.data.sockets.outputs[0].value = null;
+        localCardData.value.data.status = 'error';
+        handleCardUpdate();
+      }
+    });
 
     // Lifecycle hooks
     Vue.onMounted(() => {

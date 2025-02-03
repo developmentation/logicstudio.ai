@@ -237,7 +237,7 @@ export default {
     Vue.watch(
       () => props.activeCards.map((card) => ({
         id: card.uuid,
-        status: card.status,
+        status: card.data.status // Changed from card.status to card.data.status
       })),
       () => {
         if (isRunning.value && hasSequence.value && 
@@ -247,6 +247,7 @@ export default {
       },
       { deep: true }
     );
+    
 
     // Lifecycle hooks
     Vue.onMounted(() => {
@@ -270,14 +271,17 @@ export default {
 
     const triggerCard = (cardId) => {
       const card = props.activeCards.find((c) => c.uuid === cardId);
-      if (card) {
+      // Only trigger if card exists and is not currently processing
+      if (card && card.data.status !== 'inProgress') {
         emit("update-card", {
           ...Vue.toRaw(card),
-          trigger: Date.now(),
+          data: {
+            ...card.data,
+            trigger: Date.now()
+          }
         });
       }
     };
-
     const handleDirectTrigger = () => {
       updateOutputSocketValue();
 
@@ -369,28 +373,44 @@ export default {
         clearTimeout(retryTimeout.value);
         retryTimeout.value = null;
       }
-
+    
       isRunning.value = false;
       currentSequenceIndex.value = -1;
       isTransitioning.value = false;
-
+    
+      // Reset all cards in sequence
       localCardData.value.data.sequence.forEach((item) => {
         item.errorCount = 0;
         const card = props.activeCards.find((c) => c.uuid === item.cardId);
-        if (card && card.status !== "idle") {
+        if (card && card.data.status !== 'idle') {
           emit("update-card", {
             ...Vue.toRaw(card),
-            status: "idle",
-            trigger: null,
+            data: {
+              ...card.data,
+              status: 'idle',
+              trigger: null
+            }
           });
         }
       });
-
+    
       handleCardUpdate();
     };
 
     const processSequence = () => {
       if (isTransitioning.value) return;
+      
+      // Add additional guard against processing while sequence is running
+      const currentItem = currentSequenceIndex.value >= 0 ? 
+        localCardData.value.data.sequence[currentSequenceIndex.value] : null;
+      
+      if (currentItem) {
+        const currentCard = props.activeCards.find(c => c.uuid === currentItem.cardId);
+        if (currentCard?.data.status === 'inProgress') {
+          return;
+        }
+      }
+    
       isTransitioning.value = true;
 
       // Reset error counts and clear timeouts
@@ -495,45 +515,54 @@ export default {
       }
     };
 
-    const handleCardStatusChange = () => {
-      const currentItem = localCardData.value.data.sequence[currentSequenceIndex.value];
-      const currentCard = props.activeCards.find(
-        (card) => card.uuid === currentItem?.cardId
-      );
+// Update handleCardStatusChange to check data.status
+const handleCardStatusChange = () => {
+  // Guard against processing while transitioning
+  if (isTransitioning.value) {
+    return;
+  }
 
-      // Handle card not existing anymore
-      if (!currentCard) {
-        const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
-        if (nextIndex !== -1) {
-          isTransitioning.value = true;
-          currentSequenceIndex.value = nextIndex;
-          triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
-          setTimeout(() => {
-            isTransitioning.value = false;
-          }, 100);
-        } else {
-          completeSequence();
-        }
-        return;
-      }
+  const currentItem = localCardData.value.data.sequence[currentSequenceIndex.value];
+  const currentCard = props.activeCards.find(
+    (card) => card.uuid === currentItem?.cardId
+  );
 
-      // Handle normal status transitions
-      if (currentCard.status === "complete") {
-        const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
-        if (nextIndex !== -1) {
-          isTransitioning.value = true;
-          currentSequenceIndex.value = nextIndex;
-          triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
-          setTimeout(() => {
-            isTransitioning.value = false;
-          }, 100);
-        } else {
-          completeSequence();
-        }
-      } else if (currentCard.status === "error") {
-        retryCard(currentCard.uuid, currentSequenceIndex.value);
-      }
-    };
+  // Handle card not existing anymore
+  if (!currentCard) {
+    const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
+    if (nextIndex !== -1) {
+      isTransitioning.value = true;
+      currentSequenceIndex.value = nextIndex;
+      // Add delay before triggering next card
+      setTimeout(() => {
+        triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
+        isTransitioning.value = false;
+      }, 250); // Add small delay between triggers
+    } else {
+      completeSequence();
+    }
+    return;
+  }
+
+  // Only proceed if current card's status is 'complete' or 'error'
+  if (currentCard.data.status === 'complete') {
+    const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
+    if (nextIndex !== -1) {
+      isTransitioning.value = true;
+      currentSequenceIndex.value = nextIndex;
+      // Add delay before triggering next card
+      setTimeout(() => {
+        triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
+        isTransitioning.value = false;
+      }, 250); // Add small delay between triggers
+    } else {
+      completeSequence();
+    }
+  } else if (currentCard.data.status === 'error') {
+    retryCard(currentCard.uuid, currentSequenceIndex.value);
+  }
+};
+
 
     const handleTriggerClick = () => {
       if (isRunning.value) {
@@ -550,10 +579,11 @@ export default {
     };
 
     const getCardStatus = (cardId) => {
-      if (!cardId || cardId.trim() === "") return "idle";
+      if (!cardId || cardId.trim() === '') return 'idle';
       const card = props.activeCards.find((c) => c.uuid === cardId);
-      return card?.status || "idle";
+      return card?.data?.status || 'idle'; // Changed from card?.status to card?.data?.status
     };
+    
 
     const hasSocketError = () => false;
 

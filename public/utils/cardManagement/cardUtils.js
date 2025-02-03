@@ -217,11 +217,12 @@ class CardSetupManager {
 // Setup watchers for card data
 class CardWatcherManager {
   constructor(params) {
-    const { props, localCardData, isProcessing, emit } = params;
+    const { props, localCardData, isProcessing, emit, onTrigger } = params;
     this.props = props;
     this.localCardData = localCardData;
     this.isProcessing = isProcessing;
     this.emit = emit;
+    this.onTrigger = onTrigger;
   }
 
   updatePosition(newX, newY) {
@@ -251,6 +252,16 @@ class CardWatcherManager {
     }
   }
 
+  updateTrigger(newTrigger, oldTrigger) {
+    if (newTrigger !== oldTrigger && newTrigger !== null && !this.isProcessing.value) {
+      this.localCardData.value.data.trigger = newTrigger;
+      if (this.onTrigger) {
+        Vue.nextTick(() => this.onTrigger());
+      }
+    }
+  }
+
+
   getWatchers() {
     return {
       position: (newVal, oldVal) => {
@@ -258,7 +269,8 @@ class CardWatcherManager {
         if (newVal?.y !== oldVal?.y) this.updatePosition(undefined, newVal.y);
       },
       display: this.updateDisplay.bind(this),
-      width: this.updateWidth.bind(this)
+      width: this.updateWidth.bind(this),
+      trigger: this.updateTrigger.bind(this)
     };
   }
 }
