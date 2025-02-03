@@ -97,7 +97,7 @@ export default {
         { id: 'text', label: 'Text ✔', icon: 'pi pi-pen-to-square', type: 'text'  },
         { id: 'chat', label: 'Chat ✔', icon: 'pi pi-comments', type: 'chat'  },
         { id: 'fileInput', label: 'File Input ✔', icon: 'pi pi-upload', type: 'input' },
-        { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
+        { id: 'fileOutput', label: 'File Output ✔', icon: 'pi pi-download', type: 'output' },
         { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
         { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },

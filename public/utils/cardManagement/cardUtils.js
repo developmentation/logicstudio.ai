@@ -47,13 +47,13 @@ class SocketInitializer {
     return true;
   }
 
-  static createDefaultSocket(type, index, name = null) {
+  static createDefaultSocket(type, index, options = {}) {
     return {
-      id: `socket-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: options.id || `socket-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       type,
-      name: name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
+      name: options.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${index + 1}`,
       index,
-      value: null,
+      value: options.value !== undefined ? options.value : null,
       momentUpdated: Date.now()
     };
   }
@@ -69,6 +69,11 @@ class SocketInitializer {
       return existingSockets
         .filter(socket => this.validateSocket(socket))
         .map((socket, idx) => ({
+          ...this.createDefaultSocket(type, idx, {
+            id: socket.id,
+            name: socket.name,
+            value: socket.value
+          }),
           ...socket,
           type,
           index: idx,
@@ -79,11 +84,7 @@ class SocketInitializer {
     // If no existing sockets but we have defaults, create new sockets
     if (defaultSockets.length > 0) {
       return defaultSockets.map((socketData, idx) => 
-        this.createDefaultSocket(
-          type,
-          idx,
-          socketData.name
-        )
+        this.createDefaultSocket(type, idx, socketData)
       );
     }
 
@@ -92,6 +93,7 @@ class SocketInitializer {
 }
 
 // Card data initialization and validation
+
 class CardInitializer {
   static validateCardData(data) {
     if (!data.uuid || !data.type) {
@@ -114,6 +116,22 @@ class CardInitializer {
     };
   }
 
+  static preserveExistingData(data, config) {
+    // If there's no existing data, return default data
+    if (!data.data) {
+      return config.defaultData || {};
+    }
+
+    // Create a deep copy of the existing data, excluding sockets
+    const { sockets, ...restData } = data.data;
+    
+    // Merge with default data, preserving existing values
+    return {
+      ...config.defaultData,
+      ...restData
+    };
+  }
+
   static initializeCardData(data, config = {}) {
     // Validate input data
     if (!this.validateCardData(data)) {
@@ -126,15 +144,18 @@ class CardInitializer {
       ...config
     };
 
-    // Initialize sockets
+    // Preserve existing data first
+    const preservedData = this.preserveExistingData(data, config);
+
+    // Initialize sockets, preserving existing ones
     const inputs = SocketInitializer.initializeSockets(
-      data.data?.sockets?.inputs,
+      data.data?.sockets?.inputs,  // Pass existing inputs if any
       config.defaultSockets?.inputs || [],
       SOCKET_TYPES.INPUT
     );
 
     const outputs = SocketInitializer.initializeSockets(
-      data.data?.sockets?.outputs,
+      data.data?.sockets?.outputs,  // Pass existing outputs if any
       config.defaultSockets?.outputs || [],
       SOCKET_TYPES.OUTPUT
     );
@@ -145,8 +166,7 @@ class CardInitializer {
       type: data.type,
       ui: this.initializeUI(data, defaultConfig),
       data: {
-        ...config.defaultData,
-        ...(data.data || {}),
+        ...preservedData,
         sockets: {
           inputs,
           outputs,

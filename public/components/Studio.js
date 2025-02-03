@@ -649,38 +649,37 @@ const updateCard = (updates) => {
         if (type === "input" && conn.targetCardId === cardId) {
           const oldIndex = oldSockets.findIndex(s => s.id === conn.targetSocketId);
           if (oldIndex !== -1) {
-            const newIndex = reindexMap.get(conn.targetSocketId); // Use Map.get() instead of array indexing
-            if (newIndex !== undefined) {  // Check if we got a valid index
-              const newSocket = newSockets[newIndex];
-              if (newSocket) {  // Verify we have a valid socket
-                return { ...conn, targetSocketId: newSocket.id };
-              }
+            // Check if reindexMap is a Map object or an array
+            const newIndex = reindexMap instanceof Map ? 
+              reindexMap.get(conn.targetSocketId) : 
+              reindexMap[oldIndex];
+              
+            if (newIndex !== undefined && newSockets[newIndex]) {
+              return { ...conn, targetSocketId: newSockets[newIndex].id };
             }
           }
         } else if (type === "output" && conn.sourceCardId === cardId) {
           const oldIndex = oldSockets.findIndex(s => s.id === conn.sourceSocketId);
           if (oldIndex !== -1) {
-            const newIndex = reindexMap.get(conn.sourceSocketId); // Use Map.get() instead of array indexing
-            if (newIndex !== undefined) {  // Check if we got a valid index
-              const newSocket = newSockets[newIndex];
-              if (newSocket) {  // Verify we have a valid socket
-                return { ...conn, sourceSocketId: newSocket.id };
-              }
+            // Check if reindexMap is a Map object or an array
+            const newIndex = reindexMap instanceof Map ? 
+              reindexMap.get(conn.sourceSocketId) : 
+              reindexMap[oldIndex];
+              
+            if (newIndex !== undefined && newSockets[newIndex]) {
+              return { ...conn, sourceSocketId: newSockets[newIndex].id };
             }
           }
         }
         return conn;
       });
-    
       // Update card's socket structure
       if (type === "input") {
         card.data.sockets.inputs = newSockets;
       } else if (type === "output") {
         card.data.sockets.outputs = newSockets;
       }
-    
       await Vue.nextTick();
-    
       // Recalculate connection points
       requestAnimationFrame(() => {
         const updatedConnections = activeConnections.value.map(conn => {
@@ -696,7 +695,6 @@ const updateCard = (updates) => {
           }
           return conn;
         });
-    
         activeConnections.value = updatedConnections;
       });
     };
