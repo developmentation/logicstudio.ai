@@ -12,7 +12,7 @@ import {
   setupSocketWatcher,
 } from "../utils/cardManagement/cardUtils.js";
 
-import { updateSocketArray } from "../utils/socketManagement/socketRemapping.js";
+import { updateSocketArray , createSocket, createSocketUpdateEvent} from "../utils/socketManagement/socketRemapping.js";
 
 
 export default {
@@ -331,81 +331,102 @@ export default {
       Vue.nextTick(() => handleCardUpdate());
     };
 
-    // Handle socket updates from SocketEditor
-// Handle socket updates from SocketEditor
-const handleSocketUpdate = (event) => {
-  if (isProcessing.value) return;
-  isProcessing.value = true;
-
-  try {
-    // Get current inputs to preserve
-    const oldSockets = [...localCardData.value.data.sockets.inputs];
-    
-    // Get all socket declarations from both prompts
-    const systemDeclarations = parseSocketDeclarations(
-      localCardData.value.data.systemPrompt,
-      "system"
-    );
-    const userDeclarations = parseSocketDeclarations(
-      localCardData.value.data.userPrompt,
-      "user"
-    );
-    const declarations = systemDeclarations.concat(userDeclarations);
-
-    // Create new sockets while preserving existing IDs and values
-    const newSockets = declarations.map((decl, index) => {
-      // Try to find existing socket with same name and source
-      const existingSocket = oldSockets.find(
-        s => s.name === decl.name && s.source === decl.source
+    // Get both prompt's socket declarations
+    const getMergedSocketDeclarations = () => {
+      const systemDeclarations = parseSocketDeclarations(
+        localCardData.value.data.systemPrompt,
+        "system"
       );
+      const userDeclarations = parseSocketDeclarations(
+        localCardData.value.data.userPrompt,
+        "user"
+      );
+      return systemDeclarations.concat(userDeclarations);
+    };
 
-      // Find matching socket info from event
-      const socketInfo = event.sockets?.find(s => s.name === decl.name);
 
-      return {
-        id: socketInfo?.id || existingSocket?.id || `socket-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        type: 'input',
-        name: decl.name,
-        source: decl.source,
-        index,
-        value: existingSocket?.value || null,
-        momentUpdated: Date.now()
-      };
-    });
-
-    // Find deleted sockets
-    const deletedSocketIds = oldSockets
-      .filter(old => !newSockets.some(n => n.name === old.name && n.source === old.source))
-      .map(s => s.id);
-
-    // Use updateSocketArray to handle reindexing
-    const { reindexedSockets, reindexMap } = updateSocketArray({
-      oldSockets,
-      newSockets, 
-      type: 'input',
-      deletedSocketIds,
-      socketRegistry,
-      connections: connections.value
-    });
-
-    // Update inputs while preserving outputs
-    localCardData.value.data.sockets.inputs = reindexedSockets;
-
-    // Emit socket update event for any parent components that need to know
-    emit('sockets-updated', {
-      cardId: localCardData.value.uuid,
-      oldSockets,
-      newSockets: reindexedSockets,
-      reindexMap,
-      deletedSocketIds,
-      type: 'input'
-    });
-
-  } finally {
-    isProcessing.value = false;
-    Vue.nextTick(() => handleCardUpdate());
-  }
-};
+    // Handle socket updates from SocketEditor
+     const handleSocketUpdate = (event) => {
+       if (isProcessing.value) return;
+       isProcessing.value = true;
+ 
+       try {
+         const oldSockets = [...localCardData.value.data.sockets.inputs];
+         const declarations = getMergedSocketDeclarations();
+ 
+         // Create new sockets using IDs from SocketEditor when available
+         const newSockets = declarations.map((decl, index) => {
+           const existingSocket = oldSockets.find(
+             (s) => s.name === decl.name && s.source === decl.source
+           );
+ 
+           // Find matching socket info from the event
+           const socketInfo = event.sockets?.find((s) => s.name === decl.name);
+ 
+           const socket = createSocket({
+             type: "input",
+             index,
+             existingId: socketInfo?.id || existingSocket?.id,
+             value: existingSocket?.value,
+           });
+ 
+           socket.name = decl.name;
+           socket.source = decl.source;
+           return socket;
+         });
+ 
+         // Find deleted sockets
+         const deletedSocketIds = oldSockets
+           .filter(
+             (old) =>
+               !newSockets.some(
+                 (n) => n.name === old.name && n.source === old.source
+               )
+           )
+           .map((s) => s.id);
+ 
+         // Use utility for socket array update
+         const { reindexMap, reindexedSockets } = updateSocketArray({
+           oldSockets,
+           newSockets,
+           type: "input",
+           deletedSocketIds,
+           socketRegistry,
+           connections: connections.value,
+         });
+ 
+         // Ensure the reindexed sockets retain their names
+         const finalSockets = reindexedSockets.map((socket, index) => {
+           const declaration = declarations[index];
+           return {
+             ...socket,
+             name: declaration.name,
+             source: declaration.source,
+           };
+         });
+ 
+         // Update local state with properly named sockets
+         localCardData.value.data.sockets.inputs = finalSockets;
+ 
+         // Emit socket update event
+         emit(
+           "sockets-updated",
+           createSocketUpdateEvent({
+             cardId: localCardData.value.uuid,
+             oldSockets,
+             newSockets: finalSockets,
+             reindexMap,
+             deletedSocketIds,
+             type: "input",
+           })
+         );
+       } finally {
+         isProcessing.value = false;
+         Vue.nextTick(() => {
+           handleCardUpdate();
+         });
+       }
+     };
 
     // Parse socket declarations from prompts
     const parseSocketDeclarations = (text, source) => {

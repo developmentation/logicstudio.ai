@@ -152,7 +152,7 @@ export default {
         description: "Text Processing Node",
         defaultSockets: {
           inputs: [{ name: "Text Input" }],
-          outputs: [],
+          outputs: [{ name: "Start" }],
         },
         defaultData: {
           content: "",
@@ -172,30 +172,42 @@ export default {
     };
 
     // Setup socket watcher
-    setupSocketWatcher({
-      props,
-      localCardData,
-      isProcessing,
-      emit,
-      onInputChange: ({ type, content }) => {
-        switch (type) {
-          case "modified":
-            if (content.old.value !== content.new.value && autoSync.value) {
-              syncFromInput();
-            }
-            break;
+// Setup socket watcher
+setupSocketWatcher({
+  props,
+  localCardData,
+  isProcessing,
+  emit,
+  onInputChange: ({ type, content }) => {
+    switch (type) {
+      case "modified":
+        if (content.old.value !== content.new.value && autoSync.value) {
+          // Reset outputs first
+          localCardData.value.data.sockets.outputs = [{
+            ...localCardData.value.data.sockets.outputs[0] || createSocket({
+              type: 'output',
+              name: 'Start',
+              index: 0
+            }),
+            value: ""  // Clear the value
+          }];
+
+          // Then sync from input
+          syncFromInput();
         }
-      },
-      onOutputChange: ({ type, content }) => {
-        switch (type) {
-          case "modified":
-            if (content.old.value !== content.new.value) {
-              handleCardUpdate();
-            }
-            break;
+        break;
+    }
+  },
+  onOutputChange: ({ type, content }) => {
+    switch (type) {
+      case "modified":
+        if (content.old.value !== content.new.value) {
+          handleCardUpdate();
         }
-      }
-    });
+        break;
+    }
+  }
+});
 
     // Set up watchers
     const watchers = setupCardDataWatchers({
@@ -250,36 +262,43 @@ export default {
     const handleBreakUpdate = (event) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
-
+    
       try {
-        // Update output sockets based on breaks
-        const newOutputs = event.breaks.map((breakInfo, index) => {
-          const segment = currentSegments.value[index];
+        // Keep the initial "Start" output socket
+        const newOutputs = [{
+          ...localCardData.value.data.sockets.outputs[0],
+          value: currentSegments.value[0]?.text || ""
+        }];
+    
+        // Add outputs for each break
+        event.breaks.forEach((breakInfo, index) => {
+          // Get the segment that comes AFTER this break
+          const segmentIndex = index + 1;
+          const segment = currentSegments.value[segmentIndex];
+    
           const existingSocket = localCardData.value.data.sockets.outputs
             .find(s => s.name === breakInfo.name);
-
+    
           if (existingSocket) {
-            return {
+            newOutputs.push({
               ...existingSocket,
               value: segment?.text || "",
-              index
-            };
+              index: segmentIndex
+            });
+          } else {
+            newOutputs.push(createSocket({
+              type: "output",
+              name: breakInfo.name,
+              value: segment?.text || "",
+              index: segmentIndex
+            }));
           }
-
-          return createSocket({
-            type: "output",
-            name: breakInfo.name,
-            value: segment?.text || "",
-            index
-          });
         });
-
+    
         localCardData.value.data.sockets.outputs = newOutputs;
+        handleCardUpdate();
       } finally {
         isProcessing.value = false;
-        Vue.nextTick(() => {
-          handleCardUpdate();
-        });
       }
     };
 

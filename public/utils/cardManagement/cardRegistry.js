@@ -191,7 +191,7 @@ export const createCardRegistry = (props) => {
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
-        content: "Enter text here...",
+        content: "",
         sockets: {
           inputs: [],
           outputs: []
