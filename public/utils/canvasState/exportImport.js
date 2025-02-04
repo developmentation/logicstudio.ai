@@ -1,4 +1,6 @@
 // utils/canvasState/exportImport.js
+// Import the migration utilities - This ensures backward compatibility with the old flat card format
+import { migrateCanvasData} from './migrate.js';
 
 export const createExportImport = (props) => {
     const {
@@ -239,64 +241,130 @@ export const createExportImport = (props) => {
         }
     };
 // In exportImport.js, update the importFromJSON function
+/**
+ * Imports a canvas from a template object
+ * @param {Object} template - Template object to import
+ * @returns {Promise} Resolution with import results
+ */
+const importFromTemplate = (template) => {
+    return new Promise((resolve, reject) => {
+      if (!template || typeof template !== 'object') {
+        reject(new Error('Template must be a valid object'));
+        return;
+      }
+  
+      try {
+        // Validate basic structure
+        if (!Array.isArray(template.cards)) {
+          reject(new Error('Invalid canvas structure in template'));
+          return;
+        }
+  
+        // Migrate the template data to new format
+        const migratedData = migrateCanvasData(template);
+  
+        // Log migration results for debugging
+        console.log('Template migration complete:', {
+          originalCards: template.cards.length,
+          migratedCards: migratedData.cards.length,
+          originalConnections: template.connections?.length || 0,
+          migratedConnections: migratedData.connections?.length || 0
+        });
+  
+        // Import the canvas
+        const canvasId = importCanvas(migratedData);
+        if (!canvasId) {
+          reject(new Error('Failed to import template'));
+          return;
+        }
+  
+        // Set as active canvas
+        activeCanvasId.value = canvasId;
+  
+        resolve({
+          totalImported: 1,
+          canvasIds: [canvasId],
+          activeCanvasId: canvasId
+        });
+      } catch (error) {
+        console.error('Error importing template:', error);
+        reject(error);
+      }
+    });
+  };
 
 const importFromJSON = () => {
     return new Promise((resolve, reject) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.multiple = true;  // Enable multiple file selection
-        
-        input.onchange = async (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) {
-                reject(new Error('No files selected'));
-                return;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.multiple = true;
+  
+      input.onchange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) {
+          reject(new Error('No files selected'));
+          return;
+        }
+  
+        try {
+          const importedCanvasIds = [];
+  
+          for (const file of files) {
+            console.log("importFromJSON file", file)
+            const text = await file.text();
+            const rawData = JSON.parse(text);
+  
+            // Validate basic structure before migration
+            if (!rawData || !Array.isArray(rawData.cards)) {
+              console.error(`Invalid canvas structure in file: ${file.name}`);
+              continue;
             }
-
-            try {
-                const importedCanvasIds = [];
-                
-                // Process each file sequentially
-                for (const file of files) {
-                    const text = await file.text();
-                    const data = JSON.parse(text);
-
-                    if (!validateImportData(data)) {
-                        console.error(`Invalid canvas data structure in file: ${file.name}`);
-                        continue; // Skip invalid files but continue processing others
-                    }
-
-                    const canvasId = importCanvas(data);
-                    importedCanvasIds.push(canvasId);
-                }
-
-                if (importedCanvasIds.length === 0) {
-                    reject(new Error('No valid canvas files were imported'));
-                    return;
-                }
-
-                // Select the last imported canvas
-                const lastCanvasId = importedCanvasIds[importedCanvasIds.length - 1];
-                const lastCanvas = canvases.value.find(c => c.id === lastCanvasId);
-                if (lastCanvas) {
-                    activeCanvasId.value = lastCanvasId;
-                }
-
-                resolve({
-                    totalImported: importedCanvasIds.length,
-                    canvasIds: importedCanvasIds,
-                    activeCanvasId: lastCanvasId
-                });
-            } catch (error) {
-                console.error('Error importing JSON:', error);
-                reject(error);
-            }
-        };
-
-        input.click();
+  
+            // Migrate the canvas data to new format
+            console.log("import rawData", rawData)
+            const migratedData = migrateCanvasData(rawData);
+            console.log("import migratedData", migratedData)
+  
+            // Log migration results for debugging
+            console.log('Migration complete:', {
+              originalCards: rawData.cards.length,
+              migratedCards: migratedData.cards.length,
+              originalConnections: rawData.connections?.length || 0,
+              migratedConnections: migratedData.connections?.length || 0
+            });
+  
+            const canvasId = importCanvas(migratedData);
+            importedCanvasIds.push(canvasId);
+          }
+  
+          if (importedCanvasIds.length === 0) {
+            reject(new Error('No valid canvas files were imported'));
+            return;
+          }
+  
+          // Select the last imported canvas
+          const lastCanvasId = importedCanvasIds[importedCanvasIds.length - 1];
+          if (lastCanvasId) {
+            activeCanvasId.value = lastCanvasId;
+          }
+  
+          resolve({
+            totalImported: importedCanvasIds.length,
+            canvasIds: importedCanvasIds,
+            activeCanvasId: lastCanvasId
+          });
+        } catch (error) {
+          console.error('Error importing JSON:', error);
+          reject(error);
+        }
+      };
+  
+      input.click();
     });
-};
+  };
+
+
     // API Import/Export with enhanced error handling
     const exportToAPI = async (endpoint, options = {}) => {
         try {
@@ -487,6 +555,7 @@ const importFromJSON = () => {
         exportToSVG,
         exportToJSON,
         importFromJSON,
+        importFromTemplate,
 
         // API operations
         exportToAPI,

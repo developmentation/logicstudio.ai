@@ -21,18 +21,20 @@ export default {
 
   template: `
     <div class="card">
-      <BaseCard
-        :card-data="localCardData"
-        :zoom-level="zoomLevel"
-        :z-index="zIndex"
-        :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
-        @update-card="handleCardUpdate"
-        @close-card="$emit('close-card', $event)"
-        @clone-card="uuid => $emit('clone-card', uuid)"
-        @select-card="$emit('select-card', $event)"
-        style = "min-height:150px"
-      >
+  <BaseCard
+    :card-data="localCardData"
+    :zoom-level="zoomLevel"
+    :z-index="zIndex"
+    :is-selected="isSelected"
+    @drag-start="$emit('drag-start', $event)"   
+    @drag="$emit('drag', $event)"
+    @drag-end="$emit('drag-end', $event)"
+    @update-card="handleCardUpdate"
+    @close-card="$emit('close-card', $event)"
+    @clone-card="uuid => $emit('clone-card', uuid)"
+    @select-card="$emit('select-card', $event)"
+    style="min-height: 150px;"
+  >
         <!-- Input Socket -->
         <div class="absolute -left-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
           <div class="flex items-center justify-start">
