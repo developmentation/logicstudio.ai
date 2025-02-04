@@ -2,14 +2,24 @@
 
 ## Project Delivery
 
-- Create a dev branch and dev.logicstudio.ai to permit testing new features without breaking the old features.
+- Create a dev branch and dev.logicstudio.ai to permit testing new features without breaking the old features. (DONE)
 
 ## Bugs
 
-- Slow performance when there is lots of screen data-refactor to limit refreshes.
-- Canvas overflow off to the lower right hand side.
-- Screen glitch: Trigger, Agent, and Chat cards cause the screen to relocate.
+- Slow performance when there is lots of screen data-refactor to limit refreshes. (DONE)
+- Canvas overflow off to the lower right hand side. (DONE)
+- Screen glitch: Trigger, Agent, and Chat cards cause the screen to relocate. (DONE)
 - Text card: Maintain whitespace within the component when saving. Carriage returns are lost when importing. Doesn't impact the LLM, but readability takes a hit.
+
+
+
+- ZIndex of selected is inconsistent
+- Multi select not working consistently / not working well.
+- Reimporting InputCards cause the output sockets to fail because they don't have index.
+
+- Error in Exporting to Word. GIves an error when crashing (Not sure how to resolve at this point, intermittent)
+- Pasting into an Agent card causes the sockets to reset, where as key strokes do not. (Could not reproduce)
+- Minimizing and expanding a card, which changes the UI, causes it to be recalcualted (Cound not reproduce)
 
 ## Enhancements to Exiting Cards
 
@@ -54,29 +64,30 @@
 
 ## Reactivity
 
-- There seems to be a significant over processing of the reactive variables whenever the UI moves.
+- There seems to be a significant over processing of the reactive variables whenever the UI moves. (DONE)
 
 ## Studio / Canvas
 
-- The ConnectionsLayer seems to have shifted off the central point of the canvas.
+- The ConnectionsLayer seems to have shifted off the central point of the canvas. (DONE)
 - The touch actions have seriously fallen out of sync with the mouse events, bring them back into alignment
-- Adding some cards creates an unexpected scroll back to the centre of the Canvas. Not all cards cause this, but Chat for example seems to.
-  - - Happens on Agent, Chat and Trigger card, seemingly due to some complex socket registration event emissions.
+- Adding some cards creates an unexpected scroll back to the centre of the Canvas. Not all cards cause this, but Chat for example seems to. (DONE)
+  - - Happens on Agent, Chat and Trigger card, seemingly due to some complex socket registration event emissions. (DONE)
 
 ## Join
 
-- Create another join for JSON, whereby multiples are brought into an array (higheset level element) or they are brought into an Object, with the socket name the unique object.
-- Join by type, JSON, array, text, or images
+- Create another join for JSON, whereby multiples are brought into an array (higheset level element) or they are brought into an Object, with the socket name the unique object. (DONE)
+- Join by type, JSON, array, text (DONE)
 
 ## BaseCard
 
-- Generally, PrimeVue components cause slowdowns. Loading several repositories causes the UI to significantly slowdown
-- Likely there is excessive reactivity happening across all the components
+- Generally, PrimeVue components cause slowdowns. Loading several repositories causes the UI to significantly slowdown (DONE)
+- Likely there is excessive reactivity happening across all the components (DONE)
 - Multiselect remains buggy
 
 ## Input Card
 
 - Loading Word and PDF documents doesn't result in text being handed. Use proper importing
+    - Now loading PDFs
 - Images are not permitted
 - Feature Request: OCR files on input
 
@@ -91,11 +102,11 @@
 
 ## View
 
-- Enable the reading / receipt of JSON or text, without showing [Object object]
+- Enable the reading / receipt of JSON or text, without showing [Object object] (DONE)
 
 ## Optimizations
 
-- Remove PrimeVue and any other unnecessary plugins / libraries. Revert just back to Tailwind CSS and build out a custom stylesheet.
+- Remove PrimeVue and any other unnecessary plugins / libraries. Revert just back to Tailwind CSS and build out a custom stylesheet. (DONE)
 
 ## Export
 

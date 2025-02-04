@@ -19,23 +19,33 @@ const FORMATS = {
  * Process input content to ensure consistent format
  */
 const processContent = (content) => {
-    // Handle null/undefined
-    if (content == null) return '';
-  
-    // Handle objects and arrays
-    if (typeof content === 'object') {
+  // Handle null/undefined
+  if (content == null) return '';
+
+  // Handle objects and arrays
+  if (typeof content === 'object') {
       // If it has a content property, use that
       if (content.content !== undefined) {
-        return processContent(content.content);
+          return processContent(content.content);
       }
       // Otherwise stringify the object nicely
       return JSON.stringify(content, null, 2);
-    }
-  
-    // Handle other types
-    return String(content);
-  };
+  }
 
+  // Sanitize content
+  let processed = String(content);
+  
+  // Fix unclosed code blocks
+  const unclosedBlocks = (processed.match(/```/g) || []).length;
+  if (unclosedBlocks % 2 !== 0) {
+      processed += '\n```';
+  }
+  
+  // Normalize table structures
+  processed = processed.replace(/\|[^\n|]+\|[^\n]*\n(?!\s*\|)/g, match => match + '\n');
+  
+  return processed;
+};
 /**
  * Create formatted file from content
  */
@@ -74,17 +84,27 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
       }
 
       case 'docx': {
-        const doc = convertToDocx(processedContent, {
-          ...DOCX_STYLES,
-          ...options
-        });
-        const blob = await docx.Packer.toBlob(doc);  // Use toBlob instead of toBuffer
-        return {
-          content: blob,
-          extension: 'docx',
-          mimeType: FORMATS.docx.mime
-        };
-      }
+        try {
+            const doc = convertToDocx(processedContent, {
+                ...DOCX_STYLES,
+                ...options
+            });
+            const blob = await docx.Packer.toBlob(doc);
+            return {
+                content: blob,
+                extension: 'docx',
+                mimeType: FORMATS.docx.mime
+            };
+        } catch (error) {
+            console.error('DOCX conversion error:', error);
+            // Fallback to plain text if conversion fails
+            return {
+                content: processedContent,
+                extension: 'txt',
+                mimeType: FORMATS.txt.mime
+            };
+        }
+    }
 
       case 'pdf': {
         const pdf = new jspdf.jsPDF();
@@ -105,6 +125,8 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
     throw error;
   }
 };
+
+
 
 /**
  * Download blob as file

@@ -32,10 +32,10 @@ export default {
         isDragging ? 'cursor-grabbing' : 'cursor-grab',
         isSelected ? 'ring-2 ring-blue-500' : ''
     ]"
-    :style="{
+   :style="{
         position: 'absolute',
         transform: \`translate3d(\${localCardData.ui.x}px, \${localCardData.ui.y}px, 0)\`,
-        zIndex: isDragging ? 1000 : zIndex,
+        zIndex: isDragging ? 1000 : (isSelected ? Z_INDEX_LAYERS.SELECTED : zIndex),
         width: (localCardData.ui.width || 300) + 'px'
     }"
     @click="handleCardClick"
@@ -106,6 +106,14 @@ export default {
     </div>
   `,
   setup(props, { emit }) {
+
+    const Z_INDEX_LAYERS = {
+      DEFAULT: 1,
+      HOVERED: 50,
+      SELECTED: 100,
+      DRAGGING: 1000,
+    };
+
     // Watch position changes with immediate flush for smooth dragging
     Vue.watch(() => ({
       x: props.cardData.ui?.x,
@@ -163,6 +171,18 @@ export default {
     const handleCardClick = (event) => {
       if (wasDragging.value) return;
 
+      // Always handle shift-clicks for selection
+      if (event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        emit("select-card", {
+          uuid: localCardData.uuid,
+          shiftKey: true,
+        });
+        return;
+      }
+
+      // Regular click behavior for non-shift clicks
       if (
         event.target.matches(
           'input, textarea, [contenteditable="true"], button'
@@ -172,15 +192,7 @@ export default {
         )
       ) {
         return;
-      }
-
-      event.stopPropagation();
-
-      emit("select-card", {
-        uuid: localCardData.uuid,
-        shiftKey: event.shiftKey,
-      });
-    };
+      }}
 
     const startConnectionDrag = (event) => {
       const isTouch = event.type === "touchstart";
@@ -361,6 +373,8 @@ export default {
       finishDescriptionEdit,
       handleHeaderClick,
       toggleDisplay,
+      Z_INDEX_LAYERS
+
     };
   },
 };
