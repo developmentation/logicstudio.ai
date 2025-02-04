@@ -3,10 +3,11 @@ import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import { useApis } from "../composables/useApis.js";
 import {
-  updateSocketArray,
-  createSocketUpdateEvent,
-  createSocket,
-} from '../utils/socketManagement/socketRemapping.js';
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
 
 export default {
   name: "ApiCard",
@@ -17,8 +18,9 @@ export default {
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false }
   },
+
   template: `
-    <div>
+    <div class="card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
@@ -29,35 +31,34 @@ export default {
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
+        style = "min-height:150px"
       >
         <!-- Input Socket -->
-        <div class="absolute -left-[12px]" style="top: 16px;">
-          <BaseSocket
-            type="input"
-            :socket-id="localCardData.sockets.inputs[0].id"
-            :card-id="localCardData.uuid"
-            name="Payload Input"
-            :value="localCardData.sockets.inputs[0].value"
-            :is-connected="getSocketConnections(localCardData.sockets.inputs[0].id)"
-            :has-error="hasSocketError(localCardData.sockets.inputs[0].id)"
-            :zoom-level="zoomLevel"
-            @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
-            @connection-drag="$emit('connection-drag', $event)"
-            @connection-drag-end="$emit('connection-drag-end', $event)"
-            @socket-mounted="handleSocketMount($event)"
-          />
+        <div class="absolute -left-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
+          <div class="flex items-center justify-start">
+            <BaseSocket
+              type="input"
+              :socket-id="localCardData.data.sockets.inputs[0].id"
+              :card-id="localCardData.uuid"
+              name="Payload Input"
+              :value="localCardData.data.sockets.inputs[0].value"
+              :is-connected="getSocketConnections(localCardData.data.sockets.inputs[0].id)"
+              :has-error="false"
+              :zoom-level="zoomLevel"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
+              @connection-drag="$emit('connection-drag', $event)"
+              @connection-drag-end="$emit('connection-drag-end', $event)"
+              @socket-mounted="handleSocketMount($event)"
+            />
+          </div>
         </div>
 
         <!-- Output Sockets -->
-        <div 
-          class="absolute -right-[12px] flex flex-col gap-1" 
-          style="top: 16px;"
-        >
+        <div class="absolute -right-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
           <div 
-            v-for="(socket, index) in localCardData.sockets.outputs"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
-            class="flex items-center"
-            :style="{ transform: 'translateY(' + (index * 24) + 'px)' }"
+            class="flex items-center justify-end"
           >
             <BaseSocket
               type="output"
@@ -66,9 +67,9 @@ export default {
               :name="socket.name"
               :value="socket.value"
               :is-connected="getSocketConnections(socket.id)"
-              :has-error="hasSocketError(socket.id)"
+              :has-error="false"
               :zoom-level="zoomLevel"
-              @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
               @connection-drag="$emit('connection-drag', $event)"
               @connection-drag-end="$emit('connection-drag-end', $event)"
               @socket-mounted="handleSocketMount($event)"
@@ -77,7 +78,8 @@ export default {
         </div>
 
         <!-- Content -->
-        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.display == 'default'">
+        <form>
+        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.ui.display === 'default'">
           <!-- Status Indicator -->
           <div class="flex justify-between items-center">
             <label class="text-xs text-gray-400">Status:</label>
@@ -85,13 +87,13 @@ export default {
               <span 
                 class="w-3 h-3 rounded-full"
                 :class="{
-                  'bg-gray-500': localCardData.status === 'idle',
-                  'bg-yellow-500': localCardData.status === 'processing',
-                  'bg-green-500': localCardData.status === 'success',
-                  'bg-red-500': localCardData.status === 'error'
+                  'bg-gray-500': localCardData.data.status === 'idle',
+                  'bg-yellow-500': localCardData.data.status === 'processing',
+                  'bg-green-500': localCardData.data.status === 'success',
+                  'bg-red-500': localCardData.data.status === 'error'
                 }"
               ></span>
-              <span class="text-xs capitalize">{{ localCardData.status }}</span>
+              <span class="text-xs capitalize">{{ localCardData.data.status }}</span>
             </div>
           </div>
 
@@ -99,11 +101,25 @@ export default {
           <div class="space-y-1">
             <label class="text-xs text-gray-400">URL</label>
             <input
-              v-model="localCardData.url"
+              v-model="localCardData.data.url"
               type="text"
               class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
+
+              :name="'url' + randomId()"
+              autocomplete="new-password"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              data-form-type="other"
+              data-lpignore="true"
+              data-private="true"
+              aria-autocomplete="none"
+              aria-hidden="true"
+              readonly
+              onfocus="this.removeAttribute('readonly')"
+
               placeholder="Enter API URL..."
-              autocomplete="off"
+               
               @change="handleCardUpdate"
               @mousedown.stop
             />
@@ -113,7 +129,7 @@ export default {
           <div class="space-y-1">
             <label class="text-xs text-gray-400">Method</label>
             <select
-              v-model="localCardData.method"
+              v-model="localCardData.data.method"
               class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
               autocomplete="off"
               @change="handleCardUpdate"
@@ -131,11 +147,24 @@ export default {
           <div class="space-y-1">
             <label class="text-xs text-gray-400">Bearer Token (Optional)</label>
             <input
-              v-model="localCardData.token"
+              v-model="localCardData.data.token"
+
+              :name="'bearer_token_' + randomId()"
               type="password"
+              autocomplete="new-password"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              data-form-type="other"
+              data-lpignore="true"
+              data-private="true"
+              aria-autocomplete="none"
+              aria-hidden="true"
+              readonly
+              onfocus="this.removeAttribute('readonly')"
+
               class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
               placeholder="Enter bearer token..."
-              autocomplete="off"
               @change="handleCardUpdate"
               @mousedown.stop
             />
@@ -145,7 +174,7 @@ export default {
           <div class="space-y-1">
             <label class="text-xs text-gray-400">Payload (must be JSON)</label>
             <textarea
-              v-model="localCardData.payload"
+              v-model="localCardData.data.payload"
               class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
               rows="4"
               placeholder="Enter JSON payload..."
@@ -166,95 +195,139 @@ export default {
             </button>
           </div>
         </div>
+        </form>
       </BaseCard>
     </div>
   `,
 
   setup(props, { emit }) {
+    // Initialize APIs utility
     const { executeApiCall } = useApis();
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
 
-    // Initialize card data
-    const initializeCardData = (data) => {
-      const baseData = {
-        uuid: data.uuid,
-        name: data.name || "API Request",
-        description: data.description || "Generic API Request Node",
-        type: "api",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        url: data.url || "",
-        method: data.method || "get",
-        token: data.token || "",
-        payload: data.payload || "",
-        status: data.status || "idle",
-        trigger: data.trigger || null,
-        sockets: {
-          inputs: [
-            createSocket({
-              type: "input",
-              index: 0,
-              existingId: data.sockets?.inputs?.[0]?.id,
-              value: data.sockets?.inputs?.[0]?.value,
-              name: "Payload Input"
-            })
-          ],
+    const randomId = () => Math.random().toString(36).substring(2, 15);
+
+    // Initialize card setup utilities
+    const {
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup
+    } = useCardSetup(props, emit);
+
+    // Initialize local card data
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        name: "API Request",
+        description: "API Request Node",
+        defaultData: {
+          url: "",
+          method: "get",
+          token: "",
+          payload: "",
+          status: "idle"
+        },
+        defaultSockets: {
+          inputs: [{ name: "Payload Input" }],
           outputs: [
-            createSocket({
-              type: "output",
-              index: 0,
-              existingId: data.sockets?.outputs?.[0]?.id,
-              value: null,
-              name: "Success"
-            }),
-            createSocket({
-              type: "output",
-              index: 1,
-              existingId: data.sockets?.outputs?.[1]?.id,
-              value: null,
-              name: "Error"
-            })
+            { name: "Success" },
+            { name: "Error" }
           ]
         }
-      };
+      })
+    );
 
-      // Emit initial socket registration
-      emit('sockets-updated', createSocketUpdateEvent({
-        cardId: data.uuid,
-        oldSockets: [],
-        newSockets: [...baseData.sockets.inputs, ...baseData.sockets.outputs],
-        reindexMap: new Map(),
-        deletedSocketIds: [],
-        type: 'output'
-      }));
-
-      return baseData;
+    // Basic card update handler
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
     };
 
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
+    
+    const executeRequest = async () => {
+      if (!canExecute.value || isProcessing.value) return;
 
-    // Socket management
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-    const hasSocketError = () => false;
+      isProcessing.value = true;
+      localCardData.value.data.status = 'processing';
+      resetOutputs();
+      handleCardUpdate();
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, { element: event.element, cleanup: [] });
+      try {
+        const payloadToUse = localCardData.value.data.sockets.inputs[0].value || 
+                            localCardData.value.data.payload;
+        const parsedPayload = validatePayload(payloadToUse);
+
+        const result = await executeApiCall({
+          url: localCardData.value.data.url,
+          method: localCardData.value.data.method,
+          payload: parsedPayload,
+          token: localCardData.value.data.token
+        });
+
+        if (result.success) {
+          localCardData.value.data.status = 'success';
+          localCardData.value.data.sockets.outputs[0].value = result.data;
+          localCardData.value.data.sockets.outputs[1].value = null;
+        } else {
+          localCardData.value.data.status = 'error';
+          localCardData.value.data.sockets.outputs[0].value = null;
+          localCardData.value.data.sockets.outputs[1].value = result.error;
+        }
+      } catch (error) {
+        console.error('Error executing request:', error);
+        localCardData.value.data.status = 'error';
+        localCardData.value.data.sockets.outputs[0].value = null;
+        localCardData.value.data.sockets.outputs[1].value = {
+          message: error.message,
+          status: error.response?.status || 500
+        };
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
+      }
     };
 
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
-    };
 
-    // Computed properties
-    const canExecute = Vue.computed(() => {
-      return localCardData.value.url && localCardData.value.method;
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        if (type === "modified" && content.old.value !== content.new.value) {
+          handleInputValueChange(content.new.value);
+        }
+      }
+      ,
+      onOutputChange: ({ type, content }) => {
+      }
     });
 
-    // Methods
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onTrigger: executeRequest
+    });
+
+    // Watch for card data changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+    Vue.watch(() => props.cardData.data?.trigger, watchers.trigger);
+
+    // API Card specific functions
+    const canExecute = Vue.computed(() => {
+      return localCardData.value.data.url && localCardData.value.data.method;
+    });
+
     const validatePayload = (payload) => {
       if (!payload) return null;
       try {
@@ -266,142 +339,45 @@ export default {
     };
 
     const resetOutputs = () => {
-      localCardData.value.sockets.outputs.forEach(socket => {
+      localCardData.value.data.sockets.outputs.forEach(socket => {
         socket.value = null;
       });
     };
 
-    const executeRequest = async () => {
-      if (!canExecute.value || isProcessing.value) return;
-
-      isProcessing.value = true;
-      localCardData.value.status = 'processing';
-      resetOutputs();
-      handleCardUpdate();
-
-      try {
-        // Use input socket payload if available, otherwise use textarea payload
-        const payloadToUse = localCardData.value.sockets.inputs[0].value || localCardData.value.payload;
-        const parsedPayload = validatePayload(payloadToUse);
-
-        const result = await executeApiCall({
-          url: localCardData.value.url,
-          method: localCardData.value.method,
-          payload: parsedPayload,
-          token: localCardData.value.token
-        });
-
-        if (result.success) {
-          localCardData.value.status = 'success';
-          localCardData.value.sockets.outputs[0].value = result.data;
-          localCardData.value.sockets.outputs[1].value = null;
-        } else {
-          localCardData.value.status = 'error';
-          localCardData.value.sockets.outputs[0].value = null;
-          localCardData.value.sockets.outputs[1].value = result.error;
-        }
-
-      } catch (error) {
-        console.error('Error executing request:', error);
-        localCardData.value.status = 'error';
-        localCardData.value.sockets.outputs[0].value = null;
-        localCardData.value.sockets.outputs[1].value = {
-          message: error.message,
-          status: error.response?.status || 500
-        };
-      } finally {
-        isProcessing.value = false;
-        handleCardUpdate();
-      }
-    };
-
-    const handleCardUpdate = () => {
-      emit('update-card', Vue.toRaw(localCardData.value));
-    };
-
-    // Watch for input value changes
-    Vue.watch(
-      () => localCardData.value.sockets.inputs[0].value,
-      (newValue, oldValue) => {
-        console.log('Input socket value changed:', { newValue, oldValue });
-        
-        if (newValue !== null && newValue !== undefined) {
-          // Handle different input types
-          let formattedPayload;
-          try {
-            if (typeof newValue === 'string') {
-              // If it's already a string, try parsing it as JSON to format it
-              try {
-                const parsed = JSON.parse(newValue);
-                formattedPayload = JSON.stringify(parsed, null, 2);
-              } catch {
-                // If it's not valid JSON, use the string as-is
-                formattedPayload = newValue;
-              }
-            } else {
-              // For non-string values (objects, arrays), stringify them
-              formattedPayload = JSON.stringify(newValue, null, 2);
-            }
-            
-            console.log('Formatted payload:', formattedPayload);
-            localCardData.value.payload = formattedPayload;
-            
-            // Ensure the UI updates
-            Vue.nextTick(() => {
-              handleCardUpdate();
-              executeRequest();
-            });
-          } catch (error) {
-            console.error('Error processing payload:', error);
-            // Fallback to string conversion if all else fails
-            localCardData.value.payload = String(newValue);
-            handleCardUpdate();
-            executeRequest();
-          }
-        }
-      },
-      { immediate: true } // This ensures it runs on component mount
-    );
-
-    // Watch for trigger changes
-    Vue.watch(
-      () => localCardData.value.trigger,
-      (newValue, oldValue) => {
-        if (newValue && newValue !== oldValue) {
+    const handleInputValueChange = (newValue) => {
+      if (newValue !== null && newValue !== undefined) {
+        try {
+          let formattedPayload = typeof newValue === 'string' 
+            ? newValue 
+            : JSON.stringify(newValue, null, 2);
+          
+          localCardData.value.data.payload = formattedPayload;
+          handleCardUpdate();
           executeRequest();
+        } catch (error) {
+          console.error('Error processing payload:', error);
+          localCardData.value.data.payload = String(newValue);
+          handleCardUpdate();
         }
       }
-    );
+    };
 
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value) return;
-      
-      const updatedData = { ...localCardData.value };
-      if (newData.x !== undefined) updatedData.x = newData.x;
-      if (newData.y !== undefined) updatedData.y = newData.y;
-      if (newData.trigger !== undefined) updatedData.trigger = newData.trigger;
-      
-      localCardData.value = updatedData;
-    }, { deep: true });
-
-    // Cleanup
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
-      socketRegistry.clear();
-      connections.value.clear();
+    // Lifecycle hooks
+    Vue.onMounted(() => {
+      handleCardUpdate();
     });
+
+    Vue.onUnmounted(cleanup);
 
     return {
       localCardData,
       isProcessing,
       canExecute,
       getSocketConnections,
-      hasSocketError,
       handleSocketMount,
-      emitWithCardId,
+      handleCardUpdate,
       executeRequest,
-      handleCardUpdate
+      randomId,
     };
   }
 };

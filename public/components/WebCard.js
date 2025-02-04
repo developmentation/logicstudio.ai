@@ -1,15 +1,16 @@
 // WebCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
-import { useCanvases } from "../composables/useCanvases.js";
 import { useWeb } from "../composables/useWeb.js";
 
 import {
-  updateSocketArray,
-  createSocketUpdateEvent,
-  createSocket,
-  generateSocketId,
-} from "../utils/socketManagement/socketRemapping.js";
+  CardInitializer,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+
+import { createSocket } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "WebCard",
@@ -20,37 +21,38 @@ export default {
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
   },
+
   template: `
-    <div>
+    <div class="card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
       >
         <!-- Input Socket -->
-        <div class="absolute -left-[12px] flex flex-col gap-1" style="top: 16px;">
-          <div class="flex items-center">
-            <BaseSocket
-              type="input"
-              :socket-id="inputSocket.id"
-              :card-id="localCardData.uuid"
-              :name="inputSocket.name"
-              :value="inputSocket.value"
-              :is-connected="getSocketConnections(inputSocket.id)"
-              :has-error="hasSocketError(inputSocket.id)"
-              :zoom-level="zoomLevel"
-              @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
-              @connection-drag="$emit('connection-drag', $event)"
-              @connection-drag-end="$emit('connection-drag-end', $event)"
-              @socket-mounted="handleSocketMount($event)"
-            />
-          </div>
+        <div class="absolute -left-[12px]" style="top: 16px;">
+          <BaseSocket
+            type="input"
+            :socket-id="inputSocket.id"
+            :card-id="localCardData.uuid"
+            :name="inputSocket.name"
+            :value="inputSocket.value"
+            :is-connected="getSocketConnections(inputSocket.id)"
+            :has-error="hasSocketError(inputSocket.id)"
+            :zoom-level="zoomLevel"
+            @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+            @connection-drag="$emit('connection-drag', $event)"
+            @connection-drag-end="$emit('connection-drag-end', $event)"
+            @socket-mounted="handleSocketMount($event)"
+          />
         </div>
 
         <!-- Output Sockets -->
@@ -59,7 +61,7 @@ export default {
           style="top: 16px;"
         >
           <div 
-            v-for="(socket, index) in localCardData.sockets.outputs"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
             class="flex items-center"
             :style="{ transform: 'translateY(' + (index * 24) + 'px)' }"
@@ -68,7 +70,7 @@ export default {
               type="output"
               :socket-id="socket.id"
               :card-id="localCardData.uuid"
-              :name="'Output ' + (index + 1)"
+              :name="socket.name || 'Output ' + (index + 1)"
               :value="socket.value"
               :is-connected="getSocketConnections(socket.id)"
               :has-error="hasSocketError(socket.id)"
@@ -82,7 +84,7 @@ export default {
         </div>
 
         <!-- Content -->
-        <div class="space-y-4 text-gray-300" v-show="localCardData.display == 'default'">
+        <div class="space-y-4 text-gray-300" v-show="localCardData.ui.display === 'default'">
           <!-- Trigger Button -->
           <div class="flex justify-center mt-2">
             <button 
@@ -107,7 +109,7 @@ export default {
             
             <div class="space-y-2">
               <div 
-                v-for="(website, index) in localCardData.websites" 
+                v-for="(website, index) in localCardData.data.websites" 
                 :key="website.id"
                 class="flex items-center gap-2 p-2 rounded relative"
                 :class="{
@@ -137,24 +139,18 @@ export default {
                   @click="removeWebsite(index)"
                   @mousedown.stop
                 >×</button>
-
-
-
               </div>
 
               <div class="flex items-center justify-between">
                 <label class="flex items-center gap-2">
                   <input 
                     type="checkbox" 
-                    v-model="localCardData.useHtml" 
-                  
+                    v-model="localCardData.data.useHtml" 
                     class="form-checkbox" 
                   />
-                <span class="text-xs text-gray-400">Use HTML</span>
+                  <span class="text-xs text-gray-400">Use HTML</span>
                 </label>
               </div>
-
-
             </div>
           </div>
         </div>
@@ -163,371 +159,253 @@ export default {
   `,
 
   setup(props, { emit }) {
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
-    const currentWebsiteIndex = Vue.ref(-1);
+    // Initialize card setup utilities
+    const {
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
 
     const { loadWebContent } = useWeb();
 
-    // Initialize card data with proper socket structure
-    const initializeCardData = (data) => {
-      // First create the base data structure
-      const baseData = {
-        uuid: data.uuid,
-        name: data.name || "Web Content",
-        description: data.description || "Web Content Node",
-        type: "web",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        websites: data.websites || [],
-        status: data.status || "idle",
-        trigger: data.trigger || null,
-        useHtml: data.useHtml || false,
-        sockets: {
-          inputs: [],
-          outputs: [],
+    // Initialize local card data with proper defaults
+    const localCardData = Vue.ref(
+      CardInitializer.initializeCardData(props.cardData, {
+        name: "Web Content",
+        description: "Web Content Node",
+        defaultSockets: {
+          inputs: [{ name: "Website URLs" }],
+          outputs: []
         },
-      };
+        defaultData: {
+          websites: [],
+          useHtml: false,
+          status: "idle",
+          trigger: null
+        }
+      })
+    );
+
+    // Computed properties
+    const inputSocket = Vue.computed(() => localCardData.value.data.sockets.inputs[0]);
+
+    //----------------------------------------
+    // Card Specific Functions
+    //----------------------------------------
     
-      // Create initial input socket
-      const initialInputSocket = createSocket({
-        type: "input",
-        index: 0,
-        existingId: data?.sockets?.inputs?.[0]?.id,
-        name: "Website URLs",
-        value: data?.sockets?.inputs?.[0]?.value,
-      });
-    
-      baseData.sockets.inputs = [initialInputSocket];
-    
-      // Initialize outputs if websites exist
-      if (data.websites?.length) {
-        baseData.sockets.outputs = data.websites.map((_, index) =>
-          createSocket({
-            type: "output",
-            index,
-            existingId: data.sockets?.outputs?.[index]?.id,
-            value: data.sockets?.outputs?.[index]?.value,
-          })
-        );
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
       }
-    
-      // Emit initial socket registration
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: data.uuid,
-          oldSockets: [],
-          newSockets: [...baseData.sockets.inputs, ...baseData.sockets.outputs],
-          reindexMap: new Map([[null, initialInputSocket.id]]),
-          deletedSocketIds: [],
-          type: "input", // This covers both input and output sockets initial registration
-        })
-      );
-    
-      return baseData;
-    };
-    
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
-
-    // Socket connection tracking
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-    const hasSocketError = () => false;
-
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
-      });
     };
 
     const emitWithCardId = (eventName, event) => {
       emit(eventName, { ...event, cardId: localCardData.value.uuid });
     };
 
-    // Website management
-    const addWebsite = () => {
-      const newWebsite = {
-        id: generateSocketId(),
-        url: "",
+    const hasSocketError = () => false;
+
+    const extractUrls = (text) => {
+      const urlRegex = /https?:\/\/[^\s]+/g;
+      return text?.match(urlRegex) || [];
+    };
+
+    const updateWebsites = (urls) => {
+      // Create new websites array
+      localCardData.value.data.websites = urls.map(url => ({
+        id: `web_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        url,
         status: "idle",
-        momentUpdated: Date.now(),
-      };
+        momentUpdated: Date.now()
+      }));
 
-      localCardData.value.websites.push(newWebsite);
-
-      // Create new output socket
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      const newSocket = createSocket({
-        type: "output",
-        index: localCardData.value.websites.length - 1,
-      });
-
-      const newSockets = [...oldSockets, newSocket];
-
-      const { reindexMap, reindexedSockets } = updateSocketArray({
-        oldSockets,
-        newSockets,
-        type: "output",
-        socketRegistry,
-        connections: connections.value,
-      });
-
-      localCardData.value.sockets.outputs = reindexedSockets;
-
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: [],
+      // Update output sockets to match website count
+      localCardData.value.data.sockets.outputs = urls.map((_, index) =>
+        createSocket({
           type: "output",
+          index,
+          name: `Output ${index + 1}`,
+          value: null
         })
       );
 
+      handleCardUpdate();
+    };
+
+    const handleInputChange = (newValue) => {
+      if (newValue) {
+        const urls = extractUrls(newValue);
+        updateWebsites(urls);
+      }
+    };
+
+    const addWebsite = () => {
+      const newWebsite = {
+        id: `web_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        url: "",
+        status: "idle",
+        momentUpdated: Date.now()
+      };
+
+      localCardData.value.data.websites.push(newWebsite);
+
+      // Add corresponding output socket
+      const newSocket = createSocket({
+        type: "output",
+        index: localCardData.value.data.websites.length - 1,
+        name: `Output ${localCardData.value.data.websites.length}`
+      });
+
+      localCardData.value.data.sockets.outputs.push(newSocket);
       handleCardUpdate();
     };
 
     const removeWebsite = (index) => {
-      localCardData.value.websites.splice(index, 1);
+      localCardData.value.data.websites.splice(index, 1);
+      localCardData.value.data.sockets.outputs.splice(index, 1);
 
-      // Update sockets
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      const deletedSocket = oldSockets[index];
-      const deletedSocketIds = deletedSocket ? [deletedSocket.id] : [];
-
-      const newSockets = oldSockets.filter((_, i) => i !== index);
-
-      const { reindexMap, reindexedSockets } = updateSocketArray({
-        oldSockets,
-        newSockets,
-        type: "output",
-        deletedSocketIds,
-        socketRegistry,
-        connections: connections.value,
+      // Reindex remaining sockets
+      localCardData.value.data.sockets.outputs.forEach((socket, i) => {
+        socket.index = i;
+        socket.name = `Output ${i + 1}`;
       });
 
-      localCardData.value.sockets.outputs = reindexedSockets;
-
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds,
-          type: "output",
-        })
-      );
-
       handleCardUpdate();
     };
 
-    // Extract URLs from input text
-    const extractUrls = (text) => {
-      const urlRegex = /https?:\/\/[^\s]+/g;
-      return text.match(urlRegex) || [];
+    const processWebContent = async (response, website, index) => {
+      if (response) {
+        website.status = "complete";
+        const useSource = localCardData.value.data.useHtml ? "html" : "text";
+        let content;
+
+        if (response?.payload) {
+          content = response.payload[useSource];
+        } else if (response[useSource]) {
+          content = response[useSource];
+        } else if (typeof response === "string") {
+          content = response;
+        } else {
+          content = JSON.stringify(response);
+        }
+
+        localCardData.value.data.sockets.outputs[index].value = content;
+      } else {
+        localCardData.value.data.sockets.outputs[index].value = null;
+        website.status = "error";
+      }
     };
 
-    // Process websites
-// Add this function before processWebsites
-const processWebContent = async (response, website, index) => {
-  if (response) {
-    website.status = "complete";
-    const useSource = localCardData.value.useHtml ? "html" : "text";
-    let content;
+    const processWebsites = async () => {
+      if (isProcessing.value) return;
 
-    if (response?.payload) {
-      content = response.payload[useSource];
-    } else if (response[useSource]) {
-      content = response[useSource];
-    } else if (typeof response === "string") {
-      content = response;
-    } else {
-      content = JSON.stringify(response);
-    }
-
-    localCardData.value.sockets.outputs[index].value = content;
-  } else {
-    localCardData.value.sockets.outputs[index].value = null;
-    website.status = "error";
-  }
-};
-
-// Updated processWebsites function
-const processWebsites = async () => {
-  if (isProcessing.value) return;
-
-  isProcessing.value = true;
-  currentWebsiteIndex.value = 0;
-  localCardData.value.status = "inProgress";
-
-  try {
-    for (let i = 0; i < localCardData.value.websites.length; i++) {
-      const website = localCardData.value.websites[i];
-      if (!website.url) continue;
-
-      website.status = "inProgress";
-      currentWebsiteIndex.value = i;
-      handleCardUpdate();
+      isProcessing.value = true;
+      localCardData.value.data.status = "inProgress";
 
       try {
-        const response = await loadWebContent(website.url);
-        await processWebContent(response, website, i);
+        for (let i = 0; i < localCardData.value.data.websites.length; i++) {
+          const website = localCardData.value.data.websites[i];
+          if (!website.url) continue;
+
+          website.status = "inProgress";
+          handleCardUpdate();
+
+          try {
+            const response = await loadWebContent(website.url);
+            await processWebContent(response, website, i);
+          } catch (error) {
+            console.error(`Error loading website ${website.url}:`, error);
+            website.status = "error";
+            localCardData.value.data.sockets.outputs[i].value = null;
+          }
+
+          handleCardUpdate();
+        }
+
+        const allProcessed = localCardData.value.data.websites.every(
+          (site) => site.status === "complete" || site.status === "error"
+        );
+
+        if (allProcessed) {
+          localCardData.value.data.status = "complete";
+        }
       } catch (error) {
-        console.error(`Error loading website ${website.url}:`, error);
-        website.status = "error";
-        localCardData.value.sockets.outputs[i].value = null;
+        console.error("Error processing websites:", error);
+      } finally {
+        isProcessing.value = false;
+        handleCardUpdate();
       }
-
-      handleCardUpdate();
-    }
-
-    // Check if all websites are either complete or error
-    const allProcessed = localCardData.value.websites.every(
-      (site) => site.status === "complete" || site.status === "error"
-    );
-
-    if (allProcessed) {
-      localCardData.value.status = "complete";
-    }
-  } catch (error) {
-    console.error("Error processing websites:", error);
-  } finally {
-    isProcessing.value = false;
-    currentWebsiteIndex.value = -1;
-    handleCardUpdate();
-  }
-};
-
+    };
 
     const handleTriggerClick = () => {
       processWebsites();
     };
 
-    const handleCardUpdate = () => {
-      emit("update-card", Vue.toRaw(localCardData.value));
-    };
-
-    // Input socket for watching changes
-    const inputSocket = Vue.computed(
-      () => localCardData.value.sockets.inputs[0]
-    );
-
-    // Watch for input value changes
-   
-// Watch for input value changes
-Vue.watch(
-  () => inputSocket.value?.value,
-  (newValue) => {
-    if (newValue) {
-      const urls = extractUrls(newValue);
-
-      // Clear existing websites and create new ones
-      localCardData.value.websites = urls.map((url) => ({
-        id: generateSocketId(),
-        url,
-        status: "idle",
-        momentUpdated: Date.now(),
-      }));
-
-      // Update output sockets
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      const newSockets = urls.map((_, index) =>
-        createSocket({
-          type: "output",
-          index,
-          value: "",
-        })
-      );
-
-      const { reindexMap, reindexedSockets } = updateSocketArray({
-        oldSockets,
-        newSockets,
-        type: "output",
-        socketRegistry,
-        connections: connections.value,
-      });
-
-      localCardData.value.sockets.outputs = reindexedSockets;
-
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: oldSockets.map((s) => s.id),
-          type: "output",
-        })
-      );
-
-      handleCardUpdate();
-      processWebsites(); // Automatically start processing
-    }
-  }
-);
-
-
-    // Watch for trigger changes
-    Vue.watch(
-      () => localCardData.value.trigger,
-      (newValue, oldValue) => {
-        if (newValue && newValue !== oldValue) {
-          processWebsites();
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        if (type === 'modified' && content.old.value !== content.new.value) {
+          handleInputChange(content.new.value);
+        }
+      },
+      onOutputChange: ({ type, content }) => {
+        if (type === 'modified' && content.old.value !== content.new.value) {
+          handleCardUpdate();
         }
       }
-    );
-
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData, oldData) => {
-      if (!newData || isProcessing.value) return;
-      isProcessing.value = true;
-      
-      try {
-        // Only update specific properties that changed
-        if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-        if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
-        if (newData.trigger !== oldData?.trigger) localCardData.value.trigger = newData.trigger;
-        
-        // Only update websites if structure changed
-        if (JSON.stringify(newData.websites) !== JSON.stringify(oldData?.websites)) {
-          localCardData.value.websites = [...newData.websites];
-        }
-      } finally {
-        isProcessing.value = false;
-      }
-    }, { deep: true });
-
-    // Cleanup on unmount
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach((socket) =>
-        socket.cleanup.forEach((cleanup) => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
     });
 
-    return {
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
       localCardData,
-      inputSocket,
       isProcessing,
+      emit,
+      onTrigger: processWebsites
+    });
+
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch trigger changes
+    Vue.watch(() => props.cardData.data?.trigger, watchers.trigger);
+
+    // Lifecycle hooks
+    Vue.onMounted(() => {
+      handleCardUpdate();
+    });
+
+    Vue.onUnmounted(cleanup);
+
+    return {
+      // Core setup
+      localCardData,
+      isProcessing,
+      inputSocket,
       getSocketConnections,
       hasSocketError,
-      emitWithCardId,
       handleSocketMount,
-      addWebsite,
-      removeWebsite,
+      emitWithCardId,
+
+      // Card functions
       handleCardUpdate,
       handleTriggerClick,
-      
+      addWebsite,
+      removeWebsite,
     };
   },
 };

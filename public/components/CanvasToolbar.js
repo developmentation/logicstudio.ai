@@ -101,11 +101,11 @@ export default {
         { id: 'join', label: 'Join ✔', icon: 'pi pi-plus', type: 'join'},
         { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label ✔', icon: 'pi pi-tag', type: 'label' },
-        { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
+        { id: 'web', label: 'Web Content ✔', icon: 'pi pi-globe', type: 'web' },
         { id: 'github', label: 'GitHub', icon: 'pi pi-github', type: 'github' },
-        { id: 'pdf', label: 'PDF', icon: 'pi pi-file-pdf', type: 'pdf' },
-        { id: 'api', label: 'API', icon: 'pi pi-server', type: 'api' },
-        { id: 'transcribe', label: 'Transcribe', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
+        { id: 'pdf', label: 'PDF ✔', icon: 'pi pi-file-pdf', type: 'pdf' },
+        { id: 'api', label: 'API ✔', icon: 'pi pi-server', type: 'api' },
+        { id: 'transcribe', label: 'Transcribe  ✔', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
         { id: 'template', label: 'Tester Template ✔', icon: 'pi pi-circle', type: 'template' },
         // { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
         // { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },
