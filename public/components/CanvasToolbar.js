@@ -100,7 +100,7 @@ export default {
         { id: 'fileOutput', label: 'File Output ✔', icon: 'pi pi-download', type: 'output' },
         { id: 'join', label: 'Join ✔', icon: 'pi pi-plus', type: 'join'},
         { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
-        { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
+        { id: 'label', label: 'Label ✔', icon: 'pi pi-tag', type: 'label' },
         { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
         { id: 'github', label: 'GitHub', icon: 'pi pi-github', type: 'github' },
         { id: 'pdf', label: 'PDF', icon: 'pi pi-file-pdf', type: 'pdf' },
