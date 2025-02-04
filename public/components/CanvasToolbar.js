@@ -98,7 +98,7 @@ export default {
         { id: 'chat', label: 'Chat ✔', icon: 'pi pi-comments', type: 'chat'  },
         { id: 'fileInput', label: 'File Input ✔', icon: 'pi pi-upload', type: 'input' },
         { id: 'fileOutput', label: 'File Output ✔', icon: 'pi pi-download', type: 'output' },
-        { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
+        { id: 'join', label: 'Join ✔', icon: 'pi pi-plus', type: 'join'},
         { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
         { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
         { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
@@ -106,14 +106,9 @@ export default {
         { id: 'pdf', label: 'PDF', icon: 'pi pi-file-pdf', type: 'pdf' },
         { id: 'api', label: 'API', icon: 'pi pi-server', type: 'api' },
         { id: 'transcribe', label: 'Transcribe', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
-        { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
+        { id: 'template', label: 'Tester Template ✔', icon: 'pi pi-circle', type: 'template' },
+        // { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
         // { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },
-
-        
-        // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
-        // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
-        // { id: 'tool', label: 'Tool', icon: 'pi pi-cog', type: 'tool' },
-        { id: 'template', label: 'Template ✔', icon: 'pi pi-circle', type: 'template' },
 
       ];
   

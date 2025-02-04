@@ -441,7 +441,7 @@ export const createCardRegistry = (props) => {
 
       position = {
         x: (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value - defaultConfig.ui.width / 2,
-        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 100,
+        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 150,
       };
     }
 
