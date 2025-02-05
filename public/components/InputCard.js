@@ -378,14 +378,16 @@ export default {
         ];
 
         // Create corresponding sockets
-        const newSockets = processedFiles.map((pf) => ({
+        const currentLength = localCardData.value.data.sockets.outputs.length;
+        const newSockets = processedFiles.map((pf, idx) => ({
           ...createSocket({
             type: "output",
             value: pf.fileData,
+            index: currentLength + idx,  // Use current length as base
           }),
           name: pf.fileInfo.name,
         }));
-
+        
         localCardData.value.data.sockets.outputs = [
           ...localCardData.value.data.sockets.outputs,
           ...newSockets,
