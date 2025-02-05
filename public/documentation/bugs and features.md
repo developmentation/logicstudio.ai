@@ -9,15 +9,12 @@
 - Slow performance when there is lots of screen data-refactor to limit refreshes. (DONE)
 - Canvas overflow off to the lower right hand side. (DONE)
 - Screen glitch: Trigger, Agent, and Chat cards cause the screen to relocate. (DONE)
+- Reimporting InputCards cause the output sockets to fail because they don't have index. (DONE)
+- Error in Exporting to Word. GIves an error when crashing (Not sure how to resolve at this point, intermittent) (DONE)
+- ZIndex of selected is inconsistent (DONE)
+
 - Text card: Maintain whitespace within the component when saving. Carriage returns are lost when importing. Doesn't impact the LLM, but readability takes a hit.
-
-
-
-- ZIndex of selected is inconsistent
 - Multi select not working consistently / not working well.
-- Reimporting InputCards cause the output sockets to fail because they don't have index.
-
-- Error in Exporting to Word. GIves an error when crashing (Not sure how to resolve at this point, intermittent)
 - Pasting into an Agent card causes the sockets to reset, where as key strokes do not. (Could not reproduce)
 - Minimizing and expanding a card, which changes the UI, causes it to be recalcualted (Cound not reproduce)
 

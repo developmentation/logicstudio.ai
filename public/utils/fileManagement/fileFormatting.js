@@ -1,6 +1,6 @@
 // fileFormatting.js
+import { MarkdownConverter, DEFAULT_STYLES as DOCX_STYLES } from './formatDocxFromMarkdown.js';
 import { convertToPdf, DEFAULT_STYLES as PDF_STYLES } from './formatPdfFromMarkdown.js';
-import { convertToDocx, DEFAULT_STYLES as DOCX_STYLES } from './formatDocxFromMarkdown.js';
 
 const FORMATS = {
   markdown: { extension: 'md', mime: 'text/markdown' },
@@ -46,6 +46,7 @@ const processContent = (content) => {
   
   return processed;
 };
+
 /**
  * Create formatted file from content
  */
@@ -85,11 +86,18 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
 
       case 'docx': {
         try {
-            const doc = convertToDocx(processedContent, {
+            // Create new converter instance with merged styles
+            const converter = new MarkdownConverter({
                 ...DOCX_STYLES,
                 ...options
             });
+            
+            // Convert markdown to docx document
+            const doc = converter.convertMarkdown(processedContent);
+            
+            // Convert to blob using docx.Packer
             const blob = await docx.Packer.toBlob(doc);
+            
             return {
                 content: blob,
                 extension: 'docx',
@@ -104,7 +112,7 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
                 mimeType: FORMATS.txt.mime
             };
         }
-    }
+      }
 
       case 'pdf': {
         const pdf = new jspdf.jsPDF();
@@ -125,8 +133,6 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
     throw error;
   }
 };
-
-
 
 /**
  * Download blob as file
