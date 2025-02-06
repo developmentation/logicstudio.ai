@@ -38,7 +38,7 @@ export default {
   },
 
   template: `
-    <div class = "card">
+    <div class="card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
@@ -112,6 +112,24 @@ export default {
             />
           </div>
           
+          <!-- Break Controls -->
+          <div class="flex items-center gap-2 mt-4">
+            <button
+              @click="addBreaksFromPattern"
+              @mousedown.stop
+              class="px-2 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded whitespace-nowrap"
+            >
+              Split
+            </button>
+            <input
+              type="text"
+              v-model="breakPattern"
+              placeholder="Split by text or regex pattern"
+              class="w-full px-2 py-1 bg-gray-800 text-gray-300 rounded text-sm border border-gray-700"
+              @mousedown.stop
+            />
+          </div>
+          
           <!-- Bottom Controls -->
           <div class="flex justify-between items-center mt-4">
             <label class="flex items-center gap-2 text-xs text-gray-400">
@@ -161,9 +179,23 @@ export default {
       })
     );
 
-    // Auto-sync ref
+    // Auto-sync ref and pattern matching refs
     const autoSync = Vue.ref(true);
     const currentSegments = Vue.ref([]);
+    const breakPattern = Vue.ref("");
+    const nextBreakNumber = Vue.ref(1);
+
+    // Function to detect if a string is a valid regex
+    const isValidRegex = (pattern) => {
+      try {
+        new RegExp(pattern);
+        // Additional check to ensure it's actually a regex pattern
+        // Look for common regex features like \d, \w, [], (), *, +, etc.
+        return /[\[\]\(\)\{\}\^\$\*\+\?\\\|\.]/.test(pattern);
+      } catch (e) {
+        return false;
+      }
+    };
 
     const handleCardUpdate = () => {
       if (!isProcessing.value) {
@@ -172,42 +204,206 @@ export default {
     };
 
     // Setup socket watcher
-// Setup socket watcher
-setupSocketWatcher({
-  props,
-  localCardData,
-  isProcessing,
-  emit,
-  onInputChange: ({ type, content }) => {
-    switch (type) {
-      case "modified":
-        if (content.old.value !== content.new.value && autoSync.value) {
-          // Reset outputs first
-          localCardData.value.data.sockets.outputs = [{
-            ...localCardData.value.data.sockets.outputs[0] || createSocket({
-              type: 'output',
-              name: 'Start',
-              index: 0
-            }),
-            value: ""  // Clear the value
-          }];
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value && autoSync.value) {
+              // Reset outputs first
+              localCardData.value.data.sockets.outputs = [{
+                ...localCardData.value.data.sockets.outputs[0] || createSocket({
+                  type: 'output',
+                  name: 'Start',
+                  index: 0
+                }),
+                value: ""
+              }];
 
-          // Then sync from input
-          syncFromInput();
+              // Then sync from input
+              syncFromInput();
+            }
+            break;
         }
-        break;
-    }
-  },
-  onOutputChange: ({ type, content }) => {
-    switch (type) {
-      case "modified":
-        if (content.old.value !== content.new.value) {
-          handleCardUpdate();
+      },
+      onOutputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value) {
+              handleCardUpdate();
+            }
+            break;
         }
-        break;
-    }
-  }
-});
+      }
+    });
+
+          // Add breaks based on pattern
+    const addBreaksFromPattern = () => {
+      console.log("Adding breaks for pattern:", breakPattern.value);
+      if (!breakPattern.value) return;
+
+      const editor = document.querySelector('.text-editor');
+      if (!editor) {
+        console.error("Editor element not found");
+        return;
+      }
+
+      // Get the pure text content without HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = editor.innerHTML;
+      
+      // Get positions and lengths of existing break tags
+      const breakTags = Array.from(editor.querySelectorAll('.text-editor-tag'));
+      const existingBreaks = breakTags.map(tag => {
+        const range = document.createRange();
+        range.selectNode(tag);
+        return {
+          startOffset: getTextPosition(editor, tag),
+          length: tag.textContent.length
+        };
+      });
+
+      // Sort breaks by position for offset calculation
+      existingBreaks.sort((a, b) => a.startOffset - b.startOffset);
+
+      // Function to adjust position based on existing breaks
+      const adjustPosition = (pos) => {
+        let adjustment = 0;
+        for (const breakTag of existingBreaks) {
+          if (breakTag.startOffset < pos) {
+            adjustment += breakTag.length;
+          } else {
+            break;
+          }
+        }
+        return pos + adjustment;
+      };
+
+      // Remove break tags from temp div for clean matching
+      const tempBreakTags = Array.from(tempDiv.querySelectorAll('.text-editor-tag'));
+      tempBreakTags.forEach(tag => tag.remove());
+
+      // Get clean text content
+      const content = tempDiv.textContent;
+      
+      const isRegex = isValidRegex(breakPattern.value);
+      console.log("Is regex pattern:", isRegex);
+      
+      const pattern = isRegex
+        ? new RegExp(breakPattern.value, 'g')
+        : breakPattern.value;
+
+      // Find all matches in the clean text
+      const matches = [];
+      if (isRegex) {
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+          matches.push(match.index);
+        }
+      } else {
+        let pos = 0;
+        while ((pos = content.indexOf(pattern, pos)) !== -1) {
+          matches.push(pos);
+          pos += pattern.length;
+        }
+      }
+
+      console.log("Found matches at positions:", matches);
+
+      // Sort all positions in reverse order (from end to start)
+      const allPositions = [...matches].sort((a, b) => b - a);
+
+      console.log("Processing matches in reverse order:", allPositions);
+
+      // Insert breaks
+      let offset = 0;
+      let highestSocket = matches.length;
+      for (const pos of allPositions) {
+        let breakName;
+        if (isRegex) {
+          const matchText = content.slice(pos).match(pattern)[0];
+          breakName = matchText;
+        } else {
+          // Start numbering from the total number of matches and count down
+          breakName = `${breakPattern.value} ${highestSocket--}`;
+        }
+
+        // Adjust position based on existing break tags
+        const adjustedPos = adjustPosition(pos);
+        // Find the actual position in the editor
+        const targetPos = findActualPosition(editor, adjustedPos);
+        if (targetPos) {
+          const { node, offset: nodeOffset } = targetPos;
+          const range = document.createRange();
+          range.setStart(node, nodeOffset);
+          range.setEnd(node, nodeOffset);
+          
+          const breakSpan = document.createElement('span');
+          breakSpan.className = 'text-editor-tag';
+          breakSpan.setAttribute('contenteditable', 'false');
+          breakSpan.setAttribute('data-socket-id', `break-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+          breakSpan.setAttribute('data-break-name', breakName);
+          breakSpan.textContent = `[${breakName}]`;
+          
+          range.insertNode(breakSpan);
+        }
+      }
+
+      // Trigger update
+      const event = new Event('input', { bubbles: true });
+      editor.dispatchEvent(event);
+    };
+
+    // Helper function to find text position of an element
+    const getTextPosition = (root, element) => {
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      let pos = 0;
+      let node;
+      
+      while ((node = walker.nextNode())) {
+        if (element.contains(node)) {
+          break;
+        }
+        pos += node.textContent.length;
+      }
+      
+      return pos;
+    };
+
+    // Helper function to find the actual position in the editor
+    const findActualPosition = (editor, targetPos) => {
+      let currentPos = 0;
+      const walker = document.createTreeWalker(
+        editor,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+
+      let node;
+      while ((node = walker.nextNode())) {
+        const nodeLength = node.textContent.length;
+        if (currentPos + nodeLength > targetPos) {
+          return {
+            node,
+            offset: targetPos - currentPos
+          };
+        }
+        currentPos += nodeLength;
+      }
+
+      return null;
+    };
+    
 
     // Set up watchers
     const watchers = setupCardDataWatchers({
@@ -318,6 +514,7 @@ setupSocketWatcher({
     return {
       localCardData,
       autoSync,
+      breakPattern,
       getSocketConnections,
       handleSocketMount,
       handleCardUpdate,
@@ -326,6 +523,7 @@ setupSocketWatcher({
       handleSegmentsUpdate,
       syncFromInput,
       clearContent,
+      addBreaksFromPattern,
     };
   },
 };

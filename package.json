@@ -1,6 +1,6 @@
 {
   "name": "logicstudio-ai",
-  "version": "0.0.43",
+  "version": "0.0.44",
   "description": "An interactive no code AI agentic builder with logic and tools",
   "main": "index.js",
   "scripts": {
