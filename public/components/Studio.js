@@ -18,6 +18,7 @@ import ApiCard from "./ApiCard.js";
 import PDFCard from "./PDFCard.js";
 import TranscribeCard from "./TranscribeCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
+import CanvasSessionToolbar from "./CanvasSessionToolbar.js";
 import CanvasTemplatesToolbar from "./CanvasTemplatesToolbar.js";
 
 import ConnectionsLayer from "./ConnectionsLayer.js";
@@ -42,6 +43,7 @@ export default {
     PDFCard,
     TranscribeCard,
     CanvasToolbar,
+    CanvasSessionToolbar,
     CanvasTemplatesToolbar,
     ConnectionsLayer,
   },
@@ -122,6 +124,7 @@ export default {
         <CanvasToolbar class="z-50" @add-card="handleToolbarAction" @export-png="exportToPNG"
             @export-json="exportToJSON" @import-json="importFromJSON" @update:expanded="(val) => toolbarExpanded = val"
             @update:show-text="(val) => toolbarShowText = val" />
+        <CanvasSessionToolbar :canvases="canvases" @switch-canvas="handleSwitchCanvas" />
         <CanvasTemplatesToolbar :canvas-templates="canvasTemplates" @add-canvas="handleAddCanvas" />
 
 
@@ -417,6 +420,11 @@ export default {
       //     updateCard(structuredCard);
       //   }
       // }
+    };
+
+
+    const handleSwitchCanvas = (canvas) => {
+      activeCanvasId.value = canvas.id;
     };
 
 
@@ -790,6 +798,7 @@ const updateCard = (updates) => {
       getCardComponent,
       getConnectionStyle,
       handleToolbarAction,
+      handleSwitchCanvas,
       handleAddCanvas,
       handleConnectionClick,
       handleManualTrigger,

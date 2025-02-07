@@ -1,8 +1,8 @@
 // CanvasTemplatesToolbar.js
 export default {
-    name: "CanvasTemplatesToolbar",
+    name: "CanvasSessionToolbar",
     template: `
-      <div class="fixed right-4 top-[105px] z-50">
+      <div class="fixed right-4 top-[60px] z-50">
         <!-- Expanded State -->
         <template v-if="expanded">
           <div 
@@ -11,7 +11,7 @@ export default {
           >
             <!-- Header with close button -->
             <div class="flex items-center justify-between p-4 border-b border-gray-700">
-              <h2 class="text-white text-sm font-medium">Canvas Templates</h2>
+              <h2 class="text-white text-sm font-medium">Active Canvases</h2>
               <button 
                 class="w-8 h-8 flex items-center justify-center hover:bg-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
                 @click="toggleExpanded"
@@ -24,15 +24,15 @@ export default {
             <!-- Template List -->
             <div class="flex-1 overflow-y-auto">
               <div class="py-2">
-                <div v-for="template in canvasTemplates" :key="template.id" 
+                <div v-for="canvas in canvases" :key="canvas.id"   @click="switchCanvas(canvas)"
                   class="flex items-center justify-between px-4 py-2 hover:bg-gray-700 group transition-colors duration-200">
-                  <span class="text-white text-sm">{{ template.name }}</span>
+                  <span class="text-white text-sm">{{ canvas.name }}</span>
                   <button
                     class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors duration-200"
-                    @click="addCanvas(template)"
+                    @click="switchCanvas(canvas)"
                     
                   >
-                    <i class="pi pi-plus"></i>
+                    <i class="pi pi-eye"></i>
                   </button>
                 </div>
               </div>
@@ -47,14 +47,14 @@ export default {
             @click="toggleExpanded"
              
           >
-            <i class="pi pi-book"></i>
+            <i class="pi pi-list"></i>
           </button>
         </template>
       </div>
     `,
     
     props: {
-      canvasTemplates: {
+      canvases: {
         type: Array,
         required: true
       }
@@ -67,22 +67,15 @@ export default {
         expanded.value = !expanded.value;
       };
   
-      const addCanvas = (template) => {
-        // Create a new canvas from the template
-        const newCanvas = {
-          ...template,
-          id: crypto.randomUUID(), // Generate a new unique ID
-          name: `${template.name}` // Optionally modify the name
-        };
-  
-        emit('add-canvas', newCanvas);
+      const switchCanvas = (canvas) => {
+        emit('switch-canvas', canvas);
         expanded.value = false; // Close the toolbar after adding
       };
   
       return {
         expanded,
         toggleExpanded,
-        addCanvas
+        switchCanvas
       };
     }
   };

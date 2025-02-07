@@ -109,7 +109,7 @@ export default {
 
       <!-- Resize Handle Height -->
       <div
-        class="absolute bottom-0 left-0 w-full h-1 cursor-ns-resize hover:bg-blue-500 hover:opacity-50"
+        class="absolute bottom-0 left-0 pt-1 mt-1 w-full h-2 cursor-ns-resize hover:bg-blue-500 hover:opacity-50 z-index:50"
         @mousedown.stop="event => startResize(event, 'y')"
         @touchstart.stop.passive="event => startResize(event, 'y')"
       ></div>
