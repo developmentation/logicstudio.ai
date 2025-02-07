@@ -36,7 +36,8 @@ export default {
         position: 'absolute',
         transform: \`translate3d(\${localCardData.ui.x}px, \${localCardData.ui.y}px, 0)\`,
         zIndex: isDragging ? 1000 : (isSelected ? Z_INDEX_LAYERS.SELECTED : zIndex),
-        width: (localCardData.ui.width || 300) + 'px'
+        width: (localCardData.ui.width || 300) + 'px',
+        minHeight: (localCardData.ui.height ) + 'px'
     }"
     @click="handleCardClick"
     @mousedown="handleDragStart"
@@ -97,13 +98,23 @@ export default {
         <slot></slot>
       </div>
 
-      <!-- Resize Handle -->
+      <!-- Resize Handle Width -->
       <div
         class="absolute top-0 right-0 w-1 h-full cursor-ew-resize hover:bg-blue-500 hover:opacity-50"
-        @mousedown.stop="startResize"
-        @touchstart.stop.passive="startResize"
+
+
+        @mousedown.stop="event => startResize(event, 'x')"
+        @touchstart.stop.passive="event => startResize(event, 'x')"
       ></div>
-    </div>
+
+      <!-- Resize Handle Height -->
+      <div
+        class="absolute bottom-0 left-0 w-full h-1 cursor-ns-resize hover:bg-blue-500 hover:opacity-50"
+        @mousedown.stop="event => startResize(event, 'y')"
+        @touchstart.stop.passive="event => startResize(event, 'y')"
+      ></div>
+
+      </div>
   `,
   setup(props, { emit }) {
 
@@ -131,23 +142,38 @@ export default {
     const descriptionInput = Vue.ref(null);
     const wasDragging = Vue.ref(false);
 
-    const startResize = (event) => {
+    const startResize = (event, direction) => {
       const isTouch = event.type === "touchstart";
       if (!isTouch && event.button !== 0) return;
 
       isResizing.value = true;
+
+  
       dragStart.x = isTouch ? event.touches[0].clientX : event.clientX;
+      dragStart.y = isTouch ? event.touches[0].clientY : event.clientY;
       
       const handleMove = (e) => {
         if (!isResizing.value) return;
         
-        const currentX = isTouch ? e.touches[0].clientX : e.clientX;
-        const dx = (currentX - dragStart.x) / props.zoomLevel;
-        
-        const newWidth = Math.max(200, (localCardData.ui.width || 300) + dx);
-        localCardData.ui.width = newWidth;
-        
-        dragStart.x = currentX;
+        if(direction == 'x')
+          {
+            const currentX = isTouch ? e.touches[0].clientX : e.clientX;
+            const dx = (currentX - dragStart.x) / props.zoomLevel;
+            const newWidth = Math.max(200, (localCardData.ui.width || 300) + dx);
+            localCardData.ui.width = newWidth;
+            dragStart.x = currentX;
+  
+          }
+    
+          if(direction == 'y')
+          {
+
+            const currentY = isTouch ? e.touches[0].clientY : e.clientY;
+            const dy = (currentY - dragStart.y) / props.zoomLevel;
+            const newHeight = Math.max(200, (localCardData.ui.height || 150) + dy);
+            localCardData.ui.height = newHeight;
+            dragStart.y = currentY;
+          }
         
         emit("update-card", { ...localCardData });
       };

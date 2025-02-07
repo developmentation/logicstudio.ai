@@ -237,6 +237,9 @@ export default {
 
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+    
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
     Vue.onMounted(() => {
       console.log("ModelCard mounted, emitting initial state");

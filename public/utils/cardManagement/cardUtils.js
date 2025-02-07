@@ -252,6 +252,13 @@ class CardWatcherManager {
     }
   }
 
+  updateHeight(newHeight) {
+    if (newHeight !== undefined && !this.isProcessing.value) {
+      this.localCardData.value.ui.height = newHeight;
+      this.emit('update-card', Vue.toRaw(this.localCardData.value));
+    }
+  }
+
   updateTrigger(newTrigger, oldTrigger) {
     if (newTrigger !== oldTrigger && newTrigger !== null && !this.isProcessing.value) {
       this.localCardData.value.data.trigger = newTrigger;
@@ -270,6 +277,7 @@ class CardWatcherManager {
       },
       display: this.updateDisplay.bind(this),
       width: this.updateWidth.bind(this),
+      height: this.updateHeight.bind(this),
       trigger: this.updateTrigger.bind(this)
     };
   }

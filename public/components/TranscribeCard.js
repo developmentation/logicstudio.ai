@@ -278,6 +278,9 @@ export default {
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
     // Card-specific computed properties
     const buttonClass = Vue.computed(() => {
       if (isProcessing.value) {

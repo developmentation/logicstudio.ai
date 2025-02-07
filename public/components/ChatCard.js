@@ -127,7 +127,11 @@ export default {
 
         <!-- Chat History -->
         <div class="mt-4 space-y-2">
-          <div ref="chatContainer" class="w-full h-[300px] bg-gray-900 rounded overflow-y-auto p-2" @mousedown.stop @wheel.stop>
+          <div ref="chatContainer" 
+          class="w-full   bg-gray-900 rounded overflow-y-auto p-2" 
+          :style="{height: \`calc(\${localCardData.ui.height}px - 180px)\`}"
+          
+          @mousedown.stop @wheel.stop>
             <div v-for="(message, index) in localCardData.data.messageHistory" :key="index" class="mb-2">
               <div v-if="message.role === 'system'" 
                 class="flex items-start justify-start mb-2 relative group">
@@ -335,6 +339,8 @@ const syncInputSocketToMessageHistory = (socket) => {
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
     // Session status watcher
     const sessionStatus = Vue.computed(() => {

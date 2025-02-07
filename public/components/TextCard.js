@@ -104,6 +104,7 @@ export default {
           <div class="space-y-1">
             <TextEditor
               v-model="localCardData.data.content"
+              :height =  "localCardData.ui.height - 180"
               placeholder="Enter text with break points..."
               :existing-breaks="localCardData.data.sockets.outputs"
               @break-update="handleBreakUpdate"
@@ -424,6 +425,9 @@ export default {
 
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
     // Card-specific functions
     const syncFromInput = () => {

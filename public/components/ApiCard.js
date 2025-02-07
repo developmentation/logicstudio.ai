@@ -323,6 +323,7 @@ export default {
 
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
     Vue.watch(() => props.cardData.data?.trigger, watchers.trigger);
 
     // API Card specific functions

@@ -384,6 +384,9 @@ export default {
     // Watch trigger changes
     Vue.watch(() => props.cardData.data?.trigger, watchers.trigger);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
     // Lifecycle hooks
     Vue.onMounted(() => {
       handleCardUpdate();

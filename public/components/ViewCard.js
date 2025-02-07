@@ -91,7 +91,9 @@ export default {
           v-else-if="isJsonContent" 
           ref="editableContent"
           contenteditable="true" 
-          class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto text-gray-300 whitespace-pre-wrap font-mono cursor-text"
+          class="bg-[#12141a] border border-gray-800 rounded-lg p-4 overflow-y-auto text-gray-300 whitespace-pre-wrap font-mono cursor-text"
+            :style="{height: \`calc(\${localCardData.ui.height}px - 180px)\`}"
+
           @mousedown.stop
           @wheel.stop
           :key="contentKey+'JSON'"
@@ -102,7 +104,9 @@ export default {
           v-else 
           ref="editableContent"
           contenteditable="true"
-          class="bg-[#12141a] border border-gray-800 rounded-lg p-4 max-h-[400px] overflow-y-auto markdown-dark cursor-text"
+          class="bg-[#12141a] border border-gray-800 rounded-lg p-4   overflow-y-auto markdown-dark cursor-text"
+          :style="{height: \`calc(\${localCardData.ui.height}px - 180px)\`}"
+
           @mousedown.stop
           @wheel.stop
           :key="contentKey+'Markdown'"
@@ -188,6 +192,9 @@ export default {
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
 
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
 
     //Card Specficic Functions

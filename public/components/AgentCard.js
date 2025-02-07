@@ -607,6 +607,9 @@ export default {
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
     // Message watchers
     Vue.watch(sessionStatus, (newValue) => {
       localCardData.value.data.status = newValue;

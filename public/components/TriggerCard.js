@@ -233,6 +233,9 @@ export default {
     Vue.watch(() => props.cardData.ui?.display, watchers.display);
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
     // Watch for status changes in sequence cards
     Vue.watch(
       () => props.activeCards.map((card) => ({

@@ -241,6 +241,9 @@ export default {
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
     // Update minimum height based on socket count
     const updateContentMinHeight = () => {
       contentMinHeight.value = 60 + (localCardData.value.data.sockets.outputs.length * 36);

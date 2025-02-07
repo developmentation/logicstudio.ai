@@ -79,7 +79,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 200,
+        height: 600,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -158,7 +158,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 150,
+        height: 400,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -187,7 +187,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 150,
+        height: 400,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -272,7 +272,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 150,
+        height: 200,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -293,7 +293,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 250,
+        height: 350,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -315,7 +315,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 500,
-        height: 250,
+        height: 400,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -336,7 +336,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 250,
+        height: 550,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -399,7 +399,7 @@ export const createCardRegistry = (props) => {
         x: 0,
         y: 0,
         width: 300,
-        height: 150,
+        height: 350,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
@@ -441,7 +441,7 @@ export const createCardRegistry = (props) => {
 
       position = {
         x: (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value - defaultConfig.ui.width / 2,
-        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 - 150,
+        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 ,
       };
     }
 

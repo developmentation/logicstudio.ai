@@ -7,6 +7,10 @@ export default {
         type: String,
         default: "",
       },
+      height: {
+        type: Number,
+        default: 200,
+      },
       placeholder: {
         type: String,
         default: "Enter text...",
@@ -42,6 +46,7 @@ export default {
         @click.stop="updateLastCursorPosition"
         @wheel.stop="handleWheel"
         spellcheck="false"
+        :style="{height: calculatedHeight + 'px'}"
       ></div>
       <div class="text-editor-input-container">
       <button 
@@ -73,6 +78,8 @@ export default {
       const lastText = Vue.ref(props.modelValue || "");
       const nextBreakNumber = Vue.ref(1);
       const breakIdMap = Vue.reactive(new Map());
+
+      const calculatedHeight = Vue.computed(()=>{return props.height})
       let isProcessing = false;
   
       const generateBreakId = () => {
@@ -679,7 +686,8 @@ export default {
         handleDragOver,
         handleDrop,
         handleDragEnd,
-        handleWheel
+        handleWheel,
+        calculatedHeight
       };
     }
 }

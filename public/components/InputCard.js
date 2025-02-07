@@ -298,6 +298,9 @@ export default {
 
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
+    
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
     // Set the minimum height of the card based on number of files
     const contentMinHeight = Vue.computed(() => 
@@ -387,7 +390,7 @@ export default {
           }),
           name: pf.fileInfo.name,
         }));
-        
+
         localCardData.value.data.sockets.outputs = [
           ...localCardData.value.data.sockets.outputs,
           ...newSockets,

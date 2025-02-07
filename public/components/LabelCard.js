@@ -164,6 +164,11 @@ export default {
     // Watch width changes
     Vue.watch(() => props.cardData.ui?.width, watchers.width);
 
+    
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
+    
     // Card specific functions
     const updateTitle = () => {
       if (isProcessing.value) return;
