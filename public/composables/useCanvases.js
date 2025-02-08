@@ -424,6 +424,7 @@ export const useCanvases = () => {
 
   const templateNames = [
     // Add more template names here
+    'Canadian News Analysis',
     'Hot Topics Book Generator',
     'Weather Forecast and Heat Loss Calculation'
   ];
@@ -633,6 +634,7 @@ Vue.watch(
     // Connection Management
     createConnection: socketConnections.createConnection,
     removeConnection: socketConnections.removeConnection,
+    removeConnectionBySourceTarget: socketConnections.removeConnectionBySourceTarget,
     drawSpline: socketConnections.drawSpline,
     updateConnections: socketConnections.updateConnections,
 

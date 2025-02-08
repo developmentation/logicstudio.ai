@@ -3,7 +3,7 @@
 import { useCanvases } from "../composables/useCanvases.js";
 import ModelCard from "./ModelCard.js";
 import TriggerCard from "./TriggerCard.js";
-import AgentCard from "./AgentCard.js";
+import AgentCard from "./AgentCard (Beast Mode).js";
 import TextCard from "./TextCard.js";
 import ChatCard from "./ChatCard.js";
 import InputCard from "./InputCard.js";
@@ -191,6 +191,10 @@ export default {
                         @connection-drag-start="handleConnectionDragStart" 
                         @connection-drag="handleConnectionDrag"
                         @connection-drag-end="handleConnectionDragEnd" 
+                        @connection-create="createConnection" 
+                        @connection-remove="removeConnection" 
+                        @connection-remove-by-source-target="removeConnectionBySourceTarget" 
+
                         @close-card="removeCard"
                         @clone-card="cloneCard" 
                         @manual-trigger="handleManualTrigger"
@@ -248,7 +252,10 @@ export default {
 
       //Connections management
       createConnection,
+      
       removeConnection,
+      removeConnectionBySourceTarget,
+
       socketRegistry,
       socketConnections,
       updateConnections,
@@ -823,7 +830,9 @@ const updateCard = (updates) => {
       handleConnectionDragStart,
       handleConnectionDrag,
       handleConnectionDragEnd,
-
+      createConnection,
+      removeConnection,
+      removeConnectionBySourceTarget,
 
       handleDragStartCard,
       handleDragCard,

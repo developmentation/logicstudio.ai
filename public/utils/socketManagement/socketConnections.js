@@ -280,6 +280,7 @@ export const createSocketConnections = (props) => {
     onConnectionCreated?.(newConnection);
     return newConnection.id;
   };
+
   const removeConnection = (connectionId) => {
     const index = connections.value.findIndex(
       (conn) => conn.id === connectionId
@@ -292,6 +293,23 @@ export const createSocketConnections = (props) => {
 
     return true;
   };
+
+  const removeConnectionBySourceTarget = (details) => {
+    const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } = details;
+    
+    const connectionIndex = connections.value.findIndex(conn => 
+      conn.sourceCardId === sourceCardId &&
+      conn.sourceSocketId === sourceSocketId &&
+      conn.targetCardId === targetCardId &&
+      conn.targetSocketId === targetSocketId
+    );
+  
+    if (connectionIndex === -1) return false;
+  
+    const connection = connections.value[connectionIndex];
+    return removeConnection(connection.id);
+  };
+
 
   const getSocketValue = (cardId, socketId) => {
     const socket = findSocket(cardId, socketId);
@@ -695,6 +713,7 @@ const cleanupSocketConnections = (socketId) => {
     // Core functions
     createConnection,
     removeConnection,
+    removeConnectionBySourceTarget,
     propagateValue,
     activateConnection,
     cleanupCardConnections,

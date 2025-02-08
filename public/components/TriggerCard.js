@@ -110,10 +110,12 @@ export default {
                 class="flex items-center gap-2 p-2 rounded relative transition-all duration-200"
                 :class="{
                   'bg-gray-900': getCardStatus(item.cardId) === 'idle',
-                  'bg-yellow-500/80 animate-pulse': getCardStatus(item.cardId) === 'inProgress',
+                  'bg-yellow-500/80 animate-pulse': getCardStatus(item.cardId) === 'inProgress' || getCardStatus(item.cardId) === 'beastMode-inProgress',
+                  'bg-blue-500/80': getCardStatus(item.cardId) === 'complete-interim',
                   'bg-green-500/80': getCardStatus(item.cardId) === 'complete',
                   'border border-red-500': item.errorCount > 0
                 }"
+
               >
                 <span class="text-xs text-gray-400 w-6">{{ index + 1 }}.</span>
                 <select
@@ -240,7 +242,7 @@ export default {
     Vue.watch(
       () => props.activeCards.map((card) => ({
         id: card.uuid,
-        status: card.data.status // Changed from card.status to card.data.status
+        status: card.data.status
       })),
       () => {
         if (isRunning.value && hasSequence.value && 
@@ -250,7 +252,6 @@ export default {
       },
       { deep: true }
     );
-    
 
     // Lifecycle hooks
     Vue.onMounted(() => {
@@ -401,8 +402,7 @@ export default {
     };
 
     const processSequence = () => {
-      if (isTransitioning.value) return;
-      
+
       // Add additional guard against processing while sequence is running
       const currentItem = currentSequenceIndex.value >= 0 ? 
         localCardData.value.data.sequence[currentSequenceIndex.value] : null;
@@ -519,51 +519,80 @@ export default {
     };
 
 // Update handleCardStatusChange to check data.status
+
+// In TriggerCard.js
+// Update handleCardStatusChange
+// In TriggerCard.js
 const handleCardStatusChange = () => {
-  // Guard against processing while transitioning
   if (isTransitioning.value) {
     return;
   }
 
   const currentItem = localCardData.value.data.sequence[currentSequenceIndex.value];
-  const currentCard = props.activeCards.find(
-    (card) => card.uuid === currentItem?.cardId
-  );
+  if (!currentItem) {
+    console.warn('No current sequence item found');
+    return;
+  }
 
-  // Handle card not existing anymore
+  const currentCard = props.activeCards.find(card => card.uuid === currentItem.cardId);
   if (!currentCard) {
+    console.log('Current card not found, moving to next');
     const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
     if (nextIndex !== -1) {
-      isTransitioning.value = true;
-      currentSequenceIndex.value = nextIndex;
-      // Add delay before triggering next card
-      setTimeout(() => {
-        triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
-        isTransitioning.value = false;
-      }, 250); // Add small delay between triggers
+      moveToNextCard(nextIndex);
     } else {
       completeSequence();
     }
     return;
   }
 
-  // Only proceed if current card's status is 'complete' or 'error'
-  if (currentCard.data.status === 'complete') {
-    const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
-    if (nextIndex !== -1) {
-      isTransitioning.value = true;
-      currentSequenceIndex.value = nextIndex;
-      // Add delay before triggering next card
-      setTimeout(() => {
-        triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
-        isTransitioning.value = false;
-      }, 250); // Add small delay between triggers
-    } else {
-      completeSequence();
-    }
-  } else if (currentCard.data.status === 'error') {
-    retryCard(currentCard.uuid, currentSequenceIndex.value);
+  switch (currentCard.data.status) {
+    case 'complete':
+      console.log('Card fully completed, moving to next');
+      const nextIndex = findNextValidSequenceItem(currentSequenceIndex.value);
+      if (nextIndex !== -1) {
+        moveToNextCard(nextIndex);
+      } else {
+        completeSequence();
+      }
+      break;
+
+    case 'complete-interim':
+      console.log('Card completed interim step, waiting for full completion');
+      break;
+
+    case 'error':
+      console.log('Card error, attempting retry');
+      retryCard(currentCard.uuid, currentSequenceIndex.value);
+      break;
+
+    case 'beastMode':
+    case 'beastMode-inProgress':
+      console.log('Card in beast mode, waiting for completion');
+      break;
+
+    case 'inProgress':
+      console.log('Card in progress, waiting for completion');
+      break;
+
+    case 'idle':
+      console.log('Card idle, monitoring for changes');
+      break;
+
+    default:
+      console.warn('Unknown card status:', currentCard.data.status);
+      break;
   }
+};
+
+// Helper function to handle card transitions
+const moveToNextCard = (nextIndex) => {
+  isTransitioning.value = true;
+  currentSequenceIndex.value = nextIndex;
+  setTimeout(() => {
+    triggerCard(localCardData.value.data.sequence[nextIndex].cardId);
+    isTransitioning.value = false;
+  }, 250);
 };
 
 
