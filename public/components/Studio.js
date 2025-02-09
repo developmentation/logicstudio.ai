@@ -233,6 +233,7 @@ export default {
       nearestSocket,
       activeConnections,
       activateConnection,
+      setupViewportWatchers,
 
       activeCanvasId,
       activeCanvasIndex,
@@ -317,6 +318,9 @@ export default {
     const initialized = Vue.ref(false);
 
     const panOffset = Vue.reactive({ x: 0, y: 0 });
+
+    const { updateViewportScroll } = setupViewportWatchers();
+
 
     Vue.onMounted(() => {
       // Add keyboard event listener
@@ -640,6 +644,9 @@ const updateCard = (updates) => {
       if (canvasRef.value) {
         panOffset.x = canvasRef.value.scrollLeft;
         panOffset.y = canvasRef.value.scrollTop;
+
+        // Update viewport state (new functionality)
+        updateViewportScroll();
       }
     }, 16);
 

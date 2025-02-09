@@ -583,6 +583,50 @@ Vue.watch(
   }
 );
 
+
+const setupViewportWatchers = () => {
+  // Rename to updateViewportScroll to avoid conflicts
+  const updateViewportScroll = () => {
+    if (!canvasRef.value || !activeCanvas.value) return;
+    
+    activeCanvas.value.viewport = {
+      ...activeCanvas.value.viewport,
+      scrollLeft: canvasRef.value.scrollLeft,
+      scrollTop: canvasRef.value.scrollTop
+    };
+  };
+
+  // Watch zoom level changes
+  Vue.watch(zoomLevel, (newZoom) => {
+    if (!activeCanvas.value) return;
+    
+    activeCanvas.value.viewport = {
+      ...activeCanvas.value.viewport,
+      zoomLevel: newZoom
+    };
+  });
+
+  // Watch active canvas changes to restore viewport
+  Vue.watch(activeCanvasId, () => {
+    Vue.nextTick(() => {
+      if (!activeCanvas.value?.viewport || !canvasRef.value) return;
+      
+      const { zoomLevel: savedZoom, scrollLeft, scrollTop } = activeCanvas.value.viewport;
+      
+      // Restore zoom
+      zoomLevel.value = savedZoom;
+      
+      // Restore scroll position
+      canvasRef.value.scrollLeft = scrollLeft;
+      canvasRef.value.scrollTop = scrollTop;
+    });
+  });
+
+  return { updateViewportScroll };
+};
+
+
+
   // Comprehensive return statement:
   return {
     //Templates
@@ -604,6 +648,7 @@ Vue.watch(
     isOverBackground,
     zoomLevel,
     panBackground,
+    setupViewportWatchers,
 
     // Selection State
     selectedCardIds,

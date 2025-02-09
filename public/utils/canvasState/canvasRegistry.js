@@ -24,8 +24,8 @@ export const createCanvasRegistry = (props) => {
       lastModified: Date.now(),
       viewport: {
         zoomLevel: 1,
-        centerX: 0,
-        centerY: 0,
+        scrollLeft: 4000, // Center of 8000x8000
+        scrollTop: 4000,  // Center of 8000x8000
       },
     };
   
@@ -34,7 +34,6 @@ export const createCanvasRegistry = (props) => {
     activeCanvasId.value = canvas.id;
     return canvas.id;
   };
-  
 
   const removeCanvas = (canvasId) => {
     const index = canvases.value.findIndex((c) => c.id === canvasId);
@@ -60,22 +59,25 @@ export const createCanvasRegistry = (props) => {
 
   // Export/Import
   const exportCanvas = (canvasId = activeCanvasId.value) => {
-    const canvas =activeCanvas.value;
+    const canvas = activeCanvas.value;
     if (!canvas) return null;
-
-    console.log("exportCanvas", JSON.parse(JSON.stringify(activeCanvas.value)))
-
+  
     return {
       id: canvas.id,
       name: canvas.name,
       cards: canvas.cards,
       connections: canvas.connections,
-      viewport: canvas.viewport,
+      viewport: {
+        zoomLevel: canvas.viewport.zoomLevel,
+        scrollLeft: canvas.viewport.scrollLeft,
+        scrollTop: canvas.viewport.scrollTop
+      },
       created: canvas.created,
       lastModified: canvas.lastModified,
-      version: "1.0", //Could load this fromt he configs
+      version: "1.0"
     };
   };
+  
 
   //Clone and append the current active canvas.
   const cloneCanvas = ()=>{
@@ -88,28 +90,26 @@ export const createCanvasRegistry = (props) => {
   }
 
   const importCanvas = (canvasData) => {
-    console.log("Import Data", canvasData)
     const canvas = {
-        id:  uuidv4(), //Always assign an imported canvas a fresh UUID so they don't conflict if there are multiple instances canvasData.id ||
-        name: canvasData.name || "Imported Canvas",
-        cards: canvasData.cards || [],
-        connections: canvasData.connections || [],
-        viewport: canvasData.viewport || {
-            zoomLevel: 1,
-            centerX: 0,
-            centerY: 0,
-        },
-        created: canvasData.created || Date.now(),
-        lastModified: Date.now(),
+      id: uuidv4(),
+      name: canvasData.name || "Imported Canvas",
+      cards: canvasData.cards || [],
+      connections: canvasData.connections || [],
+      viewport: {
+        zoomLevel: canvasData.viewport?.zoomLevel || 1,
+        scrollLeft: canvasData.viewport?.scrollLeft || 4000,
+        scrollTop: canvasData.viewport?.scrollTop || 4000
+      },
+      created: canvasData.created || Date.now(),
+      lastModified: Date.now(),
     };
-
-    // Add the new canvas to the array
+  
     canvases.value = [...canvases.value, canvas];
-    
-    // IMPORTANT: Set this as the active canvas
     activeCanvasId.value = canvas.id;
     return canvas.id;
-};
+  };
+
+  
 
   return {
     // Core functionality
