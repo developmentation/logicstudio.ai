@@ -208,8 +208,8 @@ export const createCardRegistry = (props) => {
         display: "default",
         x: 0,
         y: 0,
-        width: 300,
-        height: 250,
+        width: 450,
+        height: 450,
         zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
       data: {
