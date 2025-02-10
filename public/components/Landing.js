@@ -78,12 +78,12 @@ export default {
        <section class="py-24 bg-gray-800">
           <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
             <div class="flex flex-col items-center gap-6 p-6 bg-gray-900 rounded-xl border border-gray-700 hover:border-emerald-500/30 transition-all">
-              <!--<img 
+<img 
                 :src="albertaLogoRef" 
                 alt="Alberta Logo" 
                 class="h-12 w-auto opacity-90"
-              />-->
-              <h2 class="text-3xl font-bold text-white">Built in Alberta</h2>
+              />
+              <h2 class="text-3xl font-bold text-white">An Open Source Solution from the Government of Alberta</h2>
               <span class="text-gray-400 text-lg">Let's get building.</span>
             </div>
           </div>
@@ -188,13 +188,13 @@ export default {
                 <p class="text-gray-400 text-sm mt-2">Join the discussion</p>
               </a>
           -->
-              <a href="https://github.com/developmentation/logicstudio.ai" target="_blank" 
+              <a href="https://github.com/GovAlta" target="_blank" 
                  class="flex flex-col items-center p-6 bg-gray-900 rounded-xl border border-gray-800 hover:border-emerald-500/30 transition-all">
                 <i class="pi pi-github text-3xl text-emerald-500 mb-4"></i>
                 <h3 class="text-white font-semibold">GitHub</h3>
                 <p class="text-gray-400 text-sm mt-2">Contribute & collaborate</p>
               </a>
-              <a href="https://x.com/janakalford" target="_blank" 
+              <a href="https://x.com/YourAlberta" target="_blank" 
                  class="flex flex-col items-center p-6 bg-gray-900 rounded-xl border border-gray-800 hover:border-emerald-500/30 transition-all">
                 <i class="pi pi-twitter text-3xl text-emerald-500 mb-4"></i>
                 <h3 class="text-white font-semibold">X</h3>
