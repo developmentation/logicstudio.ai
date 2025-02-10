@@ -4,7 +4,7 @@ import router from './router/index.js';
 
 console.log(Vue.version);
 
-// Create the Vue app and use the router
+// // Create the Vue app and use the router
 const app = Vue.createApp(App);
 
 app.use(router);
