@@ -1,6 +1,6 @@
 {
   "name": "logicstudio-ai",
-  "version": "0.0.54",
+  "version": "0.0.55",
   "description": "An interactive no code AI agentic builder with logic and tools",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,7 @@
     "studio",
     "MIT"
   ],
-  "author": "Janak Alford",
+  "author": "Janak Alford - The Government of Alberta",
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
