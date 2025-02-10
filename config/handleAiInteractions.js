@@ -83,17 +83,22 @@ const handlePrompt = async (promptConfig, sendToClient) => {
       apiEndpoint: modelConfig.apiEndpoint,
     });
 
-    
+    //Create the prompt object to pass forward to the function
+    let promptPayload =       {
+      model: modelConfig.model,
+      messages,
+      temperature: Math.max(0, Math.min(1, parseFloat(temperature) || 0.5)),
+      stream: true,
+    }
+
+    //Handle model specific limitations
+    if(modelConfig.model == 'o3-mini-2025-01-31') delete promptPayload.temperature;
+
     // Handle provider-specific prompts
     const responseStream = await handleProviderPrompt(
       client,
       modelConfig.provider,
-      {
-        model: modelConfig.model,
-        messages,
-        temperature: Math.max(0, Math.min(1, parseFloat(temperature) || 0.5)),
-        stream: true,
-      }
+      promptPayload
     );
 
     // Process the response stream

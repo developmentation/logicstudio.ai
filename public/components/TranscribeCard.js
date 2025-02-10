@@ -3,6 +3,12 @@ import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import { useTranscripts } from "../composables/useTranscripts.js";
 import {
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+import {
   updateSocketArray,
   createSocketUpdateEvent,
   createSocket,
@@ -17,14 +23,17 @@ export default {
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false }
   },
+  
   template: `
-    <div>
+    <div class="card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
@@ -34,14 +43,14 @@ export default {
         <div class="absolute -left-[12px]" style="top: 16px;">
           <BaseSocket
             type="input"
-            :socket-id="localCardData.sockets.inputs[0].id"
+            :socket-id="localCardData.data.sockets.inputs[0].id"
             :card-id="localCardData.uuid"
             name="Trigger"
-            :value="localCardData.sockets.inputs[0].value"
-            :is-connected="getSocketConnections(localCardData.sockets.inputs[0].id)"
+            :value="localCardData.data.sockets.inputs[0].value"
+            :is-connected="getSocketConnections(localCardData.data.sockets.inputs[0].id)"
             :has-error="false"
             :zoom-level="zoomLevel"
-            @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+            @connection-drag-start="$emit('connection-drag-start', $event)"
             @connection-drag="$emit('connection-drag', $event)"
             @connection-drag-end="$emit('connection-drag-end', $event)"
             @socket-mounted="handleSocketMount($event)"
@@ -54,7 +63,7 @@ export default {
           style="top: 16px;"
         >
           <div 
-            v-for="(socket, index) in localCardData.sockets.outputs"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
             class="flex items-center justify-end"
           >
@@ -67,7 +76,7 @@ export default {
               :is-connected="getSocketConnections(socket.id)"
               :has-error="false"
               :zoom-level="zoomLevel"
-              @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
               @connection-drag="$emit('connection-drag', $event)"
               @connection-drag-end="$emit('connection-drag-end', $event)"
               @socket-mounted="handleSocketMount($event)"
@@ -76,9 +85,9 @@ export default {
         </div>
 
         <!-- Content -->
-        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.display == 'default'">
+        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.ui.display === 'default'">
           <!-- File Upload Area (when no file is selected) -->
-          <div v-if="!localCardData.currentFile">
+          <div v-if="!localCardData.data.currentFile">
             <div 
               class="flex justify-center items-center border-2 border-dashed border-gray-600 rounded-lg p-4 cursor-pointer"
               @click.stop="triggerFileInput"
@@ -106,11 +115,11 @@ export default {
             <!-- File Info -->
             <div class="flex items-center justify-between bg-gray-800 p-2 rounded">
               <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-400">{{ localCardData.currentFile.name }}</span>
+                <span class="text-xs text-gray-400">{{ localCardData.data.currentFile.name }}</span>
                 <span 
-                  v-if="localCardData.status === 'error'" 
+                  v-if="localCardData.data.status === 'error'" 
                   class="text-xs text-red-500"
-                >{{ localCardData.error }}</span>
+                >{{ localCardData.data.error }}</span>
               </div>
               <button 
                 class="text-xs text-gray-400 hover:text-white"
@@ -124,32 +133,32 @@ export default {
             <!-- Progress Bar (during processing) -->
             <div v-if="isProcessing" class="space-y-2">
               <div class="flex justify-between text-xs text-gray-400">
-                <span>{{ localCardData.status === 'uploading' ? 'Uploading' : 'Transcribing' }}...</span>
-                <span>{{ localCardData.progress }}%</span>
+                <span>{{ localCardData.data.status === 'uploading' ? 'Uploading' : 'Transcribing' }}...</span>
+                <span>{{ localCardData.data.progress }}%</span>
               </div>
               <div class="w-full bg-gray-700 rounded-full h-2">
                 <div 
                   class="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-                  :style="{ width: localCardData.progress + '%' }"
+                  :style="{ width: localCardData.data.progress + '%' }"
                 ></div>
               </div>
             </div>
 
             <!-- Transcription Results -->
-            <div v-if="localCardData.transcription" class="space-y-4">
+            <div v-if="localCardData.data.transcription" class="space-y-4">
               <!-- Statistics -->
               <div class="grid grid-cols-3 gap-2 text-xs">
                 <div class="bg-gray-800 p-2 rounded">
                   <span class="text-gray-400">Duration:</span>
-                  <span class="ml-1">{{ formatDuration(localCardData.transcription.metadata.totalDuration) }}</span>
+                  <span class="ml-1">{{ formatDuration(localCardData.data.transcription.metadata.totalDuration) }}</span>
                 </div>
                 <div class="bg-gray-800 p-2 rounded">
                   <span class="text-gray-400">Words:</span>
-                  <span class="ml-1">{{ localCardData.transcription.metadata.totalWords }}</span>
+                  <span class="ml-1">{{ localCardData.data.transcription.metadata.totalWords }}</span>
                 </div>
                 <div class="bg-gray-800 p-2 rounded">
                   <span class="text-gray-400">Speakers:</span>
-                  <span class="ml-1">{{ localCardData.transcription.metadata.speakerCount }}</span>
+                  <span class="ml-1">{{ localCardData.data.transcription.metadata.speakerCount }}</span>
                 </div>
               </div>
 
@@ -157,7 +166,7 @@ export default {
               <div class="space-y-2">
                 <div class="text-xs text-gray-400 font-medium">Speakers</div>
                 <div 
-                  v-for="speaker in localCardData.transcription.speakers" 
+                  v-for="speaker in localCardData.data.transcription.speakers" 
                   :key="speaker.id"
                   class="flex items-center gap-2 bg-gray-800 p-2 rounded group"
                 >
@@ -183,7 +192,7 @@ export default {
                 class="px-6 py-2 text-sm font-medium rounded"
                 :class="buttonClass"
                 @click="startTranscription"
-                :disabled="isProcessing || !localCardData.currentFile"
+                :disabled="isProcessing || !localCardData.data.currentFile"
               >
                 {{ buttonText }}
               </button>
@@ -195,103 +204,127 @@ export default {
   `,
 
   setup(props, { emit }) {
+    // Initialize transcripts utility
     const { validateFile, transcribeFile } = useTranscripts();
     
+    // Initialize file input ref
     const fileInput = Vue.ref(null);
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.computed(() => 
-      ['uploading', 'transcribing'].includes(localCardData.value.status)
+
+    // Initialize card setup utilities
+    const {
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup
+    } = useCardSetup(props, emit);
+
+    // Initialize local card data with default configuration
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        name: "Transcribe Card",
+        description: "Audio/Video Transcription",
+        defaultSockets: {
+          inputs: [{ name: "Trigger" }],
+          outputs: []
+        },
+        defaultData: {
+          currentFile: null,
+          status: 'idle', // idle, uploading, transcribing, complete, error
+          progress: 0,
+          error: null,
+          transcription: null
+        }
+      })
     );
 
-    // Initialize card data
-    const initializeCardData = (data) => ({
-      uuid: data.uuid,
-      name: data.name || "Transcribe Card",
-      description: data.description || "Audio/Video Transcription",
-      display: data.display || "default",
-      x: data.x || 0,
-      y: data.y || 0,
-      currentFile: data.currentFile || null,
-      status: data.status || 'idle', // idle, uploading, transcribing, complete, error
-      progress: data.progress || 0,
-      error: data.error || null,
-      transcription: data.transcription || null,
-      sockets: {
-        inputs: [
-          createSocket({
-            type: 'input',
-            index: 0,
-            existingId: data.sockets?.inputs?.[0]?.id,
-            value: data.sockets?.inputs?.[0]?.value
-          })
-        ],
-        outputs: data.transcription ? createTranscriptionSockets(data.transcription) : []
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        if (type === "modified" && content.old.value !== content.new.value) {
+          // Handle input trigger
+          if (content.new.value && localCardData.value.data.currentFile) {
+            startTranscription();
+          }
+        }
+      },
+      onOutputChange: ({ type, content }) => {
+        if (type === "modified") {
+          handleCardUpdate();
+        }
       }
     });
 
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit
+    });
 
-    // Socket management
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, { element: event.element, cleanup: [] });
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
+    // Card-specific computed properties
+    const buttonClass = Vue.computed(() => {
+      if (isProcessing.value) {
+        return 'bg-orange-500 hover:bg-orange-600';
+      }
+      return localCardData.value.data.status === 'complete' 
+        ? 'bg-green-500 hover:bg-green-600'
+        : 'bg-blue-500 hover:bg-blue-600';
+    });
+
+    const buttonText = Vue.computed(() => {
+      switch (localCardData.value.data.status) {
+        case 'uploading': return `Uploading... ${localCardData.value.data.progress}%`;
+        case 'transcribing': return 'Transcribing...';
+        case 'complete': return 'Transcribe Again';
+        case 'error': return 'Retry Transcription';
+        default: return 'Start Transcription';
+      }
+    });
+
+    // Lifecycle hooks
+    Vue.onMounted(() => {
+      handleCardUpdate();
+    });
+
+    Vue.onUnmounted(cleanup);
+
+    // Card-specific methods
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit('update-card', Vue.toRaw(localCardData.value));
+      }
     };
 
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
+    const formatDuration = (seconds) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.round(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Create or update sockets for transcription results
-    const createTranscriptionSockets = (transcription, existingSockets = []) => {
-      const sockets = [];
-      
-      // Full transcript socket
-      const existingTranscriptSocket = existingSockets[0];
-      sockets.push({
-        ...createSocket({
-          type: 'output',
-          index: 0,
-          existingId: existingTranscriptSocket?.id,
-          value: JSON.stringify({
-            metadata: transcription.metadata,
-            segments: transcription.segments
-          })
-        }),
-        name: 'Entire Transcript'
-      });
-
-      // Speaker sockets
-      transcription.speakers.forEach((speaker, index) => {
-        const speakerSegments = transcription.segments.filter(
-          seg => seg.speaker === speaker.id
-        );
-        
-        // Find existing socket for this speaker
-        const existingSpeakerSocket = existingSockets.find(s => 
-          s.value?.speaker?.id === speaker.id
-        );
-
-        sockets.push({
-          ...createSocket({
-            type: 'output',
-            index: index + 1,
-            existingId: existingSpeakerSocket?.id,
-            value: JSON.stringify({
-              speaker: speaker,
-              segments: speakerSegments
-            })
-          }),
-          name: speaker.displayName || `Speaker ${speaker.id}`
-        });
-      });
-
-      return sockets;
+    const triggerFileInput = () => {
+      fileInput.value?.click();
     };
 
-    // File handling
     const handleFileSelect = (event) => {
       const file = event.target.files?.[0];
       if (file) setFile(file);
@@ -305,252 +338,210 @@ export default {
     const setFile = async (file) => {
       const errors = validateFile(file);
       if (errors.length > 0) {
-        localCardData.value.error = errors.join('. ');
-        localCardData.value.status = 'error';
+        localCardData.value.data.error = errors.join('. ');
+        localCardData.value.data.status = 'error';
         return;
       }
 
-      localCardData.value.currentFile = file;
-      localCardData.value.status = 'idle';
-      localCardData.value.error = null;
-      localCardData.value.progress = 0;
+      localCardData.value.data.currentFile = file;
+      localCardData.value.data.status = 'idle';
+      localCardData.value.data.error = null;
+      localCardData.value.data.progress = 0;
       handleCardUpdate();
 
-      // Automatically start transcription
       await startTranscription();
     };
 
     const resetFile = () => {
       if (isProcessing.value) return;
 
-      // Reset all state
-      localCardData.value.currentFile = null;
-      localCardData.value.status = 'idle';
-      localCardData.value.error = null;
-      localCardData.value.progress = 0;
-      localCardData.value.transcription = null;
+      localCardData.value.data.currentFile = null;
+      localCardData.value.data.status = 'idle';
+      localCardData.value.data.error = null;
+      localCardData.value.data.progress = 0;
+      localCardData.value.data.transcription = null;
 
-      // Reset sockets to initial state
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      localCardData.value.sockets.outputs = [];
+      // Reset sockets with proper cleanup
+      const oldSockets = [...localCardData.value.data.sockets.outputs];
+      const { reindexedSockets, deletedSocketIds } = updateSocketArray({
+        oldSockets,
+        newSockets: [],
+        type: 'output'
+      });
+
+      localCardData.value.data.sockets.outputs = reindexedSockets;
 
       // Emit socket removal event
       emit('sockets-updated', createSocketUpdateEvent({
         cardId: localCardData.value.uuid,
         oldSockets,
-        newSockets: [],
+        newSockets: reindexedSockets,
         reindexMap: new Map(),
-        deletedSocketIds: oldSockets.map(s => s.id),
+        deletedSocketIds,
         type: 'output'
       }));
 
       handleCardUpdate();
       
-      // Trigger file input to select new file
       Vue.nextTick(() => {
-        triggerFileInput({ stopPropagation: () => {} });
+        triggerFileInput();
       });
     };
 
-    // Transcription
-    const startTranscription = async () => {
-      if (!localCardData.value.currentFile || isProcessing.value) return;
+    const handleSpeakerNameUpdate = (speaker) => {
+      if (isProcessing.value) return;
 
-      localCardData.value.status = 'uploading';
-      localCardData.value.progress = 0;
-      localCardData.value.error = null;
+      const speakerInTranscript = localCardData.value.data.transcription.speakers.find(
+        s => s.id === speaker.id
+      );
+      
+      if (speakerInTranscript) {
+        speakerInTranscript.displayName = speaker.displayName;
+
+        // Update corresponding output socket
+        const speakerSocket = localCardData.value.data.sockets.outputs.find(socket => {
+          const data = JSON.parse(socket.value);
+          return data.speaker?.id === speaker.id;
+        });
+
+        if (speakerSocket) {
+          const socketData = JSON.parse(speakerSocket.value);
+          socketData.speaker.displayName = speaker.displayName;
+          speakerSocket.name = speaker.displayName;
+          speakerSocket.value = JSON.stringify(socketData);
+        }
+
+        handleCardUpdate();
+      }
+    };
+
+    const startTranscription = async () => {
+      if (!localCardData.value.data.currentFile || isProcessing.value) return;
+
+      localCardData.value.data.status = 'uploading';
+      localCardData.value.data.progress = 0;
+      localCardData.value.data.error = null;
 
       try {
         const result = await transcribeFile(
-          localCardData.value.currentFile,
+          localCardData.value.data.currentFile,
           (progress) => {
             if (progress === 100) {
-              localCardData.value.status = 'transcribing';
+              localCardData.value.data.status = 'transcribing';
             }
-            localCardData.value.progress = progress;
+            localCardData.value.data.progress = progress;
           }
         );
 
         if (result.success) {
-          localCardData.value.transcription = result.data;
-          localCardData.value.status = 'complete';
+          localCardData.value.data.transcription = result.data;
+          localCardData.value.data.status = 'complete';
 
-          // Update sockets
-          const oldSockets = [...localCardData.value.sockets.outputs];
-          const newSockets = createTranscriptionSockets(result.data, oldSockets);
+          const existingOutputs = localCardData.value.data.sockets.outputs;
+          const currentSpeakerCount = result.data.speakers.length;
+          const existingSpeakerCount = existingOutputs.length > 0 ? existingOutputs.length - 1 : 0; // -1 for the "Entire Transcript" socket
 
-          const { reindexMap, reindexedSockets } = updateSocketArray({
-            oldSockets,
-            newSockets,
-            type: 'output',
-            deletedSocketIds: [],
-            socketRegistry,
-            connections: connections.value
-          });
+          // If we have the same number of speakers, preserve socket IDs
+          if (currentSpeakerCount === existingSpeakerCount && existingOutputs.length > 0) {
+            // Update main transcript socket
+            existingOutputs[0].value = JSON.stringify({
+              metadata: result.data.metadata,
+              segments: result.data.segments
+            });
+            existingOutputs[0].momentUpdated = Date.now();
 
-          localCardData.value.sockets.outputs = reindexedSockets;
+            // Update speaker sockets
+            result.data.speakers.forEach((speaker, index) => {
+              const socketIndex = index + 1; // +1 because index 0 is the main transcript
+              existingOutputs[socketIndex].name = speaker.displayName || `Speaker ${speaker.id}`;
+              existingOutputs[socketIndex].value = JSON.stringify({
+                speaker: speaker,
+                segments: result.data.segments.filter(seg => seg.speaker === speaker.id)
+              });
+              existingOutputs[socketIndex].momentUpdated = Date.now();
+            });
 
-          emit('sockets-updated', createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: oldSockets.map(s => s.id),
-            type: 'output'
-          }));
+            // Emit update for existing sockets
+            emit('sockets-updated', createSocketUpdateEvent({
+              cardId: localCardData.value.uuid,
+              oldSockets: existingOutputs,
+              newSockets: existingOutputs,
+              reindexMap: new Map(existingOutputs.map((s, i) => [s.id, i])),
+              deletedSocketIds: [],
+              type: 'output'
+            }));
+          } else {
+            // Different number of speakers, create new sockets
+            const newSockets = [
+              createSocket({
+                type: 'output',
+                index: 0,
+                name: 'Entire Transcript',
+                value: JSON.stringify({
+                  metadata: result.data.metadata,
+                  segments: result.data.segments
+                })
+              }),
+              ...result.data.speakers.map((speaker, index) => 
+                createSocket({
+                  type: 'output',
+                  index: index + 1,
+                  name: speaker.displayName || `Speaker ${speaker.id}`,
+                  value: JSON.stringify({
+                    speaker: speaker,
+                    segments: result.data.segments.filter(seg => seg.speaker === speaker.id)
+                  })
+                })
+              )
+            ];
+
+            // Update socket array with proper remapping
+            const { reindexMap, reindexedSockets, deletedSocketIds } = updateSocketArray({
+              oldSockets: existingOutputs,
+              newSockets,
+              type: 'output'
+            });
+
+            // Update the sockets
+            localCardData.value.data.sockets.outputs = reindexedSockets;
+
+            // Emit socket update event
+            emit('sockets-updated', createSocketUpdateEvent({
+              cardId: localCardData.value.uuid,
+              oldSockets: existingOutputs,
+              newSockets: reindexedSockets,
+              reindexMap,
+              deletedSocketIds,
+              type: 'output'
+            }));
+          }
         } else {
           throw new Error(result.error);
         }
       } catch (error) {
-        localCardData.value.error = error.message;
-        localCardData.value.status = 'error';
+        localCardData.value.data.error = error.message;
+        localCardData.value.data.status = 'error';
       }
 
       handleCardUpdate();
-    };
-
-    // Speaker management
-    const handleSpeakerNameUpdate = (speaker) => {
-      // Update speaker name in transcription data
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      const socketIndex = oldSockets.findIndex(
-        s => s.value && JSON.parse(s.value).speaker?.id === speaker.id
-      );
-      
-      if (socketIndex !== -1) {
-        // Create new sockets array with updated name
-        const newSockets = [...oldSockets];
-        const socketData = JSON.parse(newSockets[socketIndex].value);
-        socketData.speaker.displayName = speaker.displayName;
-        
-        newSockets[socketIndex] = {
-          ...oldSockets[socketIndex],
-          name: speaker.displayName,
-          value: JSON.stringify(socketData)
-        };
-        
-        // Update socket array with proper remapping
-        const { reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: 'output',
-          deletedSocketIds: [],
-          socketRegistry,
-          connections: connections.value
-        });
-
-        // Update the sockets
-        localCardData.value.sockets.outputs = reindexedSockets;
-
-        // Emit socket update event
-        emit('sockets-updated', createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap: new Map(),
-          deletedSocketIds: [],
-          type: 'output'
-        }));
-
-        // Update transcription data
-        const speakerInTranscript = localCardData.value.transcription.speakers.find(
-          s => s.id === speaker.id
-        );
-        if (speakerInTranscript) {
-          speakerInTranscript.displayName = speaker.displayName;
-        }
-      }
-      handleCardUpdate();
-    };
-
-    // UI helpers
-    const formatDuration = (seconds) => {
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.round(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const buttonClass = Vue.computed(() => {
-      if (isProcessing.value) {
-        return 'bg-orange-500 hover:bg-orange-600';
-      }
-      return localCardData.value.status === 'complete' 
-        ? 'bg-green-500 hover:bg-green-600'
-        : 'bg-blue-500 hover:bg-blue-600';
-    });
-
-    const buttonText = Vue.computed(() => {
-      switch (localCardData.value.status) {
-        case 'uploading': return `Uploading... ${localCardData.value.progress}%`;
-        case 'transcribing': return 'Transcribing...';
-        case 'complete': return 'Transcribe Again';
-        case 'error': return 'Retry Transcription';
-        default: return 'Start Transcription';
-      }
-    });
-
-    const triggerFileInput = () => {
-      fileInput.value?.click();
-    };
-
-    // Watch for input trigger changes
-    Vue.watch(
-      () => localCardData.value.sockets.inputs[0].value,
-      async (newValue) => {
-        if (newValue && localCardData.value.currentFile) {
-          await startTranscription();
-        }
-      }
-    );
-
-    // Watch for card data changes
-    Vue.watch(() => props.cardData, (newData) => {
-      if (!newData || isProcessing.value) return;
-
-      // Only update specific properties to avoid loops
-      if (newData.x !== undefined) localCardData.value.x = newData.x;
-      if (newData.y !== undefined) localCardData.value.y = newData.y;
-      
-      // Deep compare transcription data if needed
-      if (newData.transcription && 
-          JSON.stringify(newData.transcription) !== JSON.stringify(localCardData.value.transcription)) {
-        localCardData.value.transcription = newData.transcription;
-      }
-    }, { deep: true });
-
-    // Cleanup
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => socket.cleanup.forEach(cleanup => cleanup()));
-      socketRegistry.clear();
-      connections.value.clear();
-    });
-
-    const handleCardUpdate = () => {
-      emit('update-card', Vue.toRaw(localCardData.value));
     };
 
     return {
-      // Refs
       fileInput,
       localCardData,
       isProcessing,
-
-      // Methods
       getSocketConnections,
       handleSocketMount,
-      emitWithCardId,
+      handleCardUpdate,
       handleFileSelect,
       handleFileDrop,
       handleSpeakerNameUpdate,
       triggerFileInput,
       startTranscription,
       resetFile,
-      handleCardUpdate,
       formatDuration,
-
-      // Computed
       buttonClass,
       buttonText
     };
   }
-}
+};

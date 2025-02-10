@@ -4,7 +4,6 @@ export const createCardPositioning = (props) => {
   const {
     cards,
     selectedCardIds,
-    dragStartPositions,
     zoomLevel,
     connections,
     canvasRef,
@@ -14,12 +13,9 @@ export const createCardPositioning = (props) => {
     getScaledPoint,
     emit,
     GRID_SIZE,
-    Z_INDEX_LAYERS
+    Z_INDEX_LAYERS,
+    dragState
   } = props;
-
-  const dragOrigin = Vue.reactive({ x: 0, y: 0 });
-  const isDragging = Vue.ref(false);
-  const lastValidPosition = Vue.reactive(new Map());
 
   // Simple bounds checking
   const CANVAS_BOUNDS = {
@@ -29,231 +25,236 @@ export const createCardPositioning = (props) => {
     MAX_Y: 3950,
   };
 
-  const constrainPosition = (x, y, cardWidth = 300, cardHeight = 200) => {
+  const constrainPosition = (x, y, card) => {
     return {
       x: Math.max(
         CANVAS_BOUNDS.MIN_X,
-        Math.min(CANVAS_BOUNDS.MAX_X - cardWidth, x)
+        Math.min(CANVAS_BOUNDS.MAX_X - (card.ui.width || 300), x)
       ),
       y: Math.max(
         CANVAS_BOUNDS.MIN_Y,
-        Math.min(CANVAS_BOUNDS.MAX_Y - cardHeight, y)
+        Math.min(CANVAS_BOUNDS.MAX_Y - (card.ui.height || 200), y)
       ),
     };
   };
 
   const snapToGrid = (value) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
-//   // Improved drag handling
-//   const startDrag = (event, cardId) => {
-//     console.log("startDrag", event)
-//     isDragging.value = true;
-//     const point = event.touches ? event.touches[0] : event;
 
-//     dragOrigin.x = point.clientX;
-//     dragOrigin.y = point.clientY;
+  // In cardPositioning.js
 
-//     selectedCardIds.value.forEach((id) => {
-//       const card = cards.value.find((c) => c.uuid === id);
-//       if (card) {
-//         dragStartPositions.value.set(id, { x: card.x, y: card.y });
-//       }
-//     });
-//   };
+const lastKnownPositions = new Map();
 
-//   // Updates needed in cardPositioning.js
+const handleStartDrag = (event, cardId) => {
+  const isTouch = event.type === "touchstart";
+  
+  const point = {
+    clientX: isTouch ? event.touches[0].clientX : event.clientX,
+    clientY: isTouch ? event.touches[0].clientY : event.clientY
+  };
 
-//   const handleDrag = (event) => {
-//     console.log('handleDrag', event)
-//     if (!isDragging.value) return;
+  // Create a new Map instance for startPositions
+  const newStartPositions = new Map();
 
-//     const point = event.touches ? event.touches[0] : event;
+  // Store initial positions
+  selectedCardIds.value.forEach(id => {
+    const card = cards.value.find(c => c.uuid === id);
+    if (card) {
+      newStartPositions.set(id, {
+        x: card.ui.x || 0,
+        y: card.ui.y || 0
+      });
+      // Also store as last known position
+      lastKnownPositions.set(id, {
+        x: card.ui.x || 0,
+        y: card.ui.y || 0
+      });
+    }
+  });
 
-//     const dx = (point.clientX - dragOrigin.x) / zoomLevel.value;
-//     const dy = (point.clientY - dragOrigin.y) / zoomLevel.value;
+  dragState.value = {
+    isDragging: true,
+    dragOrigin: point,
+    startPositions: newStartPositions
+  };
 
-//     // Track all cards that need connection updates
-//     const affectedCards = new Set();
+  return true;
+};
 
-//     const updatedCards = cards.value.map((card) => {
-//       if (!selectedCardIds.value.has(card.uuid)) return card;
+const handleDrag = (event) => {
+  if (!dragState.value?.isDragging) return;
 
-//       const startPos = dragStartPositions.value.get(card.uuid);
-//       if (!startPos) return card;
+  const point = {
+    clientX: event.type.includes('touch') ? event.touches[0].clientX : event.clientX,
+    clientY: event.type.includes('touch') ? event.touches[0].clientY : event.clientY
+  };
 
-//       const newX = startPos.x + dx;
-//       const newY = startPos.y + dy;
+  // If we don't have valid coordinates, use last known positions
+  if (typeof point.clientX !== 'number' || typeof point.clientY !== 'number') {
+    return {
+      updatedCards: cards.value.map(card => {
+        if (!selectedCardIds.value.has(card.uuid)) return card;
+        const lastKnown = lastKnownPositions.get(card.uuid);
+        if (!lastKnown) return card;
+        
+        return {
+          ...card,
+          ui: {
+            ...card.ui,
+            x: lastKnown.x,
+            y: lastKnown.y,
+            zIndex: Z_INDEX_LAYERS.DRAGGING
+          }
+        };
+      })
+    };
+  }
 
-//       const { x: boundedX, y: boundedY } = constrainPosition(
-//         newX,
-//         newY,
-//         card.width,
-//         card.height
-//       );
+  // Calculate movement from original drag start point
+  const dx = (point.clientX - dragState.value.dragOrigin.clientX) / zoomLevel.value;
+  const dy = (point.clientY - dragState.value.dragOrigin.clientY) / zoomLevel.value;
 
-//       // Add both the card and any connected cards to affected set
-//       affectedCards.add(card.uuid);
-//       if (connections?.value) {
-//         connections.value.forEach((conn) => {
-//           if (conn.sourceCardId === card.uuid) {
-//             affectedCards.add(conn.targetCardId);
-//           }
-//           if (conn.targetCardId === card.uuid) {
-//             affectedCards.add(conn.sourceCardId);
-//           }
-//         });
-//       }
+  const updatedCards = cards.value.map((card) => {
+    if (!selectedCardIds.value.has(card.uuid)) return card;
 
-//       return {
-//         ...card,
-//         x: boundedX,
-//         y: boundedY,
-//       };
-//     });
+    const startPos = dragState.value.startPositions.get(card.uuid);
+    if (!startPos) return card;
 
-//     emit("update:cards", updatedCards);
+    const newX = startPos.x + dx;
+    const newY = startPos.y + dy;
 
-//     // Update connections for all affected cards
-//     requestAnimationFrame(() => {
-//       affectedCards.forEach((cardId) => {
-//         updateConnections(cardId);
-//       });
-//     });
-//   };
+    // Update last known position
+    lastKnownPositions.set(card.uuid, {
+      x: newX,
+      y: newY
+    });
 
-//   const endDrag = () => {
-//     console.log('endDrag')
-//     if (!isDragging.value) return;
+    return {
+      ...card,
+      ui: {
+        ...card.ui,
+        x: newX,
+        y: newY,
+        zIndex: Z_INDEX_LAYERS.DRAGGING
+      }
+    };
+  });
 
-//     // Track affected cards for connection updates
-//     const affectedCards = new Set();
+  return { updatedCards };
+};
 
-//     // Final position update with snapping
-//     if (selectedCardIds.value.size > 0) {
-//       const updatedCards = cards.value.map((card) => {
-//         if (!selectedCardIds.value.has(card.uuid)) return card;
+const handleDragEnd = (event) => {
+  if (!dragState.value?.isDragging) return;
 
-//         // Add card and its connections to affected set
-//         affectedCards.add(card.uuid);
-//         if (connections?.value) {
-//           connections.value.forEach((conn) => {
-//             if (conn.sourceCardId === card.uuid) {
-//               affectedCards.add(conn.targetCardId);
-//             }
-//             if (conn.targetCardId === card.uuid) {
-//               affectedCards.add(conn.sourceCardId);
-//             }
-//           });
-//         }
+  const point = {
+    clientX: event.type.includes('touch') ? event.changedTouches[0].clientX : event.clientX,
+    clientY: event.type.includes('touch') ? event.changedTouches[0].clientY : event.clientY
+  };
 
-//         return {
-//           ...card,
-//           x: snapToGrid(card.x),
-//           y: snapToGrid(card.y),
-//         };
-//       });
+  const updatedCards = cards.value.map((card) => {
+    if (!selectedCardIds.value.has(card.uuid)) return card;
 
-//       emit("update:cards", updatedCards);
-//     }
+    let finalX, finalY;
+    
+    if (typeof point.clientX === 'number' && typeof point.clientY === 'number') {
+      // Calculate final position from drag delta
+      const dx = (point.clientX - dragState.value.dragOrigin.clientX) / zoomLevel.value;
+      const dy = (point.clientY - dragState.value.dragOrigin.clientY) / zoomLevel.value;
+      const startPos = dragState.value.startPositions.get(card.uuid);
+      finalX = startPos.x + dx;
+      finalY = startPos.y + dy;
+    } else {
+      // Use last known position
+      const lastKnown = lastKnownPositions.get(card.uuid);
+      finalX = lastKnown?.x ?? card.ui.x;
+      finalY = lastKnown?.y ?? card.ui.y;
+    }
 
-//     isDragging.value = false;
-//     dragStartPositions.value.clear();
-//     lastValidPosition.clear();
+    const { x: boundedX, y: boundedY } = constrainPosition(
+      snapToGrid(finalX), 
+      snapToGrid(finalY), 
+      card
+    );
 
-//     // Update connections for all affected cards after final position
-//     requestAnimationFrame(() => {
-//       affectedCards.forEach((cardId) => {
-//         updateConnections(cardId);
-//       });
-//     });
-//   };
-// // Updated updateCardPosition function for cardPositioning.js
-// In cardPositioning.js, update the updateCardPosition function:
-// In cardPositioning.js
+    return {
+      ...card,
+      ui: {
+        ...card.ui,
+        x: boundedX,
+        y: boundedY,
+        zIndex: card.isSelected ? Z_INDEX_LAYERS.SELECTED : Z_INDEX_LAYERS.DEFAULT
+      }
+    };
+  });
 
-const updateCardPosition = ({ uuid, x, y }) => {
+  // Reset states
+  dragState.value = {
+    isDragging: false,
+    dragOrigin: { x: 0, y: 0 },
+    startPositions: new Map()
+  };
+  lastKnownPositions.clear();
+
+  return { updatedCards };
+};
+
+  const updateCardPosition = ({ uuid, x, y }) => {
     const movingCard = cards.value.find((card) => card.uuid === uuid);
     if (!movingCard) return;
 
-    // Store initial positions at drag start
-    if (dragStartPositions.value.size === 0) {
-        selectedCardIds.value.forEach((selectedId) => {
-            const card = cards.value.find((c) => c.uuid === selectedId);
-            if (card) {
-                dragStartPositions.value.set(selectedId, { x: card.x, y: card.y });
-            }
-        });
+    // Initialize start positions if needed
+    if (dragState.value.startPositions.size === 0) {
+      for (const selectedId of selectedCardIds) {
+        const card = cards.value.find((c) => c.uuid === selectedId);
+        if (card) {
+          dragState.value.startPositions.set(selectedId, {
+            x: card.ui.x,
+            y: card.ui.y
+          });
+        }
+      }
     }
 
-    const startPos = dragStartPositions.value.get(uuid);
+    const startPos = dragState.value.startPositions.get(uuid);
     if (!startPos) return;
 
     const dx = x - startPos.x;
     const dy = y - startPos.y;
 
-    // Update positions
-    cards.value = cards.value.map((card) => {
-        if (selectedCardIds.value.has(card.uuid)) {
-            const cardStartPos = dragStartPositions.value.get(card.uuid);
-            if (cardStartPos) {
-                return {
-                    ...card,
-                    x: cardStartPos.x + dx,
-                    y: cardStartPos.y + dy,
-                };
-            }
+    // Create new cards array with updated positions
+    const updatedCards = cards.value.map((card) => {
+      if (!selectedCardIds.value.has(card.uuid)) return card;
+
+      const cardStartPos = dragState.value.startPositions.get(card.uuid);
+      if (!cardStartPos) return card;
+
+      return {
+        ...card,
+        ui: {
+          ...card.ui,
+          x: cardStartPos.x + dx,
+          y: cardStartPos.y + dy,
         }
-        return card;
+      };
     });
 
-    // Wait for DOM update before recalculating connection points
-   // After updating card positions
-   Vue.nextTick(() => {
-    requestAnimationFrame(() => {
-        const affectedConnections = connections.value.filter(conn =>
-            selectedCardIds.value.has(conn.sourceCardId) ||
-            selectedCardIds.value.has(conn.targetCardId)
-        );
+    // Schedule connection update
+    requestAnimationFrame(updateConnections);
 
-        connections.value = connections.value.map(conn => {
-            if (affectedConnections.includes(conn)) {
-                const points = calculateConnectionPoints({
-                    sourceCardId: conn.sourceCardId,
-                    sourceSocketId: conn.sourceSocketId,
-                    targetCardId: conn.targetCardId,
-                    targetSocketId: conn.targetSocketId
-                });
-
-                if (points) {
-                    return {
-                        ...conn,
-                        sourcePoint: points.sourcePoint,
-                        targetPoint: points.targetPoint
-                    };
-                }
-            }
-            return conn;
-        });
-
-        connections.value = [...connections.value];
-    });
-});
-};
-
-  // Card center calculations
-  const getCardCenter = (card) => {
-    return {
-      x: card.x + (card.width || 300) / 2,
-      y: card.y + (card.height || 200) / 2,
-    };
+    return updatedCards;
   };
+
+  const getCardCenter = (card) => ({
+    x: card.ui.x + (card.ui.width || 300) / 2,
+    y: card.ui.y + (card.ui.height || 200) / 2,
+  });
 
   const centerCardOnPoint = (cardId, point, snap = true) => {
     const card = cards.value.find((c) => c.uuid === cardId);
     if (!card) return;
 
-    const width = card.width || 300;
-    const height = card.height || 200;
+    const width = card.ui.width || 300;
+    const height = card.ui.height || 200;
 
     let x = point.x - width / 2;
     let y = point.y - height / 2;
@@ -263,33 +264,22 @@ const updateCardPosition = ({ uuid, x, y }) => {
       y = snapToGrid(y);
     }
 
-    updateCardPosition({
+    return updateCardPosition({
       uuid: cardId,
       x,
-      y,
-      snap,
+      y
     });
   };
 
-
   return {
-    // Core positioning
     updateCardPosition,
-    // startDrag,
-    // handleDrag,
-    // endDrag,
-
-    // Utilities
+    handleStartDrag,
+    handleDrag,
+    handleDragEnd,
     getCardCenter,
     centerCardOnPoint,
     snapToGrid,
     constrainPosition,
-
-   
-    // State
-    isDragging,
-    dragStartPositions,
-    lastValidPosition,
     CANVAS_BOUNDS,
   };
 };

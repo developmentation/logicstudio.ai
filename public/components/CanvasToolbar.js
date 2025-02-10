@@ -11,7 +11,7 @@ export default {
           :class="{ 'w-52': showText, 'w-10': !showText }"
         >
           <!-- Close Button -->
-          <button v-tooltip="'Close'"
+          <button  
             class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleExpanded"
           >
@@ -19,7 +19,7 @@ export default {
           </button>
   
           <!-- Text Toggle Button -->
-          <button  v-tooltip="'Toggle Text'"
+          <button  
             class="w-10 h-10 flex items-center justify-center bg-gray-700 hover:bg-gray-600 text-white focus:outline-none focus:ring-2 focus:ring-green-500"
             @click="toggleText"
           >
@@ -35,7 +35,7 @@ export default {
               </div>
               
               <!-- Add Tools -->
-              <button v-tooltip="showText ? null : item.label"
+              <button  
               :disabled = "item.disabled"
                 v-for="item in addTools"
                 :key="item.id"
@@ -77,7 +77,7 @@ export default {
   
       <!-- Collapsed State - Just the menu button -->
       <template v-else>
-        <button  v-tooltip="'Toggle Menu'"
+        <button  
           class="w-10 h-10 flex items-center justify-center bg-gray-800 hover:bg-gray-700 text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           @click="toggleExpanded"
         >
@@ -91,29 +91,24 @@ export default {
       const showText = Vue.ref(false);
   
       const addTools = [
-        { id: 'model', label: 'Model', icon: 'pi pi-box', type: 'model' },
-        { id: 'trigger', label: 'Trigger', icon: 'pi pi-play-circle', type: 'trigger' },
-        { id: 'agent', label: 'Agent', icon: 'pi pi-microchip-ai', type: 'agent' },
-        { id: 'text', label: 'Text', icon: 'pi pi-pen-to-square', type: 'text'  },
-        { id: 'chat', label: 'Chat', icon: 'pi pi-comments', type: 'chat'  },
-        { id: 'fileInput', label: 'File Input', icon: 'pi pi-upload', type: 'input' },
-        { id: 'fileOutput', label: 'File Output', icon: 'pi pi-download', type: 'output' },
-        { id: 'join', label: 'Join', icon: 'pi pi-plus', type: 'join'},
-        { id: 'view', label: 'View', icon: 'pi pi-desktop', type: 'view'},
-        { id: 'label', label: 'Label', icon: 'pi pi-tag', type: 'label' },
-        { id: 'web', label: 'Web Content', icon: 'pi pi-globe', type: 'web' },
+        { id: 'model', label: 'Model ✔', icon: 'pi pi-box', type: 'model' },
+        { id: 'trigger', label: 'Trigger ✔', icon: 'pi pi-play-circle', type: 'trigger' },
+        { id: 'agent', label: 'Agent ✔', icon: 'pi pi-microchip-ai', type: 'agent' },
+        { id: 'text', label: 'Text ✔', icon: 'pi pi-pen-to-square', type: 'text'  },
+        { id: 'chat', label: 'Chat ✔', icon: 'pi pi-comments', type: 'chat'  },
+        { id: 'fileInput', label: 'File Input ✔', icon: 'pi pi-upload', type: 'input' },
+        { id: 'fileOutput', label: 'File Output ✔', icon: 'pi pi-download', type: 'output' },
+        { id: 'join', label: 'Join ✔', icon: 'pi pi-plus', type: 'join'},
+        { id: 'view', label: 'View ✔', icon: 'pi pi-desktop', type: 'view'},
+        { id: 'label', label: 'Label ✔', icon: 'pi pi-tag', type: 'label' },
+        { id: 'web', label: 'Web Content ✔', icon: 'pi pi-globe', type: 'web' },
         { id: 'github', label: 'GitHub', icon: 'pi pi-github', type: 'github' },
-        { id: 'pdf', label: 'PDF', icon: 'pi pi-file-pdf', type: 'pdf' },
-        { id: 'api', label: 'API', icon: 'pi pi-server', type: 'api' },
-        { id: 'transcribe', label: 'Transcribe', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
-        { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
+        { id: 'pdf', label: 'PDF ✔', icon: 'pi pi-file-pdf', type: 'pdf' },
+        { id: 'api', label: 'API ✔', icon: 'pi pi-server', type: 'api' },
+        { id: 'transcribe', label: 'Transcribe  ✔', icon: 'pi pi-microphone', type: 'transcribe'}, //, disabled:true 
+        { id: 'template', label: 'Tester Template ✔', icon: 'pi pi-circle', type: 'template' },
+        // { id: 'webhook', label: 'Webhook (Pending)', icon: 'pi pi-arrow-right-arrow-left', type: 'webhook', disabled:true },
         // { id: 'database', label: 'Database (Pending)', icon: 'pi pi-database', type: 'database', disabled:true },
-
-        
-        // { id: 'trigger', label: 'Trigger', icon: 'pi pi-arrow-circle-right', type: 'tool' },
-        // { id: 'display', label: 'Display', icon: 'pi pi-image', type: 'tool' },
-        // { id: 'tool', label: 'Tool', icon: 'pi pi-cog', type: 'tool' },
-        // { id: 'template', label: 'Template (Tester)', icon: 'pi pi-circle', type: 'template' },
 
       ];
   

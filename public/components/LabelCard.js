@@ -1,33 +1,67 @@
 // LabelCard.js
-import BaseCardTransparent from "./BaseCardTransparent.js";
+import BaseCard from "./BaseCard.js";
+import BaseSocket from "./BaseSocket.js";
+import {
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+import { createSocket } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "LabelCard",
-  components: { BaseCardTransparent },
+  components: { BaseCard, BaseSocket },
   props: {
     cardData: { type: Object, required: true },
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
   },
+
   template: `
-    <div>
-      <BaseCardTransparent
+    <div class="card">
+      <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
-         
       >
+        <!-- Input Sockets -->
+        <div class="absolute -left-[12px] flex flex-col gap-4 py-4" style="top: 16px;">
+          <div 
+            v-for="(socket, index) in localCardData.data.sockets.inputs"
+            :key="socket.id"
+            class="flex items-center justify-start"
+          >
+            <BaseSocket
+              type="input"
+              :socket-id="socket.id"
+              :card-id="localCardData.uuid"
+              :name="socket.name"
+              :value="socket.value"
+              :is-connected="getSocketConnections(socket.id)"
+              :has-error="false"
+              :zoom-level="zoomLevel"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
+              @connection-drag="$emit('connection-drag', $event)"
+              @connection-drag-end="$emit('connection-drag-end', $event)"
+              @socket-mounted="handleSocketMount($event)"
+            />
+          </div>
+        </div>
+
         <!-- Content -->
         <div 
           class="p-4"
-          v-show="localCardData.display == 'default'"
+          v-show="localCardData.ui.display === 'default'"
         >
           <div
             ref="titleContent"
@@ -35,7 +69,7 @@ export default {
             class="text-xl font-bold mb-2 break-words text-white hover:cursor-text focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
             @input="updateTitle"
             @mousedown.stop
-            v-text="localCardData.title"
+            v-text="localCardData.data.title"
           ></div>
           <div
             ref="subtitleContent"
@@ -43,44 +77,116 @@ export default {
             class="text-sm text-gray-400 break-words hover:cursor-text focus:outline-none focus:ring-2 focus:ring-blue-500 rounded px-1"
             @input="updateSubtitle"
             @mousedown.stop
-            v-text="localCardData.subtitle"
+            v-text="localCardData.data.subtitle"
           ></div>
         </div>
-      </BaseCardTransparent>
+      </BaseCard>
     </div>
   `,
 
   setup(props, { emit }) {
-    const isProcessing = Vue.ref(false);
+    // Initialize card setup utilities
+    const {
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
+
     const titleContent = Vue.ref(null);
     const subtitleContent = Vue.ref(null);
 
-    // Initialize card data
-    const initializeCardData = (data) => {
-      return {
-        uuid: data.uuid,
-        name: data.name || "Label",
-        description: data.description || "Label Node",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        title: data.title || "Title",
-        subtitle: data.subtitle || "Subtitle",
-        sockets: {
-          inputs: [],
+    // Initialize local card data with default sockets
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        name: "Label Card",
+        description: "Displays customizable text labels",
+        defaultSockets: {
+          inputs: [
+            { name: "Title", value: "" },
+            { name: "Subtitle", value: "" }
+          ],
           outputs: []
+        },
+        defaultData: {
+          title: "Title",
+          subtitle: "Subtitle"
         }
-      };
+      })
+    );
+
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
     };
 
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        if (type === "modified" && content.new.value !== content.old.value) {
+          const socket = content.new;
+          
+          // Update title or subtitle based on socket name
+          if (socket.name === "Title") {
+            localCardData.value.data.title = socket.value || "Title";
+            handleCardUpdate();
+          } else if (socket.name === "Subtitle") {
+            localCardData.value.data.subtitle = socket.value || "Subtitle";
+            handleCardUpdate();
+          }
+        }
+      },
+      onOutputChange: () => {} // No outputs to handle
+    });
 
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
+    
+    // Card specific functions
     const updateTitle = () => {
       if (isProcessing.value) return;
       isProcessing.value = true;
       try {
-        localCardData.value.title = titleContent.value.textContent;
-        emit("update-card", Vue.toRaw(localCardData.value));
+        const newTitle = titleContent.value.textContent;
+        localCardData.value.data.title = newTitle;
+        
+        // Update the title input socket value
+        const titleSocket = localCardData.value.data.sockets.inputs.find(
+          socket => socket.name === "Title"
+        );
+        if (titleSocket) {
+          titleSocket.value = newTitle;
+          titleSocket.momentUpdated = Date.now();
+        }
+        
+        handleCardUpdate();
       } finally {
         isProcessing.value = false;
       }
@@ -90,55 +196,41 @@ export default {
       if (isProcessing.value) return;
       isProcessing.value = true;
       try {
-        localCardData.value.subtitle = subtitleContent.value.textContent;
-        emit("update-card", Vue.toRaw(localCardData.value));
+        const newSubtitle = subtitleContent.value.textContent;
+        localCardData.value.data.subtitle = newSubtitle;
+        
+        // Update the subtitle input socket value
+        const subtitleSocket = localCardData.value.data.sockets.inputs.find(
+          socket => socket.name === "Subtitle"
+        );
+        if (subtitleSocket) {
+          subtitleSocket.value = newSubtitle;
+          subtitleSocket.momentUpdated = Date.now();
+        }
+        
+        handleCardUpdate();
       } finally {
         isProcessing.value = false;
       }
     };
 
-    const handleCardUpdate = (data) => {
-      if (isProcessing.value) return;
-      if (data) {
-        isProcessing.value = true;
-        try {
-          localCardData.value = data;
-          emit("update-card", Vue.toRaw(localCardData.value));
-        } finally {
-          isProcessing.value = false;
-        }
-      }
-    };
+    // Mounted hook
+    Vue.onMounted(() => {
+      handleCardUpdate();
+    });
 
-    // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value) return;
-        isProcessing.value = true;
-
-        try {
-          // Update position
-          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
-          
-          // Update content if changed externally
-          if (newData.title !== oldData?.title) localCardData.value.title = newData.title;
-          if (newData.subtitle !== oldData?.subtitle) localCardData.value.subtitle = newData.subtitle;
-        } finally {
-          isProcessing.value = false;
-        }
-      },
-      { deep: true }
-    );
+    // Cleanup
+    Vue.onUnmounted(cleanup);
 
     return {
       localCardData,
       titleContent,
       subtitleContent,
+      getSocketConnections,
+      handleSocketMount,
+      handleCardUpdate,
       updateTitle,
       updateSubtitle,
-      handleCardUpdate,
     };
   },
 };

@@ -1,5 +1,12 @@
 // utils/cardManagement/cardRegistry.js
 
+
+
+import {
+  createSocket,
+} from "../socketManagement/socketRemapping.js";
+
+
 export const createCardRegistry = (props) => {
   const {
     // State refs
@@ -9,6 +16,7 @@ export const createCardRegistry = (props) => {
     canvasRef,
     selectedCardIds,
     Z_INDEX_LAYERS,
+    
   } = props;
 
   // Enhanced card type definitions
@@ -40,263 +48,381 @@ export const createCardRegistry = (props) => {
 
   // Enhanced default configurations with socket schemas
   const CARD_DEFAULTS = {
-
     [CARD_TYPES.MODEL]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.MODEL,
+      ui: {
+        name: "Model",
+        description: "Model Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: [],
+        }
+      }
     },
-
+  
     [CARD_TYPES.AGENT]: {
-      display:"default", //default is as described. could be "minimized", which hides the content, or could be "maximized", which makes the component very large
-      width: 300,
-      height: 200,
-      model: null,
-      systemPrompt: '<socket name = "System Socket"/>',
-      userPrompt: '<socket name = "User Socket"/>',
-      messageHistory: [],
-      pendingMessage: "",
-      completedMessage: "",
-      output: "",
-      triggers: {
-        andEnabled: false,
-        orEnabled: false,
-        autoTrigger: false,
+      uuid: null,
+      type: CARD_TYPES.AGENT,
+      ui: {
+        name: "Agent",
+        description: "Agent Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 600,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
-      sockets: {
-        inputs: [],
-        outputs: [
-          {
-            id: uuidv4(),
-            name: "Output",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
-      },
+      data: {
+        model: null,
+        systemPrompt: '<socket name="System Socket"/>',
+        userPrompt: '<socket name="User Socket"/>',
+        messageHistory: [],
+        pendingMessage: "",
+        completedMessage: "",
+        output: "",
+        triggers: {
+          andEnabled: false,
+          orEnabled: false,
+          autoTrigger: false,
+        },
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
+  
     [CARD_TYPES.INPUT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      files: [],
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.INPUT,
+      ui: {
+        name: "Input",
+        description: "File Input Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        files: [],
+        filesData: [],
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
+  
     [CARD_TYPES.OUTPUT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      outputs: [],
-      autoDownload: false,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.OUTPUT,
+      ui: {
+        name: "Output",
+        description: "Output Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        outputs: [],
+        autoDownload: false,
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.JOIN]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [
-          {
-            id: uuidv4(),
-            name: "Output",
-            type: SOCKET_TYPES.OUTPUT,
-            value: null,
-            momentUpdated: Date.now(),
-          },
-        ],
+      uuid: null,
+      type: CARD_TYPES.JOIN,
+      ui: {
+        name: "Join",
+        description: "Join Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 400,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: [
+            {
+              id: uuidv4(),
+              name: "Output",
+              type: SOCKET_TYPES.OUTPUT,
+              value: null,
+              momentUpdated: Date.now(),
+            }
+          ]
+        }
+      }
     },
+  
     [CARD_TYPES.TEXT]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.TEXT,
+      ui: {
+        name: "Text",
+        description: "Text Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 400,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        content: "",
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
+  
     [CARD_TYPES.VIEW]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.VIEW,
+      ui: {
+        name: "View",
+        description: "View Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 450,
+        height: 450,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.LABEL]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.LABEL,
+      ui: {
+        name: "Label",
+        description: "Label Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.TRIGGER]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.TRIGGER,
+      ui: {
+        name: "Trigger",
+        description: "Trigger Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 150,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-    
+  
     [CARD_TYPES.WEB]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs:  [],
+      uuid: null,
+      type: CARD_TYPES.WEB,
+      ui: {
+        name: "Web",
+        description: "Web Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 200,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-
-
+  
     [CARD_TYPES.CHAT]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.CHAT,
+      ui: {
+        name: "Chat",
+        description: "Chat Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 350,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        messages: [],
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
-    
+  
     [CARD_TYPES.GITHUB]: {
-      display:"default",
-      width: 500,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.GITHUB,
+      ui: {
+        name: "GitHub",
+        description: "GitHub Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 500,
+        height: 400,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.API]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.API,
+      ui: {
+        name: "API",
+        description: "API Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 550,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.TRANSCRIBE]: {
-      display:"default",
-      width: 450,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.TRANSCRIBE,
+      ui: {
+        name: "Transcribe",
+        description: "Transcribe Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 450,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-
+  
     [CARD_TYPES.PDF]: {
-      display:"default",
-      width: 300,
-      height: 250,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.PDF,
+      ui: {
+        name: "PDF",
+        description: "PDF Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 250,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     },
-    
+  
     [CARD_TYPES.TEMPLATE]: {
-      display:"default",
-      width: 300,
-      height: 150,
-      sockets: {
-        inputs: [],
-        outputs: [],
+      uuid: null,
+      type: CARD_TYPES.TEMPLATE,
+      ui: {
+        name: "Template",
+        description: "Template Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 350,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
       },
-    },
-
-    // [CARD_TYPES.DISPLAY]: {
-    //   width: 300,
-    //   height: 200,
-    //   displayType: "markdown",
-    //   content: "",
-    //   sockets: {
-    //     inputs: [ ],
-    //     outputs: [],
-    //   },
-    // },
-
-    // [CARD_TYPES.TEXT]: {
-    //   width: 250,
-    //   height: 150,
-    //   content: "Enter text here...",
-    //   sockets: {
-    //     inputs: [],
-    //     outputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "text",
-    //         type: SOCKET_TYPES.OUTPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //   },
-    // },
-
-    // [CARD_TYPES.TOOL]: {
-    //   width: 250,
-    //   height: 150,
-    //   toolType: "custom",
-    //   config: {},
-    //   sockets: {
-    //     inputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "input",
-    //         type: SOCKET_TYPES.INPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //     outputs: [
-    //       {
-    //         id: uuidv4(),
-    //         name: "output",
-    //         type: SOCKET_TYPES.OUTPUT,
-    //         value: null,
-    //         momentUpdated: Date.now(),
-    //       },
-    //     ],
-    //   },
-    // },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
+    }
   };
-
   // In cardRegistry.js
+ 
+  
   const createCard = (type, position = null) => {
-    // console.log({type, position })
-
+    // Reset z-index for all cards
     activeCards.value = activeCards.value.map((card) => ({
       ...card,
-      zIndex: Z_INDEX_LAYERS.DEFAULT,
+      ui: {
+        ...card.ui,
+        zIndex: Z_INDEX_LAYERS.DEFAULT
+      }
     }));
+    
     selectedCardIds.value.clear();
 
     const defaultConfig = CARD_DEFAULTS[type];
@@ -314,147 +440,226 @@ export const createCardRegistry = (props) => {
       const scrollTop = container.scrollTop;
 
       position = {
-        x:
-          (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value -
-          defaultConfig.width / 2,
-        y:
-          (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value -
-          defaultConfig.height / 2 -
-          200,
+        x: (scrollLeft + viewportWidth / 2 - 4000) / zoomLevel.value - defaultConfig.ui.width / 2,
+        y: (scrollTop + viewportHeight / 2 - 4000) / zoomLevel.value - defaultConfig.ui.height / 2 ,
       };
     }
 
+    // Create a deep clone of the default config
     const defaultConfigClone = JSON.parse(JSON.stringify(defaultConfig));
     const cardId = uuidv4();
 
-    //By card type, find the first available number in a sequence for that card to occupy
-    //Or if you like, find the next highest number, so the sequence keeps going
-
+    // Create the new card as a plain object (since it will be inside the activeCards ref)
     const newCard = {
       uuid: cardId,
       type,
-      display:"default",
-      x: position?.x ?? 0,
-      y: position?.y ?? 0,
-      zIndex: Z_INDEX_LAYERS.SELECTED,
-      name: `${type.charAt(0).toUpperCase() + type.slice(1)}`, // Simplified name
-      description: `${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
-      ...defaultConfigClone,
-      sockets: {
-        inputs: defaultConfigClone.sockets.inputs.map((socket) => ({
-          ...socket,
-          id: uuidv4(),
-          momentUpdated: Date.now(),
-        })),
-        outputs: defaultConfigClone.sockets.outputs.map((socket) => ({
-          ...socket,
-          id: uuidv4(),
-          momentUpdated: Date.now(),
-        })),
+      ui: {
+        ...defaultConfigClone.ui,
+        x: position?.x ?? 0,
+        y: position?.y ?? 0,
+        zIndex: Z_INDEX_LAYERS.SELECTED,
       },
+      data: {
+        ...defaultConfigClone.data,
+        sockets: {
+          inputs: defaultConfigClone.data.sockets.inputs.map(socket => ({
+            ...socket,
+            id: uuidv4(),
+            momentUpdated: Date.now(),
+          })),
+          outputs: defaultConfigClone.data.sockets.outputs.map(socket => ({
+            ...socket,
+            id: uuidv4(),
+            momentUpdated: Date.now(),
+          })),
+        }
+      }
     };
 
-    // console.log(newCard)
+    // Update the ref array with the new card
     activeCards.value = [...activeCards.value, newCard];
     selectedCardIds.value.add(cardId);
-    // console.log(activeCards.value)
+    
     return cardId;
   };
 
-  const cloneCard = (uuid) => {
-    let clonedCards = [];
 
-    console.log("CloneCard:", uuid)
-    console.log("SelectedCards:", selectedCardIds.value)
-    //If there is only one card to be cloned, it will be the one we just triggered, not a different selected card
-    if(selectedCardIds?.value?.size == 1) {
-      selectedCardIds.value.clear()
-      selectedCardIds.value.add(uuid);
+ // Enhanced cloneCard function for new card architecture
+ const cloneCard = (uuid) => {
+  let clonedCards = [];
+
+  // If only one card selected, use the triggered card
+  if (selectedCardIds?.value?.size === 1) {
+    selectedCardIds.value.clear();
+    selectedCardIds.value.add(uuid);
+  }
+
+  selectedCardIds.value.forEach((id) => {
+    const card = activeCards.value.find((c) => c.uuid === id);
+    if (!card) return;
+
+    // Create deep clone of card
+    let clonedCard = JSON.parse(JSON.stringify(card));
+
+    // Update core properties
+    clonedCard.uuid = uuidv4();
+    clonedCard.ui = {
+      ...clonedCard.ui,
+      x: clonedCard.ui.x + 50,
+      y: clonedCard.ui.y + 50,
+      zIndex: Z_INDEX_LAYERS.SELECTED
+    };
+
+    // Socket remapping process
+    const socketIdMap = remapSockets(clonedCard.data.sockets);
+
+    // Update HTML content based on card type
+    switch (clonedCard.type) {
+      case "agent":
+        updateAgentCardContent(clonedCard, socketIdMap);
+        break;
+      case "text":
+        updateTextCardContent(clonedCard, socketIdMap);
+        break;
+      // Add other card types as needed
     }
 
+    clonedCards.push(clonedCard);
+  });
 
-    selectedCardIds.value.forEach((id) => {
-      const card = activeCards.value.find((c) => c.uuid === id);
-      if (card) {
-        let clonedCard = JSON.parse(JSON.stringify(card));
-        clonedCard.uuid = uuidv4(); // New UUID for the clone
-        clonedCard.x = clonedCard.x + 50; // Shift right
-        clonedCard.y = clonedCard.y + 50; // Shift down
-        clonedCard.zIndex = Z_INDEX_LAYERS.SELECTED;
+  // Reset z-index for all existing cards
+  activeCards.value = activeCards.value.map((card) => ({
+    ...card,
+    ui: {
+      ...card.ui,
+      zIndex: Z_INDEX_LAYERS.DEFAULT
+    }
+  }));
 
-        // Create mapping of old socket IDs to new socket IDs
-        const socketIdMap = new Map();
+  // Clear selection and add new cards
+  selectedCardIds.value.clear();
+  clonedCards.forEach((newCard) => {
+    activeCards.value = [...activeCards.value, newCard];
+    selectedCardIds.value.add(newCard.uuid);
+  });
 
-        // Update input socket IDs and build mapping
-        clonedCard.sockets.inputs.forEach((socket) => {
-          const oldId = socket.id;
-          const newId = `socket-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-          socket.id = newId;
-          socketIdMap.set(oldId, newId);
-        });
+  return selectedCardIds.value;
+};
 
-        // Update output socket IDs
-        clonedCard.sockets.outputs.forEach((socket) => {
-          socket.id = `socket-${Date.now()}-${Math.random()
-            .toString(36)
-            .slice(2)}`;
-        });
+/**
+ * Remaps socket IDs for a cloned card's sockets
+ * @param {Object} sockets - The sockets object containing inputs and outputs arrays
+ * @returns {Map} Map of old socket IDs to new socket IDs
+ */
+const remapSockets = (sockets) => {
+  const socketIdMap = new Map();
 
-        // Helper function to update socket IDs in HTML content
-        const updateSocketIdsInHtml = (html) => {
-          if (!html) return html;
-
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, "text/html");
-
-          // Update all socket tags
-          doc.querySelectorAll(".text-editor-tag").forEach((tag) => {
-            const oldSocketId = tag.getAttribute("data-socket-id");
-            const newSocketId = socketIdMap.get(oldSocketId);
-
-            if (newSocketId) {
-              tag.setAttribute("data-socket-id", newSocketId);
-            }
-          });
-
-          return doc.body.innerHTML;
-        };
-
-        // Update socket IDs in HTML content for agent cards only
-        if (clonedCard.type === "agent") {
-          if (clonedCard.systemPromptHtml) {
-            clonedCard.systemPromptHtml = updateSocketIdsInHtml(
-              clonedCard.systemPromptHtml
-            );
-          }
-          if (clonedCard.userPromptHtml) {
-            clonedCard.userPromptHtml = updateSocketIdsInHtml(
-              clonedCard.userPromptHtml
-            );
-          }
-        }
-
-        clonedCards.push(clonedCard);
-      }
+  // Helper to create new socket with preserved properties
+  const createNewSocket = (socket) => {
+    const oldId = socket.id;
+    const newSocket = createSocket({
+      type: socket.type,
+      name: socket.name,
+      index: socket.index,
+      value: socket.value
     });
-
-    // Reset the active cards
-    activeCards.value = activeCards.value.map((card) => ({
-      ...card,
-      zIndex: Z_INDEX_LAYERS.DEFAULT,
-    }));
-    selectedCardIds.value.clear();
-
-    // Set the cloned cards to be active
-    clonedCards.forEach((newCard) => {
-      activeCards.value = [...activeCards.value, newCard];
-      selectedCardIds.value.add(newCard.uuid);
-    });
-
-    return selectedCardIds.value;
+    socketIdMap.set(oldId, newSocket.id);
+    return newSocket;
   };
+
+  // Remap input sockets
+  if (Array.isArray(sockets.inputs)) {
+    sockets.inputs = sockets.inputs.map(createNewSocket);
+  }
+
+  // Remap output sockets
+  if (Array.isArray(sockets.outputs)) {
+    sockets.outputs = sockets.outputs.map(createNewSocket);
+  }
+
+  return socketIdMap;
+};
+
+/**
+ * Updates HTML content for agent cards
+ * @param {Object} card - The card object to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ */
+const updateAgentCardContent = (card, socketIdMap) => {
+  if (!card.data) return;
+
+  // Update systemPromptHtml if it exists
+  if (card.data.systemPromptHtml) {
+    card.data.systemPromptHtml = updateSocketIdsInHtml(
+      card.data.systemPromptHtml,
+      socketIdMap
+    );
+  }
+
+  // Update userPromptHtml if it exists
+  if (card.data.userPromptHtml) {
+    card.data.userPromptHtml = updateSocketIdsInHtml(
+      card.data.userPromptHtml,
+      socketIdMap
+    );
+  }
+};
+
+/**
+ * Updates HTML content for text cards
+ * @param {Object} card - The card object to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ */
+const updateTextCardContent = (card, socketIdMap) => {
+  if (!card.data) return;
+
+  // Update contentHtml if it exists
+  if (card.data.contentHtml) {
+    card.data.contentHtml = updateSocketIdsInHtml(
+      card.data.contentHtml,
+      socketIdMap
+    );
+  }
+
+  // Update any break points or segments if they exist
+  if (card.data.segments) {
+    card.data.segments = card.data.segments.map(segment => ({
+      ...segment,
+      precedingBreak: segment.precedingBreak ? {
+        ...segment.precedingBreak,
+        id: socketIdMap.get(segment.precedingBreak.id) || segment.precedingBreak.id
+      } : null,
+      followingBreak: segment.followingBreak ? {
+        ...segment.followingBreak,
+        id: socketIdMap.get(segment.followingBreak.id) || segment.followingBreak.id
+      } : null
+    }));
+  }
+};
+
+/**
+ * Updates socket IDs in HTML content
+ * @param {string} html - The HTML content to update
+ * @param {Map} socketIdMap - Map of old socket IDs to new socket IDs
+ * @returns {string} Updated HTML content
+ */
+const updateSocketIdsInHtml = (html, socketIdMap) => {
+  if (!html) return html;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+
+  // Update socket tags
+  doc.querySelectorAll(".text-editor-tag").forEach((tag) => {
+    const oldSocketId = tag.getAttribute("data-socket-id");
+    const newSocketId = socketIdMap.get(oldSocketId);
+    if (newSocketId) {
+      tag.setAttribute("data-socket-id", newSocketId);
+    }
+  });
+
+  return doc.body.innerHTML;
+};
 
   const removeCard = (cardId) => {
     // console.log("removeCard", cardId)
@@ -471,8 +676,8 @@ export const createCardRegistry = (props) => {
 
     // Get all socket IDs for this card
     const socketIds = [
-      ...card.sockets.inputs.map((s) => s.id),
-      ...card.sockets.outputs.map((s) => s.id),
+      ...card.data.sockets.inputs.map((s) => s.id),
+      ...card.data.sockets.outputs.map((s) => s.id),
     ];
 
     // Remove all connections where this card is either source or target

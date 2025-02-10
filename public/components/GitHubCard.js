@@ -1,16 +1,25 @@
 // GitHubCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
+import TreeViewer from "./TreeViewer.js";
 import { useGitHub } from "../composables/useGitHub.js";
+import {
+  CardInitializer,
+  SocketInitializer,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+
 import {
   updateSocketArray,
   createSocketUpdateEvent,
-  createSocket,
 } from "../utils/socketManagement/socketRemapping.js";
+
 
 export default {
   name: "GitHubCard",
-  components: { BaseCard, BaseSocket },
+  components: { BaseCard, BaseSocket, TreeViewer },
   props: {
     cardData: { type: Object, required: true },
     zoomLevel: { type: Number, default: 1 },
@@ -18,29 +27,32 @@ export default {
     isSelected: { type: Boolean, default: false },
   },
   template: `
-    <div>
-      <BaseCard
-        :card-data="localCardData"
-        :zoom-level="zoomLevel"
-        :z-index="zIndex"
-        :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
-        @update-card="handleCardUpdate"
-        @close-card="$emit('close-card', $event)"
-        @clone-card="uuid => $emit('clone-card', uuid)"
-        @select-card="$emit('select-card', $event)"
-        style="min-width: 500px;"
-      >
+
+  <div class="card">
+  <BaseCard
+    :card-data="localCardData"
+    :zoom-level="zoomLevel"
+    :z-index="zIndex"
+    :is-selected="isSelected"
+    @drag-start="$emit('drag-start', $event)"   
+    @drag="$emit('drag', $event)"
+    @drag-end="$emit('drag-end', $event)"
+    @update-card="handleCardUpdate"
+    @close-card="$emit('close-card', $event)"
+    @clone-card="uuid => $emit('clone-card', uuid)"
+    @select-card="$emit('select-card', $event)"
+    style="min-width: 500px;"
+  >
         <!-- Input Socket for Trigger -->
         <div class="absolute -left-[12px]" style="top: 16px;">
           <BaseSocket
             type="input"
-            :socket-id="localCardData.sockets.inputs[0].id"
+            :socket-id="localCardData.data.sockets.inputs[0].id"
             :card-id="localCardData.uuid"
             name="Trigger Input"
-            :value="localCardData.sockets.inputs[0].value"
-            :is-connected="getSocketConnections(localCardData.sockets.inputs[0].id)"
-            :has-error="hasSocketError(localCardData.sockets.inputs[0].id)"
+            :value="localCardData.data.sockets.inputs[0].value"
+            :is-connected="getSocketConnections(localCardData.data.sockets.inputs[0].id)"
+            :has-error="hasSocketError(localCardData.data.sockets.inputs[0].id)"
             :zoom-level="zoomLevel"
             @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
             @connection-drag="$emit('connection-drag', $event)"
@@ -55,7 +67,7 @@ export default {
           style="top: 16px;"
         >
           <div 
-            v-for="(socket, index) in localCardData.sockets.outputs"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
             class="flex items-center"
             :style="{ transform: 'translateY(' + (index * 6) + 'px)' }"
@@ -78,14 +90,13 @@ export default {
         </div>
 
         <!-- Content -->
-        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.display == 'default'">
+        <div class="space-y-4 text-gray-300 p-4" v-show="localCardData.ui.display === 'default'">
           <!-- Repository Info - Only shown before initial load -->
-          <div v-if="!localCardData.treeData" class="space-y-4">
-
+          <div v-if="!localCardData.data.treeData" class="space-y-4">
             <div class="space-y-1">
               <label class="text-xs text-gray-400">GitHub URL</label>
               <input
-                v-model="localCardData.url"
+                v-model="localCardData.data.url"
                 type="text"
                 class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
                 placeholder="Paste GitHub URL or owner/repo"
@@ -98,7 +109,7 @@ export default {
               <div class="space-y-1">
                 <label class="text-xs text-gray-400">Owner</label>
                 <input
-                  v-model="localCardData.owner"
+                  v-model="localCardData.data.owner"
                   type="text"
                   class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
                   placeholder="Owner"
@@ -109,7 +120,7 @@ export default {
               <div class="space-y-1">
                 <label class="text-xs text-gray-400">Repository</label>
                 <input
-                  v-model="localCardData.repo"
+                  v-model="localCardData.data.repo"
                   type="text"
                   class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
                   placeholder="Repository"
@@ -120,7 +131,7 @@ export default {
               <div class="space-y-1">
                 <label class="text-xs text-gray-400">Branch</label>
                 <input
-                  v-model="localCardData.branch"
+                  v-model="localCardData.data.branch"
                   type="text"
                   class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
                   placeholder="Branch (default: main)"
@@ -134,7 +145,7 @@ export default {
             <div class="space-y-1">
               <label class="text-xs text-gray-400">GitHub Token (Optional)</label>
               <input
-                v-model="localCardData.token"
+                v-model="localCardData.data.token"
                 type="password"
                 class="w-full bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded border border-gray-800"
                 placeholder="Enter GitHub token for private repos"
@@ -161,7 +172,7 @@ export default {
             <!-- Repository Info Display -->
             <div class="flex items-center justify-between bg-gray-800 p-2 rounded">
               <div class="text-xs text-gray-400">
-                {{ localCardData.owner }}/{{ localCardData.repo }} ({{ localCardData.branch }})
+                {{ localCardData.data.owner }}/{{ localCardData.data.repo }} ({{ localCardData.data.branch }})
               </div>
               <button 
                 class="text-xs text-gray-400 hover:text-white"
@@ -184,36 +195,15 @@ export default {
 
             <!-- Tree View -->
             <div class="bg-gray-900 rounded p-2">
-              <Tree
-                v-model:selectionKeys="localCardData.selectedNodes"
-                :value="localCardData.treeData"
-                selectionMode="checkbox"
-                :propagateSelectionDown="true"
-                :propagateSelectionUp="true"
-                :metaKeySelection="false"
-                :expandedKeys="localCardData.expandedNodes"
-                class="custom-tree"
+              <TreeViewer
+                v-model:selectedKeys="localCardData.data.selectedNodes"
+                :nodes="localCardData.data.treeData"
+                :expandedKeys="localCardData.data.expandedNodes"
                 @node-select="handleNodeSelect"
                 @node-unselect="handleNodeUnselect"
                 @node-expand="handleNodeExpand"
                 @node-collapse="handleNodeCollapse"
-              >
-                <template #default="{ node }">
-                  <div class="flex items-center gap-2">
-                    <span>{{ node.label }}</span>
-                    <span 
-                      v-if="node.data.status"
-                      class="w-2 h-2 rounded-full"
-                      :class="{
-                        'bg-gray-500': node.data.status === 'idle',
-                        'bg-yellow-500': node.data.status === 'loading',
-                        'bg-green-500': node.data.status === 'loaded',
-                        'bg-red-500': node.data.status === 'error'
-                      }"
-                    ></span>
-                  </div>
-                </template>
-              </Tree>
+              />
             </div>
           </div>
         </div>
@@ -223,506 +213,115 @@ export default {
 
   setup(props, { emit }) {
     const { loadGitHubContent, loadFileContent } = useGitHub();
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
+    
+    // Initialize card setup utilities
+    const {
+      socketRegistry,
+      connections,
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
 
-    // Initialize card data
-
-    // Initialize card data
-    const initializeCardData = (data) => {
-      const createLoadedFilesSet = (loadedFiles) => {
-        if (!loadedFiles) return new Set();
-        if (loadedFiles instanceof Set) return loadedFiles;
-        if (Array.isArray(loadedFiles)) return new Set(loadedFiles);
-        if (typeof loadedFiles === "object") {
-          return new Set(Object.values(loadedFiles));
-        }
-        return new Set();
-      };
-
-      const baseData = {
-        uuid: data.uuid,
-        name: data.name || "GitHub Card",
-        description: data.description || "GitHub Repository Browser",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        url: data.url || "",
-        owner: data.owner || "",
-        repo: data.repo || "",
-        branch: data.branch || "main",
-        token: data.token || "",
-        trigger: data.trigger || null,
-        treeData: data.treeData || null,
-        selectedNodes: data.selectedNodes || {},
-        expandedNodes: data.expandedNodes || {},
-        loadedFiles: createLoadedFilesSet(data.loadedFiles),
-
-        sockets: {
-          inputs: [
-            createSocket({
-              type: "input",
-              index: 0,
-              existingId: data.sockets?.inputs?.[0]?.id,
-              value: data.sockets?.inputs?.[0]?.value,
-            }),
-          ],
-          outputs: [],
-        },
-      };
-
-      // Initialize outputs if they exist, preserving all socket data
-      if (data.sockets?.outputs?.length) {
-        baseData.sockets.outputs = data.sockets.outputs.map(
-          (socket, index) => ({
-            ...createSocket({
-              type: "output",
-              index,
-              existingId: socket.id,
-              value: socket.value,
-            }),
-            name: socket.name,
-            path: socket.path,
-          })
-        );
-      }
-
-      // Emit initial socket registration
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: data.uuid,
-          oldSockets: [],
-          newSockets: [...baseData.sockets.inputs, ...baseData.sockets.outputs],
-          reindexMap: new Map(),
-          deletedSocketIds: [],
-          type: "output",
-        })
-      );
-
-      return baseData;
-    };
-
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
-
-    // Computed properties
-    const canLoadRepo = Vue.computed(() => {
-      return localCardData.value.owner && localCardData.value.repo;
-    });
-
-    // Socket management
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-    const hasSocketError = () => false;
-
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
-      });
-    };
-
+    // Define additional utility functions
+    const hasSocketError = () => false; // GitHub card doesn't implement socket errors
     const emitWithCardId = (eventName, event) => {
       emit(eventName, { ...event, cardId: localCardData.value.uuid });
     };
 
-    // Find node by path in tree
-    const findNodeByPath = (nodes, path) => {
-      for (const node of nodes) {
-        if (node.data.path === path) {
-          return node;
+    // Initialize local card data with default configuration
+    const localCardData = Vue.ref(
+      CardInitializer.initializeCardData(props.cardData, {
+        name: "GitHub Card",
+        description: "GitHub Repository Browser",
+        defaultData: {
+          url: "",
+          owner: "developmentation",
+          repo: "logicstudio.ai",
+          branch: "main",
+          token: "",
+          trigger: null,
+          treeData: null,
+          selectedNodes: {},
+          expandedNodes: {},
+          loadedFiles: new Set(),
+        },
+        defaultSockets: {
+          inputs: [{ name: "Trigger Input" }],
+          outputs: []
         }
-        if (node.children) {
-          const found = findNodeByPath(node.children, path);
-          if (found) return found;
-        }
-      }
-      return null;
-    };
+      })
+    );
 
-    // Update node status in tree, including parent folders
-    // Update node status in tree, including parent folders
-    const updateNodeStatus = (node, status) => {
-      if (!node?.data) return;
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
 
-      node.data.status = status;
-
-      // Update parent folder statuses
-      const updateParentStatus = (nodes, targetPath) => {
-        const pathParts = targetPath.split("/");
-        pathParts.pop(); // Remove file name
-
-        while (pathParts.length > 0) {
-          const parentPath = pathParts.join("/");
-          const parentNode = findNodeByPath(nodes, parentPath);
-
-          if (parentNode) {
-            const allChildrenStatus = getAllChildrenStatus(parentNode);
-            if (allChildrenStatus.length === 0) {
-              // If no children have status (all unselected), set parent to idle
-              parentNode.data.status = "idle";
-            } else if (allChildrenStatus.every((s) => s === "loaded")) {
-              parentNode.data.status = "loaded";
-            } else if (allChildrenStatus.some((s) => s === "loading")) {
-              parentNode.data.status = "loading";
-            } else if (allChildrenStatus.some((s) => s === "error")) {
-              parentNode.data.status = "error";
-            } else {
-              // If children are mix of idle/unselected, set to idle
-              parentNode.data.status = "idle";
-            }
-          }
-          pathParts.pop();
-        }
-      };
-
-      updateParentStatus(localCardData.value.treeData, node.data.path);
-    };
-
-    // Get status of all children in a folder
-    const getAllChildrenStatus = (node) => {
-      const statuses = [];
-      const traverse = (n) => {
-        if (n.leaf) {
-          // Only include status if the node is selected
-          if (localCardData.value.selectedNodes[n.data.path]) {
-            statuses.push(n.data.status || "idle");
-          }
-        } else if (n.children) {
-          n.children.forEach(traverse);
-        }
-      };
-      traverse(node);
-      return statuses;
-    };
-    // Get all files in tree order
-    const getAllFilesInOrder = (nodes, selectedOnly = true) => {
-      const files = [];
-      const traverse = (node) => {
-        if (node.leaf) {
-          if (!selectedOnly || localCardData.value.selectedNodes[node.key]) {
-            files.push({
-              path: node.data.path,
-              name: node.data.path, // Use full path as name
-              node: node,
-            });
-          }
-        } else if (node.children) {
-          node.children.forEach(traverse);
-        }
-      };
-
-      nodes.forEach(traverse);
-      return files;
-    };
-
-    // Load file content and update sockets
-    const loadSelectedFiles = async (selectedPaths) => {
-      if (!selectedPaths.length) return;
-
-      const filesToLoad = selectedPaths.filter(
-        (path) => !localCardData.value.loadedFiles.has(path)
+      // Watch position changes
+      Vue.watch(
+        () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+        watchers.position
       );
+  
+      // Watch display changes
+      Vue.watch(() => props.cardData.ui?.display, watchers.display);
+  
+      // Watch width changes
+      Vue.watch(() => props.cardData.ui?.width, watchers.width);
+  
+      // Watch height changes
+      Vue.watch(() => props.cardData.ui?.height, watchers.height);
 
-      let loadResults = null; // Define result variable in proper scope
 
-      try {
-        // Load new files
-        if (filesToLoad.length) {
-          const fileObjects = filesToLoad.map((path) => {
-            const node = findNodeByPath(localCardData.value.treeData, path);
-            if (!node) {
-              throw new Error(`Node not found for path: ${path}`);
-            }
-            updateNodeStatus(node, "loading");
-            return {
-              name: node.label,
-              path: path,
-              download_url: node.data.download_url,
-            };
-          });
 
-          loadResults = await loadFileContent(
-            fileObjects,
-            localCardData.value.token
-          );
-
-          if (loadResults?.successful) {
-            loadResults.successful.forEach((file) => {
-              const node = findNodeByPath(
-                localCardData.value.treeData,
-                file.path
-              );
-              if (node) {
-                updateNodeStatus(node, "loaded");
-                localCardData.value.loadedFiles.add(file.path);
-              }
-            });
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: async ({ type, content }) => {
+        if (type === "modified" && content.old.value !== content.new.value) {
+          localCardData.value.data.trigger = Date.now();
+          
+          if (!localCardData.value.data.treeData) {
+            await loadRepository();
+          } else if (hasSelectedFiles.value) {
+            await refreshSelected();
           }
         }
-
-        // Get all selected paths in tree order
-        const allSelectedPaths = Object.keys(
-          localCardData.value.selectedNodes
-        ).filter((key) => {
-          const node = findNodeByPath(localCardData.value.treeData, key);
-          return node && node.leaf;
-        });
-
-        // Prepare socket arrays, carefully preserving existing data
-        const oldSockets = [...localCardData.value.sockets.outputs];
-        const newSockets = allSelectedPaths.map((path, index) => {
-          const existingSocket = oldSockets.find((s) => s.path === path);
-          const node = findNodeByPath(localCardData.value.treeData, path);
-          const fileName = node?.label || path.split("/").pop();
-
-          // Check if this is a newly loaded file
-          const loadedFile = filesToLoad.includes(path)
-            ? loadResults?.successful?.find((f) => f.path === path)
-            : null;
-
-          if (existingSocket) {
-            // Preserve existing socket data, only update if it's a newly loaded file
-            return {
-              ...existingSocket,
-              index,
-              name: fileName,
-              value: loadedFile ? loadedFile.content : existingSocket.value,
-            };
-          }
-
-          // Create new socket for newly selected files
-          return {
-            ...createSocket({
-              type: "output",
-              index,
-              value: loadedFile?.content || null,
-            }),
-            name: fileName,
-            path,
-          };
-        });
-
-        // Calculate deleted socket IDs
-        const deletedSocketIds = oldSockets
-          .filter((s) => !newSockets.find((ns) => ns.path === s.path))
-          .map((s) => s.id);
-
-        // Update socket array with proper remapping
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          socketRegistry,
-          connections: connections.value,
-          deletedSocketIds,
-        });
-
-        localCardData.value.sockets.outputs = reindexedSockets;
-
-        // Emit socket update event
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds,
-            type: "output",
-          })
-        );
-
-        handleCardUpdate();
-      } catch (error) {
-        console.error("Error loading files:", error);
-        filesToLoad.forEach((path) => {
-          const node = findNodeByPath(localCardData.value.treeData, path);
-          if (node) {
-            updateNodeStatus(node, "error");
-          }
-        });
-
-        // Clean up any affected sockets
-        const oldSockets = [...localCardData.value.sockets.outputs];
-        const affectedSockets = oldSockets.filter((s) =>
-          filesToLoad.includes(s.path)
-        );
-
-        if (affectedSockets.length) {
-          emit(
-            "sockets-updated",
-            createSocketUpdateEvent({
-              cardId: localCardData.value.uuid,
-              oldSockets,
-              newSockets: oldSockets.filter(
-                (s) => !filesToLoad.includes(s.path)
-              ),
-              reindexMap: new Map(),
-              deletedSocketIds: affectedSockets.map((s) => s.id),
-              type: "output",
-            })
-          );
-        }
-
-        handleCardUpdate();
+      },
+      onOutputChange: ({ type, content }) => {
+        // Handle output socket changes if needed
       }
-    };
+    });
 
-    // Node selection handlers
-    const handleNodeSelect = async (event) => {
-      // Find the node in the tree data using the event key
-      const findNode = (nodes, key) => {
-        for (const node of nodes) {
-          if (node.key === key) return node;
-          if (node.children) {
-            const found = findNode(node.children, key);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
+    // Card-specific computed properties
+    const canLoadRepo = Vue.computed(() => {
+      return localCardData.value.data.owner && localCardData.value.data.repo;
+    });
 
-      const collectAllChildPaths = (node) => {
-        const paths = [];
-        if (node.leaf) {
-          paths.push(node.data.path);
-        } else if (node.children) {
-          node.children.forEach((child) => {
-            // Keep this exactly as is - no selection state modifications
-            paths.push(...collectAllChildPaths(child));
-          });
-        }
-        return paths;
-      };
-
-      const node = findNode(localCardData.value.treeData, event.key);
-      if (!node) return;
-
-      const selectedPaths = [];
-      if (node.leaf) {
-        selectedPaths.push(node.data.path);
-      } else {
-        // For folders, automatically select all child files and update UI state
-        selectedPaths.push(...collectAllChildPaths(node));
-      }
-
-      // Force a UI update for the tree component first
-      localCardData.value = {
-        ...localCardData.value,
-        selectedNodes: { ...localCardData.value.selectedNodes },
-      };
-
-      // Now handle the file loading
-      if (selectedPaths.length) {
-        console.log("Selected paths to load:", selectedPaths);
-        await loadSelectedFiles(selectedPaths);
-      }
-
-      handleCardUpdate();
-
-      if (selectedPaths.length && (localCardData.value.autoLoad || node.leaf)) {
-        await loadSelectedFiles(selectedPaths);
-      }
-
-      handleCardUpdate();
-    };
-
-    const handleNodeUnselect = (event) => {
-      const findNode = (nodes, key) => {
-        for (const node of nodes) {
-          if (node.key === key) return node;
-          if (node.children) {
-            const found = findNode(node.children, key);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-
-      const node = findNode(localCardData.value.treeData, event.key);
-      if (!node) return;
-
-      // Get paths to remove (either single node or recursive children)
-      const pathsToRemove = new Set();
-      const collectPaths = (node) => {
-        if (node.leaf) {
-          pathsToRemove.add(node.data.path);
-          // Reset node status to idle
-          updateNodeStatus(node, "idle");
-          // Remove from loadedFiles
-          localCardData.value.loadedFiles.delete(node.data.path);
-        } else if (node.children) {
-          node.children.forEach(collectPaths);
-        }
-      };
-      collectPaths(node);
-
-      // if (localCardData.value.isRecursive && !node.leaf) {
-      //     // Recursively unselect all child nodes
-      //     const unselectChildren = (node) => {
-      //         if (node.children) {
-      //             node.children.forEach(child => {
-      //                 delete localCardData.value.selectedNodes[child.data.path];
-      //                 if (!child.leaf) {
-      //                     unselectChildren(child);
-      //                 }
-      //             });
-      //         }
-      //     };
-      //     unselectChildren(node);
-      // }
-
-      // Remove corresponding sockets
-      const oldSockets = [...localCardData.value.sockets.outputs];
-      const newSockets = oldSockets.filter(
-        (socket) => !pathsToRemove.has(socket.path)
-      );
-
-      // Update socket array with proper remapping
-      const { reindexMap, reindexedSockets } = updateSocketArray({
-        oldSockets,
-        newSockets,
-        type: "output",
-        socketRegistry,
-        connections: connections.value,
-        deletedSocketIds: oldSockets
-          .filter((s) => pathsToRemove.has(s.path))
-          .map((s) => s.id),
+    const hasSelectedFiles = Vue.computed(() => {
+      if (!localCardData.value.data.selectedNodes) return false;
+      return Object.keys(localCardData.value.data.selectedNodes).some((key) => {
+        const node = findNodeByPath(localCardData.value.data.treeData, key);
+        return node && node.leaf;
       });
+    });
 
-      localCardData.value.sockets.outputs = reindexedSockets;
-
-      // Emit socket update event
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: localCardData.value.uuid,
-          oldSockets,
-          newSockets: reindexedSockets,
-          reindexMap,
-          deletedSocketIds: oldSockets
-            .filter((s) => pathsToRemove.has(s.path))
-            .map((s) => s.id),
-          type: "output",
-        })
-      );
-
-      handleCardUpdate();
+    // Card-specific methods
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
     };
 
-    // Node expansion handlers
-    const handleNodeExpand = (event) => {
-      localCardData.value.expandedNodes[event.key] = true;
-      handleCardUpdate();
-    };
-
-    const handleNodeCollapse = (event) => {
-      delete localCardData.value.expandedNodes[event.key];
-      handleCardUpdate();
-    };
-
+    // GitHub-specific utility functions
     const parseGitHubUrl = (url) => {
       if (!url) return null;
       const patterns = [
@@ -743,44 +342,104 @@ export default {
       for (const pattern of patterns) {
         const match = url.trim().match(pattern.regex);
         if (match) {
-          // Always remove trailing .git from the repo name if it exists
           const repo = match[2].replace(/\.git$/, "");
-          const result = {
+          return {
             owner: match[1],
             repo: repo,
           };
-
-          return result;
         }
       }
 
       return null;
     };
+
     const handleUrlInput = () => {
-      const parsed = parseGitHubUrl(localCardData.value.url);
+      const parsed = parseGitHubUrl(localCardData.value.data.url);
       if (parsed) {
-        localCardData.value.owner = parsed.owner;
-        localCardData.value.repo = parsed.repo;
+        localCardData.value.data.owner = parsed.owner;
+        localCardData.value.data.repo = parsed.repo;
         handleCardUpdate();
       }
     };
 
-    // Load repository content
-    // Load repository content
+    // Node tree utility functions
+    const findNodeByPath = (nodes, path) => {
+      for (const node of nodes) {
+        // Check both key and data.path
+        if (node.key === path || node.data.path === path) {
+          return node;
+        }
+        if (node.children) {
+          const found = findNodeByPath(node.children, path);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    const updateNodeStatus = (node, status) => {
+      if (!node?.data) return;
+
+      node.data.status = status;
+
+      const updateParentStatus = (nodes, targetPath) => {
+        const pathParts = targetPath.split("/");
+        pathParts.pop();
+
+        while (pathParts.length > 0) {
+          const parentPath = pathParts.join("/");
+          const parentNode = findNodeByPath(nodes, parentPath);
+
+          if (parentNode) {
+            const allChildrenStatus = getAllChildrenStatus(parentNode);
+            if (allChildrenStatus.length === 0) {
+              parentNode.data.status = "idle";
+            } else if (allChildrenStatus.every((s) => s === "loaded")) {
+              parentNode.data.status = "loaded";
+            } else if (allChildrenStatus.some((s) => s === "loading")) {
+              parentNode.data.status = "loading";
+            } else if (allChildrenStatus.some((s) => s === "error")) {
+              parentNode.data.status = "error";
+            } else {
+              parentNode.data.status = "idle";
+            }
+          }
+          pathParts.pop();
+        }
+      };
+
+      updateParentStatus(localCardData.value.data.treeData, node.data.path);
+    };
+
+    const getAllChildrenStatus = (node) => {
+      const statuses = [];
+      const traverse = (n) => {
+        if (n.leaf) {
+          if (localCardData.value.data.selectedNodes[n.data.path]) {
+            statuses.push(n.data.status || "idle");
+          }
+        } else if (n.children) {
+          n.children.forEach(traverse);
+        }
+      };
+      traverse(node);
+      return statuses;
+    };
+
+ 
+    // Repository management functions
     const loadRepository = async () => {
-      if (!canLoadRepo.value) return;
+      if (!canLoadRepo.value || isProcessing.value) return;
 
       isProcessing.value = true;
       try {
         const result = await loadGitHubContent(
-          localCardData.value.owner,
-          localCardData.value.repo,
-          localCardData.value.branch,
-          localCardData.value.token
+          localCardData.value.data.owner,
+          localCardData.value.data.repo,
+          localCardData.value.data.branch,
+          localCardData.value.data.token
         );
 
         if (result?.treeData) {
-          // Add status property to each node
           const addStatusToNodes = (nodes) => {
             nodes.forEach((node) => {
               node.data.status = "idle";
@@ -792,15 +451,14 @@ export default {
 
           addStatusToNodes(result.treeData);
 
-          localCardData.value.treeData = result.treeData;
-          localCardData.value.selectedNodes = {};
-          localCardData.value.expandedNodes = {};
-          localCardData.value.loadedFiles = new Set();
-          localCardData.value.sockets.outputs = [];
+          localCardData.value.data.treeData = result.treeData;
+          localCardData.value.data.selectedNodes = {};
+          localCardData.value.data.expandedNodes = {};
+          localCardData.value.data.loadedFiles = new Set();
+          localCardData.value.data.sockets.outputs = [];
 
           handleCardUpdate();
 
-          // After loading, refresh if there are any selected files
           if (hasSelectedFiles.value) {
             await refreshSelected();
           }
@@ -812,40 +470,36 @@ export default {
       }
     };
 
-    // Add computed property for selected files
-    const hasSelectedFiles = Vue.computed(() => {
-      if (!localCardData.value.selectedNodes) return false;
-      return Object.keys(localCardData.value.selectedNodes).some((key) => {
-        const node = findNodeByPath(localCardData.value.treeData, key);
-        return node && node.leaf;
-      });
-    });
+    const resetRepository = () => {
+      localCardData.value.data.treeData = null;
+      localCardData.value.data.selectedNodes = {};
+      localCardData.value.data.expandedNodes = {};
+      localCardData.value.data.loadedFiles = new Set();
+      localCardData.value.data.sockets.outputs = [];
+      handleCardUpdate();
+    };
 
-    // Add new method to refresh selected files
     const refreshSelected = async () => {
       if (!hasSelectedFiles.value || isProcessing.value) return;
 
       isProcessing.value = true;
 
       try {
-        // Get all selected file paths
         const selectedPaths = Object.keys(
-          localCardData.value.selectedNodes
+          localCardData.value.data.selectedNodes
         ).filter((key) => {
-          const node = findNodeByPath(localCardData.value.treeData, key);
+          const node = findNodeByPath(localCardData.value.data.treeData, key);
           return node && node.leaf;
         });
 
-        // Reset loaded status for selected files
         selectedPaths.forEach((path) => {
-          const node = findNodeByPath(localCardData.value.treeData, path);
+          const node = findNodeByPath(localCardData.value.data.treeData, path);
           if (node) {
             updateNodeStatus(node, "idle");
-            localCardData.value.loadedFiles.delete(path);
+            localCardData.value.data.loadedFiles.delete(path);
           }
         });
 
-        // Reload the files
         await loadSelectedFiles(selectedPaths);
       } catch (error) {
         console.error("Error refreshing selected files:", error);
@@ -854,91 +508,230 @@ export default {
       }
     };
 
-    // Reset repository state
-    const resetRepository = () => {
-      localCardData.value.treeData = null;
-      localCardData.value.selectedNodes = {};
-      localCardData.value.expandedNodes = {};
-      localCardData.value.loadedFiles = new Set();
-      localCardData.value.sockets.outputs = [];
+
+// GitHubCard - update loadSelectedFiles
+const loadSelectedFiles = async (selectedPaths) => {
+  if (!selectedPaths.length) return;
+
+  const filesToLoad = selectedPaths.filter(
+    (path) => !localCardData.value.data.loadedFiles.has(path)
+  );
+
+  let loadResults = null;
+
+  try {
+    if (filesToLoad.length) {
+      const fileObjects = filesToLoad.map((path) => {
+        const node = findNodeByPath(localCardData.value.data.treeData, path);
+        if (!node) {
+          throw new Error(`Node not found for path: ${path}`);
+        }
+        updateNodeStatus(node, "loading");
+        return {
+          name: node.label,
+          path: path,
+          download_url: node.data.download_url,
+        };
+      });
+
+      loadResults = await loadFileContent(fileObjects, localCardData.value.data.token);
+
+      if (loadResults?.successful) {
+        loadResults.successful.forEach((file) => {
+          const node = findNodeByPath(localCardData.value.data.treeData, file.path);
+          if (node) {
+            updateNodeStatus(node, "loaded");
+            localCardData.value.data.loadedFiles.add(file.path);
+          }
+        });
+      }
+    }
+
+    // Get all currently selected paths from selectedNodes
+    const allSelectedPaths = Object.keys(localCardData.value.data.selectedNodes)
+      .filter(key => {
+        const node = findNodeByPath(localCardData.value.data.treeData, key);
+        return node?.leaf;
+      })
+      .map(key => {
+        const node = findNodeByPath(localCardData.value.data.treeData, key);
+        return node.data.path;
+      });
+
+    // Get current outputs for comparison
+    const oldSockets = [...localCardData.value.data.sockets.outputs];
+
+    // Create new sockets array preserving existing socket values
+    const newSockets = allSelectedPaths.map((path, index) => {
+      const existingSocket = oldSockets.find((s) => s.path === path);
+      const node = findNodeByPath(localCardData.value.data.treeData, path);
+      const fileName = node?.label || path.split("/").pop();
+
+      if (existingSocket) {
+        // Preserve existing socket
+        return {
+          ...existingSocket,
+          index,
+        };
+      } else {
+        // Create new socket only for newly loaded files
+        const loadedFile = loadResults?.successful?.find((f) => f.path === path);
+        return {
+          id: `${localCardData.value.uuid}-output-${index}`,
+          type: "output",
+          name: fileName,
+          path: path,
+          index,
+          value: loadedFile?.content || null,
+          momentUpdated: Date.now()
+        };
+      }
+    });
+
+    // Calculate deleted socket IDs
+    const deletedSocketIds = oldSockets
+      .filter((s) => !newSockets.find((ns) => ns.path === s.path))
+      .map((s) => s.id);
+
+    // Update socket array with proper remapping
+    const { reindexMap, reindexedSockets } = updateSocketArray({
+      oldSockets,
+      newSockets,
+      type: "output",
+      socketRegistry,
+      connections: connections.value,
+      deletedSocketIds,
+    });
+
+    localCardData.value.data.sockets.outputs = reindexedSockets;
+
+    // Emit socket update event
+    emit(
+      "sockets-updated",
+      createSocketUpdateEvent({
+        cardId: localCardData.value.uuid,
+        oldSockets,
+        newSockets: reindexedSockets,
+        reindexMap,
+        deletedSocketIds,
+        type: "output",
+      })
+    );
+
+    handleCardUpdate();
+  } catch (error) {
+    console.error("Error loading files:", error);
+    filesToLoad.forEach((path) => {
+      const node = findNodeByPath(localCardData.value.data.treeData, path);
+      if (node) {
+        updateNodeStatus(node, "error");
+      }
+    });
+    handleCardUpdate();
+  }
+};
+    
+const handleNodeSelect = async (event) => {
+  const selectedPaths = [];
+  
+  if (event.affectedKeys) {
+    event.affectedKeys.forEach(key => {
+      const node = findNodeByPath(localCardData.value.data.treeData, key);
+      if (node?.leaf) {
+        selectedPaths.push(node.data.path);
+      }
+    });
+  }
+
+  if (selectedPaths.length) {
+    await loadSelectedFiles(selectedPaths);
+  }
+};
+
+const handleNodeUnselect = (event) => {
+  const pathsToRemove = new Set();
+  const affectedKeys = event.affectedKeys || [event.node?.key];
+  
+  affectedKeys.forEach(key => {
+      const node = findNodeByPath(localCardData.value.data.treeData, key);
+      if (node?.leaf) {
+          pathsToRemove.add(node.data.path);
+          updateNodeStatus(node, "idle");
+          localCardData.value.data.loadedFiles.delete(node.data.path);
+          // Also ensure selection state is cleared
+          delete localCardData.value.data.selectedNodes[node.key];
+      }
+  });
+
+  if (pathsToRemove.size === 0) return;
+
+  // Remove sockets for unselected files
+  const oldSockets = [...localCardData.value.data.sockets.outputs];
+  const newSockets = oldSockets.filter(socket => !pathsToRemove.has(socket.path));
+  const deletedSocketIds = oldSockets
+      .filter(socket => pathsToRemove.has(socket.path))
+      .map(socket => socket.id);
+
+  const { reindexMap, reindexedSockets } = updateSocketArray({
+      oldSockets,
+      newSockets,
+      type: "output",
+      socketRegistry,
+      connections: connections.value,
+      deletedSocketIds,
+  });
+
+  localCardData.value.data.sockets.outputs = reindexedSockets;
+
+  emit(
+      "sockets-updated",
+      createSocketUpdateEvent({
+          cardId: localCardData.value.uuid,
+          oldSockets,
+          newSockets: reindexedSockets,
+          reindexMap,
+          deletedSocketIds,
+          type: "output",
+      })
+  );
+
+  handleCardUpdate();
+};
+    const handleNodeExpand = (event) => {
+      localCardData.value.data.expandedNodes[event.key] = true;
       handleCardUpdate();
     };
 
-    // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value) return;
-
-        const updatedData = { ...localCardData.value };
-        if (newData.x !== undefined) updatedData.x = newData.x;
-        if (newData.y !== undefined) updatedData.y = newData.y;
-
-        // Deep merge of tree data and selection state if changed
-        if (
-          newData.treeData &&
-          JSON.stringify(newData.treeData) !== JSON.stringify(oldData?.treeData)
-        ) {
-          updatedData.treeData = newData.treeData;
-          updatedData.selectedNodes = newData.selectedNodes || {};
-          updatedData.expandedNodes = newData.expandedNodes || {};
-        }
-
-        localCardData.value = updatedData;
-      },
-      { deep: true }
-    );
-
-    // Watch for changes in the trigger input socket
-    Vue.watch(
-      () => localCardData.value.sockets.inputs[0].value,
-      async (newValue, oldValue) => {
-        if (newValue === oldValue) return;
-
-        localCardData.value.trigger = Date.now();
-
-        if (!localCardData.value.treeData) {
-          // If no tree data, load repository
-          await loadRepository();
-        } else if (hasSelectedFiles.value) {
-          // If tree data exists and files are selected, refresh
-          await refreshSelected();
-        }
-      }
-    );
-
-    const handleCardUpdate = () => {
-      emit("update-card", Vue.toRaw(localCardData.value));
+    const handleNodeCollapse = (event) => {
+      delete localCardData.value.data.expandedNodes[event.key];
+      handleCardUpdate();
     };
 
-    // Cleanup
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach((socket) =>
-        socket.cleanup.forEach((cleanup) => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
+    // Lifecycle hooks
+    Vue.onMounted(() => {
+      handleCardUpdate();
     });
+
+    Vue.onUnmounted(cleanup);
 
     return {
       localCardData,
       isProcessing,
       canLoadRepo,
+      hasSelectedFiles,
       getSocketConnections,
       hasSocketError,
       handleSocketMount,
       emitWithCardId,
+      handleCardUpdate,
+      handleUrlInput,
+      loadRepository,
+      resetRepository,
+      refreshSelected,
       handleNodeSelect,
       handleNodeUnselect,
       handleNodeExpand,
       handleNodeCollapse,
-      handleCardUpdate,
-      loadRepository,
-      resetRepository,
-      refreshSelected,
-      hasSelectedFiles,
-
-      handleUrlInput,
     };
   },
 };

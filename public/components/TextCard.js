@@ -3,10 +3,12 @@ import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
 import TextEditor from "./TextEditor.js";
 import {
-  updateSocketArray,
-  createSocketUpdateEvent,
-  createSocket,
-} from "../utils/socketManagement/socketRemapping.js";
+  initializeCardData,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+import { createSocket } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
   name: "TextCard",
@@ -15,7 +17,7 @@ export default {
     BaseSocket,
     TextEditor,
   },
-  
+
   props: {
     cardData: {
       type: Object,
@@ -36,13 +38,15 @@ export default {
   },
 
   template: `
-    <div>
+    <div class="card">
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
@@ -51,16 +55,16 @@ export default {
         <!-- Input Socket -->
         <div class="absolute -left-[12px]" style="top: 16px;">
           <BaseSocket
-            v-if="localCardData.sockets.inputs[0]"
+            v-if="localCardData.data.sockets.inputs[0]"
             type="input"
-            :socket-id="localCardData.sockets.inputs[0].id"
+            :socket-id="localCardData.data.sockets.inputs[0].id"
             :card-id="localCardData.uuid"
-            :name="localCardData.sockets.inputs[0].name"
-            :value="localCardData.sockets.inputs[0].value"
-            :is-connected="getSocketConnections(localCardData.sockets.inputs[0].id)"
-            :has-error="hasSocketError(localCardData.sockets.inputs[0])"
+            :name="localCardData.data.sockets.inputs[0].name"
+            :value="localCardData.data.sockets.inputs[0].value"
+            :is-connected="getSocketConnections(localCardData.data.sockets.inputs[0].id)"
+            :has-error="false"
             :zoom-level="zoomLevel"
-            @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+            @connection-drag-start="$emit('connection-drag-start', $event)"
             @connection-drag="$emit('connection-drag', $event)"
             @connection-drag-end="$emit('connection-drag-end', $event)"
             @socket-mounted="handleSocketMount($event)"
@@ -70,9 +74,9 @@ export default {
         <!-- Output Sockets -->
         <div class="absolute -right-[12px] flex flex-col gap-1" style="top: 16px;">
           <div
-            v-for="(socket, index) in outputSockets"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
-            class="flex items-center"
+            class="flex items-center justify-end"
             :style="{ transform: 'translateY(' + (index * 4) + 'px)' }"
           >
             <BaseSocket
@@ -82,9 +86,9 @@ export default {
               :name="socket.name"
               :value="socket.value"
               :is-connected="getSocketConnections(socket.id)"
-              :has-error="hasSocketError(socket.id)"
+              :has-error="false"
               :zoom-level="zoomLevel"
-              @connection-drag-start="emitWithCardId('connection-drag-start', $event)"
+              @connection-drag-start="$emit('connection-drag-start', $event)"
               @connection-drag="$emit('connection-drag', $event)"
               @connection-drag-end="$emit('connection-drag-end', $event)"
               @socket-mounted="handleSocketMount($event)"
@@ -93,15 +97,37 @@ export default {
         </div>
 
         <!-- Content -->
-        <div class="space-y-4 text-gray-300 mt-8">
+        <div 
+          class="space-y-4 text-gray-300 mt-8"
+          v-show="localCardData.ui.display === 'default'"
+        >
           <div class="space-y-1">
             <TextEditor
-              v-model="localCardData.content"
+              v-model="localCardData.data.content"
+              :height =  "localCardData.ui.height - 180"
               placeholder="Enter text with break points..."
-              :existing-breaks="localCardData.sockets.outputs"
+              :existing-breaks="localCardData.data.sockets.outputs"
               @break-update="handleBreakUpdate"
               @segments-update="handleSegmentsUpdate"
               @html-update="handleHtmlUpdate"
+            />
+          </div>
+          
+          <!-- Break Controls -->
+          <div class="flex items-center gap-2 mt-4">
+            <button
+              @click="addBreaksFromPattern"
+              @mousedown.stop
+              class="px-2 py-1 text-sm bg-blue-500 hover:bg-blue-600 text-white rounded whitespace-nowrap"
+            >
+              Split
+            </button>
+            <input
+              type="text"
+              v-model="breakPattern"
+              placeholder="Split by text or regex pattern"
+              class="w-full px-2 py-1 bg-gray-800 text-gray-300 rounded text-sm border border-gray-700"
+              @mousedown.stop
             />
           </div>
           
@@ -130,92 +156,282 @@ export default {
   `,
 
   setup(props, { emit }) {
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
-    const currentSegments = Vue.ref([]);
+    // Initialize card setup utilities
+    const {
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
 
-    // Initialize card data with proper socket structure
-    const initializeCardData = (data) => {
-      const initialInputSocket = createSocket({
-        type: "input",
-        index: 0,
-        existingId: data.sockets?.inputs?.[0]?.id,
-        value: data.sockets?.inputs?.[0]?.value,
-      });
-
-      const baseData = {
-        uuid: data.uuid,
-        name: data.name || "Text",
-        description: data.description || "Text Node",
-        content: data.content || "",
-        contentHtml: data.contentHtml || "",
-        x: data.x || 0,
-        y: data.y || 0,
-        sockets: {
-          inputs: [initialInputSocket],
-          outputs: data.sockets?.outputs || [],
+    // Initialize local card data with default sockets
+    const localCardData = Vue.ref(
+      initializeCardData(props.cardData, {
+        name: "Text Card",
+        description: "Text Processing Node",
+        defaultSockets: {
+          inputs: [{ name: "Text Input" }],
+          outputs: [{ name: "Start" }],
         },
-      };
-
-      // Emit socket update event to register the initial input socket
-      emit(
-        "sockets-updated",
-        createSocketUpdateEvent({
-          cardId: data.uuid,
-          oldSockets: [],
-          newSockets: [initialInputSocket],
-          reindexMap: new Map([[null, initialInputSocket.id]]),
-          deletedSocketIds: [],
-          type: "input",
-        })
-      );
-
-      return baseData;
-    };
-
-    // Initialize local state
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
-
-    // Computed properties
-    const outputSockets = Vue.computed(() => localCardData.value.sockets.outputs);
-    // Add autoSync ref with default true
-    const autoSync = Vue.ref(true);
-
-    // Watch input socket value for auto-sync
-    Vue.watch(
-      () => localCardData.value.sockets.inputs[0]?.value,
-      (newValue) => {
-        if (
-          autoSync.value &&
-          newValue !== undefined && 
-          newValue !== null
-        ) {
-          syncFromInput();
-        }
-      }
+        defaultData: {
+          content: "",
+          contentHtml: "",
+        },
+      })
     );
 
-    // Socket connection tracking
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-    const hasSocketError = () => false;
+    // Auto-sync ref and pattern matching refs
+    const autoSync = Vue.ref(true);
+    const currentSegments = Vue.ref([]);
+    const breakPattern = Vue.ref("");
+    const nextBreakNumber = Vue.ref(1);
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
+    // Function to detect if a string is a valid regex
+    const isValidRegex = (pattern) => {
+      try {
+        new RegExp(pattern);
+        // Additional check to ensure it's actually a regex pattern
+        // Look for common regex features like \d, \w, [], (), *, +, etc.
+        return /[\[\]\(\)\{\}\^\$\*\+\?\\\|\.]/.test(pattern);
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const handleCardUpdate = () => {
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
+    };
+
+    // Setup socket watcher
+    setupSocketWatcher({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+      onInputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value && autoSync.value) {
+              // Reset outputs first
+              localCardData.value.data.sockets.outputs = [{
+                ...localCardData.value.data.sockets.outputs[0] || createSocket({
+                  type: 'output',
+                  name: 'Start',
+                  index: 0
+                }),
+                value: ""
+              }];
+
+              // Then sync from input
+              syncFromInput();
+            }
+            break;
+        }
+      },
+      onOutputChange: ({ type, content }) => {
+        switch (type) {
+          case "modified":
+            if (content.old.value !== content.new.value) {
+              handleCardUpdate();
+            }
+            break;
+        }
+      }
+    });
+
+          // Add breaks based on pattern
+    const addBreaksFromPattern = () => {
+      console.log("Adding breaks for pattern:", breakPattern.value);
+      if (!breakPattern.value) return;
+
+      const editor = document.querySelector('.text-editor');
+      if (!editor) {
+        console.error("Editor element not found");
+        return;
+      }
+
+      // Get the pure text content without HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = editor.innerHTML;
+      
+      // Get positions and lengths of existing break tags
+      const breakTags = Array.from(editor.querySelectorAll('.text-editor-tag'));
+      const existingBreaks = breakTags.map(tag => {
+        const range = document.createRange();
+        range.selectNode(tag);
+        return {
+          startOffset: getTextPosition(editor, tag),
+          length: tag.textContent.length
+        };
       });
+
+      // Sort breaks by position for offset calculation
+      existingBreaks.sort((a, b) => a.startOffset - b.startOffset);
+
+      // Function to adjust position based on existing breaks
+      const adjustPosition = (pos) => {
+        let adjustment = 0;
+        for (const breakTag of existingBreaks) {
+          if (breakTag.startOffset < pos) {
+            adjustment += breakTag.length;
+          } else {
+            break;
+          }
+        }
+        return pos + adjustment;
+      };
+
+      // Remove break tags from temp div for clean matching
+      const tempBreakTags = Array.from(tempDiv.querySelectorAll('.text-editor-tag'));
+      tempBreakTags.forEach(tag => tag.remove());
+
+      // Get clean text content
+      const content = tempDiv.textContent;
+      
+      const isRegex = isValidRegex(breakPattern.value);
+      console.log("Is regex pattern:", isRegex);
+      
+      const pattern = isRegex
+        ? new RegExp(breakPattern.value, 'g')
+        : breakPattern.value;
+
+      // Find all matches in the clean text
+      const matches = [];
+      if (isRegex) {
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+          matches.push(match.index);
+        }
+      } else {
+        let pos = 0;
+        while ((pos = content.indexOf(pattern, pos)) !== -1) {
+          matches.push(pos);
+          pos += pattern.length;
+        }
+      }
+
+      console.log("Found matches at positions:", matches);
+
+      // Sort all positions in reverse order (from end to start)
+      const allPositions = [...matches].sort((a, b) => b - a);
+
+      console.log("Processing matches in reverse order:", allPositions);
+
+      // Insert breaks
+      let offset = 0;
+      let highestSocket = matches.length;
+      for (const pos of allPositions) {
+        let breakName;
+        if (isRegex) {
+          const matchText = content.slice(pos).match(pattern)[0];
+          breakName = matchText;
+        } else {
+          // Start numbering from the total number of matches and count down
+          breakName = `${breakPattern.value} ${highestSocket--}`;
+        }
+
+        // Adjust position based on existing break tags
+        const adjustedPos = adjustPosition(pos);
+        // Find the actual position in the editor
+        const targetPos = findActualPosition(editor, adjustedPos);
+        if (targetPos) {
+          const { node, offset: nodeOffset } = targetPos;
+          const range = document.createRange();
+          range.setStart(node, nodeOffset);
+          range.setEnd(node, nodeOffset);
+          
+          const breakSpan = document.createElement('span');
+          breakSpan.className = 'text-editor-tag';
+          breakSpan.setAttribute('contenteditable', 'false');
+          breakSpan.setAttribute('data-socket-id', `break-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+          breakSpan.setAttribute('data-break-name', breakName);
+          breakSpan.textContent = `[${breakName}]`;
+          
+          range.insertNode(breakSpan);
+        }
+      }
+
+      // Trigger update
+      const event = new Event('input', { bubbles: true });
+      editor.dispatchEvent(event);
     };
 
-    // Helper to emit events with card ID
-    const emitWithCardId = (eventName, event) => {
-      emit(eventName, { ...event, cardId: localCardData.value.uuid });
+    // Helper function to find text position of an element
+    const getTextPosition = (root, element) => {
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+      
+      let pos = 0;
+      let node;
+      
+      while ((node = walker.nextNode())) {
+        if (element.contains(node)) {
+          break;
+        }
+        pos += node.textContent.length;
+      }
+      
+      return pos;
     };
 
-    // Sync content from input
+    // Helper function to find the actual position in the editor
+    const findActualPosition = (editor, targetPos) => {
+      let currentPos = 0;
+      const walker = document.createTreeWalker(
+        editor,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+
+      let node;
+      while ((node = walker.nextNode())) {
+        const nodeLength = node.textContent.length;
+        if (currentPos + nodeLength > targetPos) {
+          return {
+            node,
+            offset: targetPos - currentPos
+          };
+        }
+        currentPos += nodeLength;
+      }
+
+      return null;
+    };
+    
+
+    // Set up watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    // Watch position changes
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
+    // Card-specific functions
     const syncFromInput = () => {
-      const inputSocket = localCardData.value.sockets.inputs[0];
+      const inputSocket = localCardData.value.data.sockets.inputs[0];
       if (!inputSocket || inputSocket.value === undefined) return;
 
       let content = inputSocket.value;
@@ -223,196 +439,87 @@ export default {
         content = JSON.stringify(content, null, 2);
       }
 
-      // Properly preserve carriage returns
       content = String(content)
         .replace(/\\n/g, '\n')
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n');
       
-      // Update content
-      localCardData.value.content = content;
-
-      // Trigger TextEditor events to create initial socket
-      Vue.nextTick(() => {
-        const segments = [{
-          text: content,
-          startPosition: 0,
-          endPosition: content.length,
-          precedingBreak: null,
-          followingBreak: null
-        }];
-
-        handleSegmentsUpdate(segments);
-        handleBreakUpdate({ breaks: [] });
-      });
-    };
-
-    // Clear content
-    const clearContent = () => {
-      localCardData.value.content = "";
+      localCardData.value.data.content = content;
       handleCardUpdate();
     };
 
-    // Handle segments update from TextEditor
+    const clearContent = () => {
+      localCardData.value.data.content = "";
+      localCardData.value.data.contentHtml = "";
+      handleCardUpdate();
+    };
+
     const handleSegmentsUpdate = (segments) => {
       if (isProcessing.value) return;
       currentSegments.value = segments;
     };
 
-    // Handle break updates from TextEditor
     const handleBreakUpdate = (event) => {
       if (isProcessing.value) return;
       isProcessing.value = true;
-
+    
       try {
-        const oldSockets = [...localCardData.value.sockets.outputs];
-        let newSockets = [];
-
-        // First, handle the initial segment if it exists
-        if (currentSegments.value.length > 0 && currentSegments.value[0].precedingBreak === null) {
-          const existingInitialSocket = oldSockets.find(s => s.name === "Initial");
-          
-          if (existingInitialSocket) {
-            newSockets.push({
-              ...existingInitialSocket,
-              value: currentSegments.value[0].text || "",
-              index: 0
-            });
-          } else {
-            const initialSocket = createSocket({
-              type: "output",
-              index: 0,
-              value: currentSegments.value[0].text || "",
-            });
-            initialSocket.name = "Initial";
-            newSockets.push(initialSocket);
-          }
-        }
-
-        // Then map breaks to sockets with their corresponding segment texts
+        // Keep the initial "Start" output socket
+        const newOutputs = [{
+          ...localCardData.value.data.sockets.outputs[0],
+          value: currentSegments.value[0]?.text || ""
+        }];
+    
+        // Add outputs for each break
         event.breaks.forEach((breakInfo, index) => {
-          const existingSocket = oldSockets.find(s => s.name === breakInfo.name);
-          const segmentIndex = newSockets.length;
+          // Get the segment that comes AFTER this break
+          const segmentIndex = index + 1;
           const segment = currentSegments.value[segmentIndex];
-          
+    
+          const existingSocket = localCardData.value.data.sockets.outputs
+            .find(s => s.name === breakInfo.name);
+    
           if (existingSocket) {
-            newSockets.push({
+            newOutputs.push({
               ...existingSocket,
-              value: segment ? segment.text : (existingSocket.value || ""),
-              index: newSockets.length
+              value: segment?.text || "",
+              index: segmentIndex
             });
           } else {
-            const socket = createSocket({
+            newOutputs.push(createSocket({
               type: "output",
-              index: newSockets.length,
-              value: segment ? segment.text : "",
-            });
-            socket.name = breakInfo.name;
-            newSockets.push(socket);
+              name: breakInfo.name,
+              value: segment?.text || "",
+              index: segmentIndex
+            }));
           }
         });
-
-        // Find deleted sockets
-        const deletedSocketIds = oldSockets
-          .filter(old => !newSockets.some(n => n.id === old.id))
-          .map(s => s.id);
-
-        // Use utility for socket array update
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          deletedSocketIds,
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        // Update local state
-        localCardData.value.sockets.outputs = reindexedSockets;
-
-        // Emit socket update event
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds,
-            type: "output",
-          })
-        );
+    
+        localCardData.value.data.sockets.outputs = newOutputs;
+        handleCardUpdate();
       } finally {
         isProcessing.value = false;
-        Vue.nextTick(() => {
-          handleCardUpdate();
-        });
       }
     };
 
-    // Handle HTML updates
     const handleHtmlUpdate = (html) => {
-      localCardData.value.contentHtml = html;
+      localCardData.value.data.contentHtml = html;
+      handleCardUpdate();
     };
 
-    // Card update handler
-    const handleCardUpdate = (data) => {
-      if (data) localCardData.value = data;
-      if (!isProcessing.value) {
-        emit("update-card", Vue.toRaw(localCardData.value));
-      }
-    };
-
-    // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value || !oldData) return;
-        isProcessing.value = true;
-
-        try {
-          // Update position if changed
-          if (newData.x !== oldData.x) localCardData.value.x = newData.x;
-          if (newData.y !== oldData.y) localCardData.value.y = newData.y;
-          
-          // Update content if changed
-          if (newData.content !== oldData.content) {
-            // Preserve carriage returns when updating content
-            localCardData.value.content = newData.content.replace(/\\n/g, '\n');
-          }
-
-          // Update input socket if changed
-          const newInputSocket = newData.sockets?.inputs?.[0];
-          if (newInputSocket && (!localCardData.value.sockets.inputs[0] || 
-              localCardData.value.sockets.inputs[0].value !== newInputSocket.value)) {
-            localCardData.value.sockets.inputs[0] = {
-              ...localCardData.value.sockets.inputs[0],
-              value: newInputSocket.value
-            };
-          }
-        } finally {
-          isProcessing.value = false;
-        }
-      },
-      { deep: true }
-    );
-
-    // Cleanup on unmount
-    Vue.onUnmounted(() => {
-      socketRegistry.forEach(socket => 
-        socket.cleanup.forEach(cleanup => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
+    // Mounted hook
+    Vue.onMounted(() => {
+      handleCardUpdate();
     });
 
-          return {
+    // Cleanup
+    Vue.onUnmounted(cleanup);
+
+    return {
       localCardData,
-      outputSockets,
       autoSync,
+      breakPattern,
       getSocketConnections,
-      hasSocketError,
-      emitWithCardId,
       handleSocketMount,
       handleCardUpdate,
       handleBreakUpdate,
@@ -420,6 +527,7 @@ export default {
       handleSegmentsUpdate,
       syncFromInput,
       clearContent,
+      addBreaksFromPattern,
     };
   },
 };

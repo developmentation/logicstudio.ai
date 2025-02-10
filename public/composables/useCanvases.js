@@ -3,6 +3,7 @@
 import { createCanvasRegistry } from "../utils/canvasState/canvasRegistry.js";
 import { createExportImport } from "../utils/canvasState/exportImport.js";
 import { createSocketConnections } from "../utils/socketManagement/socketConnections.js";
+import { createSocketRemapping } from "../utils/socketManagement/socketRemapping.js";
 import { createPointCalculation } from "../utils/canvasInteractions/pointCalculation.js";
 import { createMouseEvents } from "../utils/canvasInteractions/mouseEvents.js";
 import { createTouchEvents } from "../utils/canvasInteractions/touchEvents.js";
@@ -54,6 +55,13 @@ const Z_INDEX_LAYERS = {
   SELECTED: 100,
   DRAGGING: 1000,
 };
+
+const dragState = Vue.ref({
+  isDragging: false,
+  dragOrigin: { x: 0, y: 0 },
+  startPositions: new Map()
+});
+
 
 // Actives are set as shortcuts for quick reference throughout the application
 // const activeCanvas = Vue.ref(null);
@@ -142,6 +150,17 @@ export const useCanvases = () => {
     const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } =
       connectionData;
 
+
+          // First check if the socket elements still exist in the DOM
+    const sourceElement = document.querySelector(`[data-socket-id="${sourceSocketId}"]`);
+    const targetElement = document.querySelector(`[data-socket-id="${targetSocketId}"]`);
+
+    // If either socket is missing from the DOM, return null immediately
+    if (!sourceElement || !targetElement) {
+        return null;
+    }
+
+    
     const sourcePoint = calculateConnectionPoint(
       sourceCardId,
       sourceSocketId,
@@ -248,7 +267,7 @@ export const useCanvases = () => {
     getScaledPoint: pointCalculation.getScaledPoint,
   });
 
-  //OK
+ 
   const cardRegistry = createCardRegistry({
     updateCardSockets: socketConnections.updateCardSockets,
     activeCards,
@@ -257,12 +276,14 @@ export const useCanvases = () => {
     activeConnections,
     zoomLevel,
     canvasRef,
+    
+
   });
 
   const cardSelection = createCardSelection({
     cards: activeCards,
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Pass dragState instead of dragStartPositions
     lastSelectionTime,
     canvasRef,
     Z_INDEX_LAYERS,
@@ -271,11 +292,9 @@ export const useCanvases = () => {
   const cardPositioning = createCardPositioning({
     cards: activeCards,
     selectedCardIds,
-    dragStartPositions,
     zoomLevel,
     connections: activeConnections,
     canvasRef,
-
     calculateConnectionPoint,
     calculateConnectionPoints,
     updateConnections: () => {
@@ -290,8 +309,11 @@ export const useCanvases = () => {
       }
     },
     GRID_SIZE,
+    Z_INDEX_LAYERS,
+    dragState  // Pass the dragState
   });
 
+  
   const zoomPan = createZoomPanControls({
     zoomLevel,
     canvasRef,
@@ -310,7 +332,7 @@ export const useCanvases = () => {
     panStart,
     lastScroll,
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Pass dragState instead of dragStartPositions
     selectedConnectionId,
     connections: activeConnections,
     panBackground,
@@ -318,6 +340,11 @@ export const useCanvases = () => {
     nearestSocket,
     canvasRef,
     zoomLevel,
+
+
+    handleConnectionDrag: socketConnections.handleConnectionDrag,
+    handleConnectionDragEnd: socketConnections.handleConnectionDragEnd,
+
 
     createConnection: socketConnections.createConnection,
     validateConnection: socketConnections.validateConnection,
@@ -397,6 +424,7 @@ export const useCanvases = () => {
 
   const templateNames = [
     // Add more template names here
+    'Canadian News Analysis',
     'Hot Topics Book Generator',
     'Weather Forecast and Heat Loss Calculation'
   ];
@@ -447,10 +475,10 @@ export const useCanvases = () => {
   /////////////// The Orchestrator
 // Helper functions remain the same
 const findSocketInCard = (card, socketId) => {
-  const inputSocket = card.sockets.inputs.find(s => s.id === socketId);
+  const inputSocket = card.data.sockets.inputs.find(s => s.id === socketId);
   if (inputSocket) return { socket: inputSocket, type: 'input' };
   
-  const outputSocket = card.sockets.outputs.find(s => s.id === socketId);
+  const outputSocket = card.data.sockets.outputs.find(s => s.id === socketId);
   if (outputSocket) return { socket: outputSocket, type: 'output' };
   
   return null;
@@ -484,7 +512,6 @@ const clearTargetSocket = (connection, canvas) => {
   targetResult.socket.momentUpdated = Date.now();
 };
 
-// Create a computed that only extracts the data we need to watch
 const socketAndConnectionState = Vue.computed(() => 
   canvases.value.map(canvas => ({
     id: canvas.id,
@@ -497,83 +524,14 @@ const socketAndConnectionState = Vue.computed(() =>
     })),
     socketValues: canvas.cards.map(card => ({
       cardId: card.uuid,
-      outputs: card.sockets.outputs.map(socket => ({
+      outputs: card.data?.sockets?.outputs?.map(socket => ({
         id: socket.id,
         value: socket.value
-      }))
+      })) || []  // Add fallback empty array
     }))
   }))
 );
 
-
-//Extract the models from the canvas
-// Memoization for model configurations
-const lastModelConfig = Vue.ref(null);
-
-// Helper to compare model configurations (ignoring position data)
-const areModelConfigsEqual = (prev, curr) => {
-  if (!prev || !curr) return false;
-  return JSON.stringify(prev) === JSON.stringify(curr);
-};
-
-// Helper to check if a string field is valid (not null/undefined and has length)
-const isValidField = (field) => field && typeof field === 'string' && field.trim().length > 0;
-
-// Helper to validate all required fields for a model
-const isValidModel = (model) => {
-  // Base validation for all providers
-  if (!isValidField(model.displayName) ||  // Add displayName validation
-      !isValidField(model.model) || 
-      !isValidField(model.provider) || 
-      !isValidField(model.apiKey)) {
-    return false;
-  }
-
-  // Additional validation for AzureAI
-  if (model.provider === 'AzureAI' && !isValidField(model.apiEndpoint)) {
-    return false;
-  }
-
-  return true;
-};
-
-const canvasModels = Vue.computed(() => {
-  if (!activeCanvas.value?.cards) return [];
-  
-  // Extract model configurations and strip reactive properties
-  const currentConfig = Object.values(activeCanvas.value.cards)
-    .filter(card => card.type === 'model')
-    .map(card => ({
-      type: card.type,
-      models: Vue.toRaw(card.models || [])
-        .filter(isValidModel)  // Only include fully valid models
-        .map(model => ({
-          name: { 
-            en: model.displayName, // Always use displayName for the name
-            fr: model.displayName
-          },
-          model: model.model,
-          provider: model.provider,
-          apiKey: model.apiKey,
-          ...(model.provider === 'AzureAI' && { apiEndpoint: model.apiEndpoint })
-        }))
-    }));
-
-  // If the configurations haven't changed, return the previous result
-  if (areModelConfigsEqual(lastModelConfig.value, currentConfig)) {
-    return lastModelConfig.value.reduce((acc, card) => {
-      return acc.concat(card.models);
-    }, []);
-  }
-
-  // Update the last known configuration
-  lastModelConfig.value = currentConfig;
-
-  // Return new model list
-  return currentConfig.reduce((acc, card) => {
-    return acc.concat(card.models);
-  }, []);
-});
 
 
 // Watch the computed instead of the entire canvases array
@@ -625,6 +583,50 @@ Vue.watch(
   }
 );
 
+
+const setupViewportWatchers = () => {
+  // Rename to updateViewportScroll to avoid conflicts
+  const updateViewportScroll = () => {
+    if (!canvasRef.value || !activeCanvas.value) return;
+    
+    activeCanvas.value.viewport = {
+      ...activeCanvas.value.viewport,
+      scrollLeft: canvasRef.value.scrollLeft,
+      scrollTop: canvasRef.value.scrollTop
+    };
+  };
+
+  // Watch zoom level changes
+  Vue.watch(zoomLevel, (newZoom) => {
+    if (!activeCanvas.value) return;
+    
+    activeCanvas.value.viewport = {
+      ...activeCanvas.value.viewport,
+      zoomLevel: newZoom
+    };
+  });
+
+  // Watch active canvas changes to restore viewport
+  Vue.watch(activeCanvasId, () => {
+    Vue.nextTick(() => {
+      if (!activeCanvas.value?.viewport || !canvasRef.value) return;
+      
+      const { zoomLevel: savedZoom, scrollLeft, scrollTop } = activeCanvas.value.viewport;
+      
+      // Restore zoom
+      zoomLevel.value = savedZoom;
+      
+      // Restore scroll position
+      canvasRef.value.scrollLeft = scrollLeft;
+      canvasRef.value.scrollTop = scrollTop;
+    });
+  });
+
+  return { updateViewportScroll };
+};
+
+
+
   // Comprehensive return statement:
   return {
     //Templates
@@ -639,7 +641,6 @@ Vue.watch(
     activeCanvasIndex,
     moveCanvasLeft,
     moveCanvasRight,
-    canvasModels,
 
     // UI State
     canvasRef,
@@ -647,10 +648,11 @@ Vue.watch(
     isOverBackground,
     zoomLevel,
     panBackground,
+    setupViewportWatchers,
 
     // Selection State
     selectedCardIds,
-    dragStartPositions,
+    dragState,  // Return dragState instead of dragStartPositions
     selectedConnectionId,
 
     // Connection State
@@ -668,9 +670,16 @@ Vue.watch(
     updateCardPosition: cardPositioning.updateCardPosition,
     handleCardSelection: cardSelection.handleCardSelection,
 
+
+    
+    handleStartDrag: cardPositioning.handleStartDrag,
+    handleDrag: cardPositioning.handleDrag,
+    handleDragEnd: cardPositioning.handleDragEnd,
+
     // Connection Management
     createConnection: socketConnections.createConnection,
     removeConnection: socketConnections.removeConnection,
+    removeConnectionBySourceTarget: socketConnections.removeConnectionBySourceTarget,
     drawSpline: socketConnections.drawSpline,
     updateConnections: socketConnections.updateConnections,
 

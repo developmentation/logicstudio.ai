@@ -1,15 +1,19 @@
 // ChatCard.js
 import BaseCard from "./BaseCard.js";
 import BaseSocket from "./BaseSocket.js";
-import { useConfigs } from "../composables/useConfigs.js";
-import { useCanvases } from "../composables/useCanvases.js";
+import { useModels } from "../composables/useModels.js";
 import { useRealTime } from "../composables/useRealTime.js";
 
 import {
+  CardInitializer,
+  useCardSetup,
+  setupCardDataWatchers,
+  setupSocketWatcher,
+} from "../utils/cardManagement/cardUtils.js";
+
+import {
   updateSocketArray,
-  createSocketUpdateEvent,
   createSocket,
-  generateSocketId,
 } from "../utils/socketManagement/socketRemapping.js";
 
 export default {
@@ -35,38 +39,46 @@ export default {
   },
 
   template: `
-    <div>
+        <div class = "card"> <!-- Required Class-->
+
       <BaseCard
         :card-data="localCardData"
         :zoom-level="zoomLevel"
         :z-index="zIndex"
         :is-selected="isSelected"
-        @update-position="$emit('update-position', $event)"
+        @drag-start="$emit('drag-start', $event)"   
+        @drag="$emit('drag', $event)"
+        @drag-end="$emit('drag-end', $event)"
         @update-card="handleCardUpdate"
         @close-card="$emit('close-card', $event)"
         @clone-card="uuid => $emit('clone-card', uuid)"
         @select-card="$emit('select-card', $event)"
-        
       >
         <!-- Model Selection -->
-        <div class="w-full" v-show="localCardData.display == 'default'">
+        <div class="w-full" v-show="localCardData.ui.display === 'default'">
           <select
-            v-model="localCardData.model"
+            v-model="localCardData.data.model"
             class="flex-1 bg-gray-900 text-xs text-gray-200 px-2 py-1 rounded cursor-pointer"
             style="border: 1px solid #374151; width:100%"
             @mousedown.stop
             @change="handleCardUpdate"
           >
             <option v-for="model in availableModels" :key="model.model" :value="model">
-             {{model.provider.toUpperCase()}} {{model.name.en}}
+              {{model.provider.toUpperCase()}} {{model.name.en}}
             </option>
           </select>
+
+          <button 
+            class="mt-2 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
+            @click="addInput"
+          >+ Add System Input</button>
+
         </div>
 
         <!-- Input Sockets -->
         <div class="absolute -left-[12px] flex flex-col gap-1" style="top: 40px;">
           <div
-            v-for="(socket, index) in localCardData.sockets.inputs"
+            v-for="(socket, index) in localCardData.data.sockets.inputs"
             :key="socket.id"
             class="flex items-center"
             :style="{ transform: 'translateY(' + (index * 4) + 'px)' }"
@@ -87,15 +99,11 @@ export default {
             />
           </div>
         </div>
-        <button 
-          class="mt-2 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
-          @click="addInput"
-        >+ Add System Input</button>
 
         <!-- Output Sockets -->
         <div class="absolute -right-[12px] flex flex-col gap-1" style="top: 16px;">
           <div
-            v-for="(socket, index) in localCardData.sockets.outputs"
+            v-for="(socket, index) in localCardData.data.sockets.outputs"
             :key="socket.id"
             class="flex items-center"
             :style="{ transform: 'translateY(' + (index * 4) + 'px)' }"
@@ -119,88 +127,68 @@ export default {
 
         <!-- Chat History -->
         <div class="mt-4 space-y-2">
+          <div ref="chatContainer" 
+          class="w-full   bg-gray-900 rounded overflow-y-auto p-2" 
+          :style="{height: \`calc(\${localCardData.ui.height}px - 180px)\`}"
+          
+          @mousedown.stop @wheel.stop>
+            <div v-for="(message, index) in localCardData.data.messageHistory" :key="index" class="mb-2">
+              <div v-if="message.role === 'system'" 
+                class="flex items-start justify-start mb-2 relative group">
+                <div class="bg-gray-800 rounded-lg p-2 w-full text-xs text-gray-200">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-gray-400">System</span>
+                    <div class="flex items-center gap-2">
+                      <span v-if="message.flaggedAs" class="text-xs text-green-500">
+                        {{message.flaggedAs}}
+                      </span>
+                      <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
+                        @click="copyToClipboard(message.content)"></i>
+                      <i class="pi pi-check-circle cursor-pointer"
+                        :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
+                        @click="toggleFlag(index)"></i>
+                      <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
+                        @click="removeMessage(index)"></i>
+                    </div>
+                  </div>
+                  <div class="markdown-content whitespace-pre-wrap break-words" v-html="renderMarkdown(message.content)"></div>
+                  <div v-if="message.content.length > 200" 
+                    class="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-gray-700">
+                    <span v-if="message.flaggedAs" class="text-xs text-green-500">
+                      {{message.flaggedAs}}
+                    </span>
+                    <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
+                      @click="copyToClipboard(message.content)"></i>
+                    <i class="pi pi-check-circle cursor-pointer"
+                      :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
+                      @click="toggleFlag(index)"></i>
+                    <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
+                      @click="removeMessage(index)"></i>
+                  </div>                  
+                </div>
+              </div>
 
-        <div ref="chatContainer" class="w-full h-[300px] bg-gray-900 rounded overflow-y-auto p-2" @mousedown.stop  @wheel.stop>
-            <div v-for="(message, index) in localCardData.messageHistory" :key="index" class="mb-2">
-              
-            
-           
-<div v-if="message.role === 'system'" 
-  class="flex items-start justify-start mb-2 relative group">
-  <div class="bg-gray-800 rounded-lg p-2 w-full text-xs text-gray-200">
-    <div class="flex justify-between items-center mb-1">
-      <span class="text-gray-400">System</span>
-      <div class="flex items-center gap-2">
-        <span v-if="message.flaggedAs" class="text-xs text-green-500">
-          {{message.flaggedAs}}
-        </span>
-        <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
-          @click="copyToClipboard(message.content)"></i>
-        <i class="pi pi-check-circle cursor-pointer"
-          :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
-          @click="toggleFlag(index)"></i>
-        <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
-          @click="removeMessage(index)"></i>
-      </div>
-    </div>
-    <div class="markdown-content whitespace-pre-wrap break-words" v-html="renderMarkdown(message.content)"></div>
-    
-    <!-- Bottom icons for long messages -->
-    <div v-if="message.content.length > 200" 
-      class="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-gray-700">
-      <span v-if="message.flaggedAs" class="text-xs text-green-500">
-        {{message.flaggedAs}}
-      </span>
-      <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
-        @click="copyToClipboard(message.content)"></i>
-      <i class="pi pi-check-circle cursor-pointer"
-        :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
-        @click="toggleFlag(index)"></i>
-      <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
-        @click="removeMessage(index)"></i>
-    </div>
-  </div>
-</div>
-
-<div v-else 
-  class="flex items-start justify-end mb-2 relative group">
-  <div class="bg-gray-700 rounded-lg p-2 max-w-full text-xs text-gray-200" style="min-width: 200px;">
-    <div class="flex justify-between items-center mb-1">
-      <span class="text-gray-400">User</span>
-      <div class="flex items-center gap-2">
-        <span v-if="message.flaggedAs" class="text-xs text-green-500">
-          {{message.flaggedAs}}
-        </span>
-        <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
-          @click="copyToClipboard(message.content)"></i>
-        <i class="pi pi-check-circle cursor-pointer"
-          :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
-          @click="toggleFlag(index)"></i>
-        <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
-          @click="removeMessage(index)"></i>
-      </div>
-    </div>
-    {{message.content}}
-    
-    <!-- Bottom icons for long messages -->
-    <div v-if="message.content.length > 200"
-      class="flex justify-end items-center gap-2 mt-2 pt-2 border-t border-gray-700">
-      <span v-if="message.flaggedAs" class="text-xs text-green-500">
-        {{message.flaggedAs}}
-      </span>
-      <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
-        @click="copyToClipboard(message.content)"></i>
-      <i class="pi pi-check-circle cursor-pointer"
-        :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
-        @click="toggleFlag(index)"></i>
-      <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
-        @click="removeMessage(index)"></i>
-    </div>
-  </div>
-</div>            
-
-
-
+              <div v-else 
+                class="flex items-start justify-end mb-2 relative group">
+                <div class="bg-gray-700 rounded-lg p-2 max-w-full text-xs text-gray-200" style="min-width: 200px;">
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-gray-400">User</span>
+                    <div class="flex items-center gap-2">
+                      <span v-if="message.flaggedAs" class="text-xs text-green-500">
+                        {{message.flaggedAs}}
+                      </span>
+                      <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
+                        @click="copyToClipboard(message.content)"></i>
+                      <i class="pi pi-check-circle cursor-pointer"
+                        :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
+                        @click="toggleFlag(index)"></i>
+                      <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"
+                        @click="removeMessage(index)"></i>
+                    </div>
+                  </div>
+                  {{message.content}}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -211,15 +199,15 @@ export default {
               contenteditable="true"
               class="w-full min-h-[60px] max-h-[300px] overflow-y-auto bg-gray-800 text-xs text-gray-200 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-700 cursor-text"
               @keydown.enter.prevent="handleUserInput"
-              @mousedown.stop  @wheel.stop
+              @mousedown.stop @wheel.stop
               placeholder="Type your message..."
             ></div>
             <div class="absolute bottom-2 right-2">
               <div class="status-dot" :class="{
-                'idle': localCardData.status === 'idle',
-                'complete': localCardData.status === 'complete',
-                'in-progress': localCardData.status === 'inProgress',
-                'error': localCardData.status === 'error'
+                'idle': localCardData.data.status === 'idle',
+                'complete': localCardData.data.status === 'complete',
+                'in-progress': localCardData.data.status === 'inProgress',
+                'error': localCardData.data.status === 'error'
               }"></div>
             </div>
           </div>
@@ -229,24 +217,23 @@ export default {
   `,
 
   setup(props, { emit }) {
-    const socketRegistry = new Map();
-    const connections = Vue.ref(new Set());
-    const isProcessing = Vue.ref(false);
+    // Initialize card setup utilities
+    const {
+      socketRegistry,
+      connections,
+      isProcessing,
+      getSocketConnections,
+      handleSocketMount,
+      cleanup,
+    } = useCardSetup(props, emit);
+
+    // Refs
     const userInput = Vue.ref(null);
-
-    const { canvasModels } = useCanvases(); // Add this import
-    const { models: configModels } = useConfigs();
-
-    // Add this computed property
-    const availableModels = Vue.computed(() => {
-      // Use canvas models if available, otherwise fall back to config models
-      return canvasModels.value.length > 0
-        ? canvasModels.value
-        : configModels.value;
-    });
-
     const chatContainer = Vue.ref(null);
+    const websocketId = Vue.ref(uuidv4());
 
+    // Composables
+    const { allModels: availableModels } = useModels();
     const {
       wsUuid,
       sessions,
@@ -255,226 +242,477 @@ export default {
       sendToServer,
     } = useRealTime();
 
-    let websocketId = Vue.ref(uuidv4());
-
-    const initializeCardData = (data) => {
-      // First preserve any existing sockets
-      const existingSockets = data.sockets?.outputs || [];
-
-      // Create new sockets only if they don't exist
-      const outputs = existingSockets.length
-        ? existingSockets
-        : [
-            {
-              ...createSocket({
-                type: "output",
-                index: 0,
-                existingId: data.sockets?.outputs?.[0]?.id,
-                value: data.messageHistory || [],
-              }),
-              name: "Entire History", // Explicitly set name
-            },
-            {
-              ...createSocket({
-                type: "output",
-                index: 1,
-                existingId: data.sockets?.outputs?.[1]?.id,
-                value: "",
-              }),
-              name: "System", // Explicitly set name
-            },
-            {
-              ...createSocket({
-                type: "output",
-                index: 2,
-                existingId: data.sockets?.outputs?.[2]?.id,
-                value: "",
-              }),
-              name: "User", // Explicitly set name
-            },
-          ];
-
-      return {
-        uuid: data.uuid,
-        name: data.name || "Chat",
-        description: data.description || "Chat Node",
-        model: data.model || "",
-        display: data.display || "default",
-        x: data.x || 0,
-        y: data.y || 0,
-        status: data.status || "idle",
-        messageHistory: data.messageHistory || [],
-        sockets: {
-          inputs: data.sockets?.inputs || [],
-          outputs: outputs,
-        },
-      };
+    // Initialize card data
+    const defaultConfig = {
+      name: "Chat",
+      description: "Chat Node",
+      defaultSockets: {
+        outputs: [
+          { name: "Entire History" },
+          { name: "System" },
+          { name: "User" },
+        ],
+      },
+      defaultData: {
+        messageHistory: [],
+        model: null,
+        status: "idle",
+      },
     };
 
-    const localCardData = Vue.ref(initializeCardData(props.cardData));
+    const localCardData = Vue.ref(
+      CardInitializer.initializeCardData(props.cardData, defaultConfig)
+    );
 
-    // Socket Management
-    const getSocketConnections = (socketId) => connections.value.has(socketId);
-    const hasSocketError = () => false;
+    // Socket watcher setup
+// Update socket watcher to handle input value changes
+setupSocketWatcher({
+  props,
+  localCardData,
+  isProcessing,
+  emit,
+  onInputChange: ({ type, content }) => {
+    if (type === "modified" && content.old.value !== content.new.value) {
+      syncInputSocketToMessageHistory(content.new);
+    }
+  },
+  onOutputChange: ({ type, content }) => {
+    if (type === "modified" && content.old.value !== content.new.value) {
+      // Handle output value changes if needed
+    }
+  }
+});
 
-    const handleSocketMount = (event) => {
-      if (!event) return;
-      socketRegistry.set(event.socketId, {
-        element: event.element,
-        cleanup: [],
-      });
+const syncInputSocketToMessageHistory = (socket) => {
+  console.log('Syncing socket to message history:', socket);
+  // Find any existing message linked to this socket
+  const existingMessageIndex = localCardData.value.data.messageHistory
+    .findIndex(msg => msg._socketId === socket.id);
+
+  if (socket.value) {
+    // Create or update message
+    const messageContent = {
+      role: "system",
+      content: socket.value,
+      flagged: false,
+      _socketId: socket.id // Internal tracking, won't be sent to LLM
+    };
+
+    if (existingMessageIndex !== -1) {
+      // Update existing message
+      localCardData.value.data.messageHistory[existingMessageIndex] = messageContent;
+    } else {
+      // Insert at the beginning for system messages
+      localCardData.value.data.messageHistory.unshift(messageContent);
+    }
+  } else {
+    // Remove message if socket value is null/empty
+    if (existingMessageIndex !== -1) {
+      localCardData.value.data.messageHistory.splice(existingMessageIndex, 1);
+    }
+  }
+
+  // Update output sockets with new message history
+  updateOutputSockets();
+  handleCardUpdate();
+};
+
+
+
+    // Card data watchers
+    const watchers = setupCardDataWatchers({
+      props,
+      localCardData,
+      isProcessing,
+      emit,
+    });
+
+    // Set up all necessary watchers
+    Vue.watch(
+      () => ({ x: props.cardData.ui?.x, y: props.cardData.ui?.y }),
+      watchers.position
+    );
+
+    // Watch display changes
+    Vue.watch(() => props.cardData.ui?.display, watchers.display);
+
+    // Watch width changes
+    Vue.watch(() => props.cardData.ui?.width, watchers.width);
+
+    // Watch height changes
+    Vue.watch(() => props.cardData.ui?.height, watchers.height);
+
+    // Session status watcher
+    const sessionStatus = Vue.computed(() => {
+      return sessions.value?.[websocketId.value]?.status || "idle";
+    });
+
+    Vue.watch(sessionStatus, (newValue) => {
+      localCardData.value.data.status = newValue;
+    });
+
+    // Message watchers
+    const partialMessage = Vue.computed(() => {
+      return sessions.value?.[websocketId.value]?.partialMessage || "";
+    });
+
+    const completedMessage = Vue.computed(() => {
+      return sessions.value?.[websocketId.value]?.completedMessage || "";
+    });
+
+    const errorMessage = Vue.computed(() => {
+      return sessions.value?.[websocketId.value]?.errorMessage || "";
+    });
+
+    Vue.watch(partialMessage, (newValue, oldValue) => {
+      if (newValue && newValue.length) {
+        handlePartialMessage(newValue, oldValue);
+      }
+    });
+
+    Vue.watch(completedMessage, (newValue) => {
+      if (newValue) {
+        handleCompletedMessage(newValue);
+      }
+    });
+
+    Vue.watch(errorMessage, (newValue, oldValue) => {
+      if (!oldValue?.length && newValue?.length) {
+        handleErrorMessage();
+      }
+    });
+
+    // Core card functions
+    const handleCardUpdate = (data) => {
+      if (data?.uuid) localCardData.value = data;
+      if (!isProcessing.value) {
+        emit("update-card", Vue.toRaw(localCardData.value));
+      }
     };
 
     const emitWithCardId = (eventName, event) => {
       emit(eventName, { ...event, cardId: localCardData.value.uuid });
     };
 
-    // Input Socket Management
+    const hasSocketError = () => false;
+
+    // UI utility functions
+    const scrollToBottom = () => {
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      }
+    };
+
+    const showToast = (message, type = "success") => {
+      const notification = document.createElement("div");
+      notification.className = `fixed top-4 right-4 ${
+        type === "success" ? "bg-green-500" : "bg-red-500"
+      } text-white px-4 py-2 rounded shadow-lg z-50`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => notification.remove(), 2000);
+    };
+
+    const copyToClipboard = async (text) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Copied to clipboard!");
+      } catch (error) {
+        console.error("Failed to copy text:", error);
+        showToast("Failed to copy to clipboard", "error");
+      }
+    };
+
+    // Chat-specific functions
+    const handleUserInput = async () => {
+      if (!userInput.value || localCardData.value.data.status === "inProgress")
+        return;
+
+      const content = userInput.value.innerText.trim();
+      if (!content) return;
+
+      userInput.value.innerText = "";
+      addMessage("user", content);
+      await triggerLLM();
+    };
+
+    const addMessage = (role, content) => {
+      localCardData.value.data.messageHistory.push({
+        role,
+        content,
+        flagged: false,
+      });
+      Vue.nextTick(scrollToBottom);
+      updateOutputSockets();
+    };
+
     const addInput = () => {
       if (isProcessing.value) return;
-      isProcessing.value = true;
+    
+      const newIndex = localCardData.value.data.sockets.inputs.length;
+      const newSocket = createSocket({
+        type: "input",
+        index: newIndex,
+        name: `System Prompt ${newIndex + 1}`,
+        value: null
+      });
+    
+      localCardData.value.data.sockets.inputs.push(newSocket);
+      handleCardUpdate();
+    };
 
-      try {
-        const oldSockets = [...localCardData.value.sockets.inputs];
-        const newSocket = createSocket({
-          type: "input",
-          index: oldSockets.length,
-          name: `System Input ${oldSockets.length + 1}`,
+    const updateOutputSockets = () => {
+      // Update the values of default sockets (first 3)
+      const outputs = localCardData.value.data.sockets.outputs;
+      
+      // Update the default socket values
+      outputs[0].value = JSON.stringify(localCardData.value.data.messageHistory);
+      outputs[1].value = localCardData.value.data.messageHistory
+        .filter(m => m.role === "system")
+        .map(m => m.content)
+        .join("\n\n");
+      outputs[2].value = localCardData.value.data.messageHistory
+        .filter(m => m.role === "user")
+        .map(m => m.content)
+        .join("\n\n");
+    
+      // Update values for flagged sockets
+      const flaggedMessages = localCardData.value.data.messageHistory
+        .filter(m => m.flagged)
+        .sort((a, b) => parseInt(a.flaggedAs.split(" ")[1]) - parseInt(b.flaggedAs.split(" ")[1]));
+    
+      // Update values of existing flagged sockets
+      flaggedMessages.forEach((msg, idx) => {
+        const socketIndex = idx + 3; // Skip the 3 default sockets
+        if (outputs[socketIndex]) {
+          outputs[socketIndex].value = msg.content;
+        }
+      });
+    
+      handleCardUpdate();
+    };
+    
+   
+    const reindexFlaggedMessages = () => {
+      // Get all flagged messages in order of appearance in message history
+      const flaggedMessages = localCardData.value.data.messageHistory
+        .filter(m => m.flagged)
+        .sort((a, b) => {
+          const indexA = localCardData.value.data.messageHistory.indexOf(a);
+          const indexB = localCardData.value.data.messageHistory.indexOf(b);
+          return indexA - indexB;
         });
-
-        const newSockets = [...oldSockets, newSocket];
-        const { reindexMap, reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "input",
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        localCardData.value.sockets.inputs = reindexedSockets;
-
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: reindexedSockets,
-            reindexMap,
-            deletedSocketIds: [],
-            type: "input",
-          })
+    
+      // Update message flags with new sequential numbers
+      flaggedMessages.forEach((msg, idx) => {
+        msg.flaggedAs = `Item ${idx + 1}`;
+      });
+    
+      // Rename sockets to match new message flags while preserving IDs
+      const flaggedSockets = localCardData.value.data.sockets.outputs.slice(3);
+      flaggedSockets.forEach((socket, idx) => {
+        if (idx < flaggedMessages.length) {
+          socket.name = `Item ${idx + 1}`;
+          socket.value = flaggedMessages[idx].content;
+          socket.index = idx + 3; // Preserve the base index offset
+        }
+      });
+    
+      // Remove any extra sockets if we have fewer flagged messages
+      if (flaggedSockets.length > flaggedMessages.length) {
+        localCardData.value.data.sockets.outputs.splice(
+          3 + flaggedMessages.length, // Start after default sockets + valid flagged messages
+          flaggedSockets.length - flaggedMessages.length // Remove extra sockets
         );
-
-        handleCardUpdate();
-      } finally {
-        isProcessing.value = false;
       }
+    
+      updateOutputSockets();
+    };
+    
+    const removeMessage = (index) => {
+      const message = localCardData.value.data.messageHistory[index];
+      
+      if (message.flagged) {
+        // Find and remove the corresponding socket
+        const socketIndex = localCardData.value.data.sockets.outputs
+          .findIndex(s => s.name === message.flaggedAs);
+        
+        if (socketIndex >= 3) {
+          localCardData.value.data.sockets.outputs.splice(socketIndex, 1);
+        }
+      }
+    
+      // Remove the message
+      localCardData.value.data.messageHistory.splice(index, 1);
+    
+      // Reindex remaining flagged messages and their sockets
+      reindexFlaggedMessages();
+    };
+    
+    const toggleFlag = (index) => {
+      const message = localCardData.value.data.messageHistory[index];
+      
+      if (!message.flagged) {
+        // Flagging a message - add new socket
+        message.flagged = true;
+        const flaggedCount = localCardData.value.data.messageHistory
+          .filter(m => m.flagged).length;
+        message.flaggedAs = `Item ${flaggedCount}`;
+    
+        // Add new socket at the end
+        const newSocket = createSocket({
+          type: "output",
+          index: localCardData.value.data.sockets.outputs.length,
+          value: message.content
+        });
+        newSocket.name = message.flaggedAs;
+        localCardData.value.data.sockets.outputs.push(newSocket);
+      } else {
+        message.flagged = false;
+        message.flaggedAs = null;
+      }
+    
+      // Reindex all flagged messages and their sockets
+      reindexFlaggedMessages();
+    };
+    
+
+// Modify triggerLLM to clean message history before sending
+const cleanMessageForLLM = (msg) => {
+  const { _socketId, ...cleanMsg } = msg;
+  return cleanMsg;
+};
+
+const triggerLLM = async () => {
+  if (localCardData.value.data.status === "inProgress") return;
+  if (!localCardData.value.data?.model?.provider) return;
+
+  // Clean message history to only include role and content
+  let messageHistory = localCardData.value.data.messageHistory.map(msg => {
+    // First remove internal tracking properties
+    const cleanMsg = cleanMessageForLLM(msg);
+    
+    // Then ensure content is a string
+    return {
+      ...cleanMsg,
+      content: typeof cleanMsg.content === "object" 
+        ? JSON.stringify(cleanMsg.content) 
+        : String(cleanMsg.content || "")
+    };
+  });
+
+  let temperature = 0.7;
+
+  // Special handling for models that don't support system messages
+  const unsupportedSystemModels = [
+    "o1-mini-2024-09-12",
+    "o1-preview",
+    "o3-mini-2025-01-31",
+  ];
+  
+  if (unsupportedSystemModels.includes(localCardData.value.data.model.model)) {
+    messageHistory = messageHistory.map(msg => ({
+      ...msg,
+      role: msg.role === "system" ? "user" : msg.role,
+    }));
+    temperature = 1;
+  }
+
+  updateOutputSockets();
+
+  try {
+    await sendToServer(
+      wsUuid.value,
+      websocketId.value,
+      localCardData.value.data.model,
+      temperature,
+      null,
+      null,
+      messageHistory,
+      "prompt",
+      false
+    );
+  } catch (error) {
+    console.error("Error in triggerLLM:", error);
+    localCardData.value.data.status = "error";
+  }
+};
+
+    const handlePartialMessage = (newValue, oldValue) => {
+      localCardData.value.data.status = "inProgress";
+
+      if (!oldValue) {
+        localCardData.value.data.messageHistory.push({
+          role: "system",
+          content: "",
+          flagged: false,
+          isPartial: true,
+        });
+      }
+
+      const lastMessage =
+        localCardData.value.data.messageHistory[
+          localCardData.value.data.messageHistory.length - 1
+        ];
+
+      if (lastMessage && lastMessage.isPartial) {
+        lastMessage.content = newValue;
+        Vue.nextTick(scrollToBottom);
+      }
+    };
+
+    const handleCompletedMessage = (newValue) => {
+      const lastMessage =
+        localCardData.value.data.messageHistory[
+          localCardData.value.data.messageHistory.length - 1
+        ];
+
+      if (lastMessage && lastMessage.isPartial) {
+        lastMessage.content = newValue;
+        lastMessage.isPartial = false;
+      } else {
+        localCardData.value.data.messageHistory.push({
+          role: "system",
+          content: newValue,
+          flagged: false,
+        });
+      }
+
+      localCardData.value.data.status = "complete";
+      updateOutputSockets();
+      handleCardUpdate();
+      Vue.nextTick(scrollToBottom);
+    };
+
+    const handleErrorMessage = () => {
+      localCardData.value.data.status = "error";
+      handleCardUpdate();
     };
 
     const renderMarkdown = (content) => {
       if (!content) return "";
 
       try {
-        // Convert to string if not already
         let textContent =
           typeof content === "object"
             ? JSON.stringify(content, null, 2)
             : String(content);
 
-        // Check if the content already contains markdown code blocks
-        const hasCodeBlocks = textContent.includes("```");
-
-        // Check if there's JSON within regular text
-        const isPureJsonInText = () => {
-          const trimmed = textContent.trim();
-          return (
-            trimmed.includes("{") &&
-            !trimmed.includes("```") &&
-            trimmed.indexOf("{") > 0
-          );
-        };
-
-        // Handle JSON within text first
-        if (isPureJsonInText()) {
-          const jsonStartIndex = textContent.indexOf("{");
-          const prefix = textContent.substring(0, jsonStartIndex);
-          const jsonPart = textContent.substring(jsonStartIndex);
-
-          try {
-            // Try to parse and format the JSON part
-            const parsed = JSON.parse(jsonPart);
-            // Check if it's a table-like structure
-            if (
-              Array.isArray(parsed) &&
-              parsed.every((item) => typeof item === "object")
-            ) {
-              // Convert JSON array to markdown table
-              const headers = Object.keys(parsed[0]);
-              let tableMarkdown = "\n| " + headers.join(" | ") + " |\n";
-              tableMarkdown +=
-                "| " + headers.map(() => "---").join(" | ") + " |\n";
-              tableMarkdown += parsed
-                .map(
-                  (row) =>
-                    "| " +
-                    headers
-                      .map((header) => String(row[header] || ""))
-                      .join(" | ") +
-                    " |"
-                )
-                .join("\n");
-              textContent = prefix + tableMarkdown;
-            } else {
-              // Regular JSON formatting
-              const prettyJson = JSON.stringify(parsed, null, 2);
-              textContent = prefix + "\n```json\n" + prettyJson + "\n```";
-            }
-          } catch (e) {
-            // If JSON is incomplete, just wrap it in code block
-            textContent = prefix + "\n```json\n" + jsonPart + "\n```";
-          }
-        }
-        // Handle standalone JSON (no prefix text)
-        else if (
-          !hasCodeBlocks &&
-          (textContent.trim().startsWith("{") ||
-            textContent.trim().startsWith("["))
+        // Handle JSON content
+        if (
+          textContent.trim().startsWith("{") ||
+          textContent.trim().startsWith("[")
         ) {
           try {
             const parsed = JSON.parse(textContent);
-            // Check if it's a table-like structure
-            if (
-              Array.isArray(parsed) &&
-              parsed.every((item) => typeof item === "object")
-            ) {
-              // Convert JSON array to markdown table
-              const headers = Object.keys(parsed[0]);
-              let tableMarkdown = "| " + headers.join(" | ") + " |\n";
-              tableMarkdown +=
-                "| " + headers.map(() => "---").join(" | ") + " |\n";
-              tableMarkdown += parsed
-                .map(
-                  (row) =>
-                    "| " +
-                    headers
-                      .map((header) => String(row[header] || ""))
-                      .join(" | ") +
-                    " |"
-                )
-                .join("\n");
-              textContent = tableMarkdown;
-            } else {
-              // Regular JSON formatting
-              textContent =
-                "```json\n" + JSON.stringify(parsed, null, 2) + "\n```";
-            }
+            textContent =
+              "```json\n" + JSON.stringify(parsed, null, 2) + "\n```";
           } catch (e) {
-            // If parsing fails (incomplete JSON), wrap in code block without parsing
+            // If JSON parsing fails, wrap as-is
             textContent = "```json\n" + textContent + "\n```";
           }
         }
 
-        // Configure markdown-it with table support and custom rendering
         const md = markdownit({
           html: true,
           breaks: true,
@@ -493,9 +731,7 @@ export default {
           },
         });
 
-        // Enable tables plugin
         md.enable("table");
-
         return md.render(textContent);
       } catch (error) {
         console.error("Error in renderMarkdown:", error);
@@ -503,456 +739,42 @@ export default {
       }
     };
 
-    // Message Management
-    const toggleFlag = (index) => {
-      const message = localCardData.value.messageHistory[index];
-      if (!message.flagged) {
-        message.flagged = true;
-        const flaggedCount = localCardData.value.messageHistory.filter(
-          (m) => m.flagged
-        ).length;
-        const itemNumber = `Item ${flaggedCount}`;
-        message.flaggedAs = itemNumber;
-
-        // Add new output socket for flagged item
-        const oldSockets = [...localCardData.value.sockets.outputs];
-        const newSocket = {
-          ...createSocket({
-            type: "output",
-            index: oldSockets.length,
-            value: message.content,
-          }),
-          name: itemNumber,
-        };
-
-        const newSockets = [...oldSockets, newSocket];
-        const { reindexedSockets } = updateSocketArray({
-          oldSockets,
-          newSockets,
-          type: "output",
-          socketRegistry,
-          connections: connections.value,
-        });
-
-        localCardData.value.sockets.outputs = reindexedSockets;
-      } else {
-        message.flagged = false;
-        const flaggedAs = message.flaggedAs;
-        message.flaggedAs = null;
-
-        // Remove corresponding output socket and update remaining sockets
-        const oldSockets = [...localCardData.value.sockets.outputs];
-        const newSockets = oldSockets.filter((s) => s.name !== flaggedAs);
-
-        // Reindex remaining flagged messages
-        const flaggedMessages = localCardData.value.messageHistory
-          .filter((m) => m.flagged)
-          .sort(
-            (a, b) =>
-              parseInt(a.flaggedAs.split(" ")[1]) -
-              parseInt(b.flaggedAs.split(" ")[1])
-          );
-
-        flaggedMessages.forEach((msg, idx) => {
-          const newItemNumber = `Item ${idx + 1}`;
-          msg.flaggedAs = newItemNumber;
-        });
-
-        // Update sockets with new ordering
-        updateOutputSockets();
-      }
-
-      handleCardUpdate();
-    };
-
-    const removeMessage = (index) => {
-      const message = localCardData.value.messageHistory[index];
-      if (message.flagged) {
-        const flaggedAs = message.flaggedAs;
-        const socketIndex = localCardData.value.sockets.outputs.findIndex(
-          (s) => s.name === flaggedAs
-        );
-        if (socketIndex !== -1) {
-          localCardData.value.sockets.outputs.splice(socketIndex, 1);
-        }
-      }
-
-      localCardData.value.messageHistory.splice(index, 1);
-      updateOutputSockets();
-      handleCardUpdate();
-    };
-
-    // Handle user input and LLM interaction
-    const handleUserInput = async (event) => {
-      if (!userInput.value || localCardData.value.status === "inProgress")
-        return;
-
-      const content = userInput.value.innerText.trim();
-      if (!content) return;
-
-      userInput.value.innerText = "";
-
-      localCardData.value.messageHistory.push({
-        role: "user",
-        content,
-        flagged: false,
-      });
-
-      Vue.nextTick(scrollToBottom); // Add scroll after user message
-
-      updateOutputSockets();
-      await triggerLLM();
-    };
-
-    const updateOutputSockets = () => {
-      // Always update sockets, even if history is empty
-      const systemMessages = localCardData.value.messageHistory
-        .filter((m) => m.role === "system")
-        .map((m) => m.content)
-        .join("\n\n");
-
-      const userMessages = localCardData.value.messageHistory
-        .filter((m) => m.role === "user")
-        .map((m) => m.content)
-        .join("\n\n");
-
-      // Get existing sockets for preservation
-      const oldSockets = [...localCardData.value.sockets.outputs];
-
-      // Create new sockets array with proper names
-      const newSockets = [];
-
-      // Add or update the three default sockets
-      const defaultSocketConfigs = [
-        {
-          name: "Entire History",
-          value: JSON.stringify(localCardData.value.messageHistory),
-        }, // Stringify the messageHistory
-        { name: "System", value: systemMessages },
-        { name: "User", value: userMessages },
-      ];
-
-      defaultSocketConfigs.forEach((config, index) => {
-        const existingSocket = oldSockets[index];
-        newSockets.push({
-          ...createSocket({
-            type: "output",
-            index,
-            existingId: existingSocket?.id,
-            value: config.value,
-          }),
-          name: config.name,
-        });
-      });
-
-      // Add flagged message sockets
-      localCardData.value.messageHistory.forEach((msg) => {
-        if (msg.flagged) {
-          const existingSocket = oldSockets.find(
-            (s) => s.name === msg.flaggedAs
-          );
-          // Ensure content is stringified if it's an object
-          const value =
-            typeof msg.content === "object"
-              ? JSON.stringify(msg.content)
-              : msg.content;
-          newSockets.push({
-            ...createSocket({
-              type: "output",
-              index: newSockets.length,
-              existingId: existingSocket?.id,
-              value: value,
-            }),
-            name: msg.flaggedAs,
-          });
-        }
-      });
-
-      // Update socket array with proper remapping
-      const { reindexedSockets } = updateSocketArray({
-        oldSockets,
-        newSockets,
-        type: "output",
-        socketRegistry,
-        connections: connections.value,
-      });
-
-      localCardData.value.sockets.outputs = reindexedSockets;
-    };
-
-    const triggerLLM = async () => {
-
-      if (localCardData.value.status === "inProgress") return; //Reject requests while in progress
-      if (!localCardData?.value?.model?.provider) return; //Must have a model
-
-      // Process input sockets first
-      if (localCardData.value.sockets.inputs.length > 0) {
-        localCardData.value.sockets.inputs.forEach((socket) => {
-          if (socket.value) {
-            localCardData.value.messageHistory.unshift({
-              role: "system",
-              content: socket.value,
-              flagged: false,
-            });
-          }
-        });
-      }
-
-      // Clean message history to only include role and content
-      let messageHistory = localCardData.value.messageHistory.map((msg) => {
-        // Ensure the content is a string
-        const content =
-          typeof msg.content === "object"
-            ? JSON.stringify(msg.content)
-            : String(msg.content || "");
-
-        return {
-          role: msg.role,
-          content: content,
-        };
-      });
-
-      let temperature = 0.7;
-
-      // System prompts not yet supported by some models
-      if (localCardData.value.model.model === "o1-mini-2024-09-12" || localCardData.value.model.model === "o1-preview") {
-        messageHistory = messageHistory.map((msg) => ({
-          ...msg,
-          role: msg.role === "system" ? "user" : msg.role,
-        }));
-        temperature = 1;
-      }
-
-      updateOutputSockets();
-
-      console.log("Message History for Chat", messageHistory);
-
-      try {
-        await sendToServer(
-          wsUuid.value,
-          websocketId.value,
-          localCardData.value.model,
-          temperature,
-          null,
-          null,
-          messageHistory,
-          "prompt", // Changed from "chat" to "prompt"
-          false
-        );
-      } catch (error) {
-        console.error("Error in triggerLLM:", error);
-        localCardData.value.status = "error";
-      }
-    };
-
-    // Handle card updates and socket management
-    const handleCardUpdate = (data) => {
-      if (data?.uuid) localCardData.value = data;
-      if (!isProcessing.value) {
-        emit("update-card", Vue.toRaw(localCardData.value));
-      }
-    };
-
-    // Watch for responses from the LLM
-    const sessionStatus = Vue.computed(() => {
-      return sessions.value?.[websocketId.value]?.status || "idle";
-    });
-
-    Vue.watch(sessionStatus, (newValue) => {
-      localCardData.value.status = newValue;
-    });
-
-    const partialMessage = Vue.computed(() => {
-      if (sessions?.value) {
-        const session = sessions.value[websocketId.value];
-        return session ? session?.partialMessage : "";
-      }
-      return "";
-    });
-
-    const completedMessage = Vue.computed(() => {
-      if (sessions?.value) {
-        const session = sessions.value[websocketId.value];
-        return session ? session?.completedMessage : "";
-      }
-      return "";
-    });
-
-    const errorMessage = Vue.computed(() => {
-      if (sessions?.value) {
-        const session = sessions.value[websocketId.value];
-        return session ? session?.errorMessage : "";
-      }
-      return "";
-    });
-
-    Vue.watch(partialMessage, (newValue, oldValue) => {
-      if (newValue && newValue.length) {
-        localCardData.value.status = "inProgress";
-
-        // If this is the start of a new message (no previous partial message)
-        if (!oldValue) {
-          localCardData.value.messageHistory.push({
-            role: "system",
-            content: "",
-            flagged: false,
-            isPartial: true,
-          });
-        }
-
-        // Update the content of the last message
-        const lastMessage =
-          localCardData.value.messageHistory[
-            localCardData.value.messageHistory.length - 1
-          ];
-        if (lastMessage && lastMessage.isPartial) {
-          lastMessage.content = newValue;
-          Vue.nextTick(scrollToBottom);
-        }
-      }
-    });
-
-    Vue.watch(completedMessage, (newValue) => {
-      if (newValue) {
-        // Find and update the partial message, or create a new one if none exists
-        const lastMessage =
-          localCardData.value.messageHistory[
-            localCardData.value.messageHistory.length - 1
-          ];
-        if (lastMessage && lastMessage.isPartial) {
-          lastMessage.content = newValue;
-          lastMessage.isPartial = false;
-        } else {
-          localCardData.value.messageHistory.push({
-            role: "system",
-            content: newValue,
-            flagged: false,
-          });
-        }
-
-        localCardData.value.status = "complete";
-        updateOutputSockets();
-        handleCardUpdate();
-        Vue.nextTick(scrollToBottom);
-      }
-    });
-
-    Vue.watch(errorMessage, (newValue, oldValue) => {
-      if (!oldValue?.length && newValue?.length) {
-        localCardData.value.status = "error";
-        handleCardUpdate();
-      }
-    });
-
-    const scrollToBottom = () => {
-      if (chatContainer.value) {
-        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-      }
-    };
-
-    // Add this utility function to the setup:
-    const showToast = (message, type = "success") => {
-      const notification = document.createElement("div");
-      notification.className = `fixed top-4 right-4 ${
-        type === "success" ? "bg-green-500" : "bg-red-500"
-      } text-white px-4 py-2 rounded shadow-lg z-50`;
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 2000);
-    };
-
-    const copyToClipboard = async (text) => {
-      try {
-        const clipData = new ClipboardItem({
-          "text/plain": new Blob([text], { type: "text/plain" }),
-        });
-        await navigator.clipboard.write([clipData]);
-        showToast("Copied to clipboard!");
-      } catch (error) {
-        console.error("Failed to copy text:", error);
-        showToast("Failed to copy to clipboard", "error");
-      }
-    };
-
-    // Watch for card data changes
-    Vue.watch(
-      () => props.cardData,
-      (newData, oldData) => {
-        if (!newData || isProcessing.value) return;
-        isProcessing.value = true;
-
-        try {
-          // Update position
-          if (newData.x !== oldData?.x) localCardData.value.x = newData.x;
-          if (newData.y !== oldData?.y) localCardData.value.y = newData.y;
-
-          // Update socket values
-          if (newData.sockets?.inputs) {
-            newData.sockets.inputs.forEach((socket, index) => {
-              if (localCardData.value.sockets.inputs[index]) {
-                localCardData.value.sockets.inputs[index].value = socket.value;
-              }
-            });
-          }
-        } finally {
-          isProcessing.value = false;
-        }
-      },
-      { deep: true }
-    );
-
-    // Initialize
+    // Lifecycle hooks
     Vue.onMounted(() => {
-       //If no model is provided, then assign the first one automatically
-       if (availableModels.value.length && !localCardData.value.model) {
-        localCardData.value.model = availableModels.value[0];
-      }
-
-      // Handle initial socket setup
-      // Only emit socket update if we created new sockets (not loading existing ones)
-      const hadExistingSockets = props.cardData.sockets?.outputs?.length > 0;
-      if (!hadExistingSockets) {
-        const oldSockets = localCardData.value.sockets.outputs;
-        emit(
-          "sockets-updated",
-          createSocketUpdateEvent({
-            cardId: localCardData.value.uuid,
-            oldSockets,
-            newSockets: localCardData.value.sockets.outputs,
-            reindexMap: new Map(oldSockets.map((s) => [s.id, s.id])),
-            deletedSocketIds: [],
-            type: "output",
-          })
-        );
+      if (availableModels.value.length && !localCardData.value.data.model) {
+        localCardData.value.data.model = availableModels.value[0];
       }
       registerSession(websocketId.value, null);
-      localCardData.value.status = sessionStatus.value;
+      localCardData.value.data.status = sessionStatus.value;
+      handleCardUpdate();
     });
 
-    // Cleanup
     Vue.onUnmounted(() => {
-      socketRegistry.forEach((socket) =>
-        socket.cleanup.forEach((cleanup) => cleanup())
-      );
-      socketRegistry.clear();
-      connections.value.clear();
+      cleanup();
       unregisterSession(websocketId.value);
     });
 
     return {
-      chatContainer,
+      // Core setup
       localCardData,
-      userInput,
-      availableModels,
       getSocketConnections,
-      hasSocketError,
-      emitWithCardId,
       handleSocketMount,
       handleCardUpdate,
+      emitWithCardId,
+      hasSocketError,
       addInput,
+
+      // Refs
+      chatContainer,
+      userInput,
+
+      // Computed
+      availableModels,
+
+      // Chat functions
+      handleUserInput,
       toggleFlag,
       removeMessage,
-      handleUserInput,
       renderMarkdown,
       copyToClipboard,
       showToast,

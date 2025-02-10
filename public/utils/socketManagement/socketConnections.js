@@ -10,9 +10,8 @@ export const createSocketConnections = (props) => {
     zoomLevel,
     calculateConnectionPoint,
     calculateConnectionPoints,
-
-    selectedConnectionId, // Added missing prop
-    activeConnection, // Added missing prop
+    selectedConnectionId,
+    activeConnection,
     onConnectionCreated,
     onConnectionRemoved,
     onValuePropagated,
@@ -20,21 +19,21 @@ export const createSocketConnections = (props) => {
     onConnectionStart,
   } = props;
 
-  // Constants
-  const SNAP_RADIUS = 50;
 
+ 
+  
+  // Constants remain unchanged
+  const SNAP_RADIUS = 50;
   const CONNECTION_STATES = {
     DEFAULT: "default",
     SELECTED: "selected",
     ACTIVE: "active",
     PREVIEW: "preview",
   };
-
   const SOCKET_TYPES = {
     INPUT: "input",
     OUTPUT: "output",
   };
-
   const CONNECTION_STYLES = {
     [CONNECTION_STATES.DEFAULT]: {
       stroke: "#64748b",
@@ -59,7 +58,7 @@ export const createSocketConnections = (props) => {
     },
   };
 
-  // Helper functions
+  // Helper functions with updated card structure references
   const getDistance = (p1, p2) => {
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
@@ -69,33 +68,33 @@ export const createSocketConnections = (props) => {
   const findSocket = (cardId, socketId) => {
     const card = cards.value.find((c) => c.uuid === cardId);
     if (!card) return null;
-    return [...card.sockets.inputs, ...card.sockets.outputs].find(
-      (s) => s.id === socketId
-    );
+    
+    const allSockets = [
+      ...card.data.sockets.inputs,
+      ...card.data.sockets.outputs
+    ];
+    return allSockets.find(s => s.id === socketId);
   };
+
 
   const getSocketType = (cardId, socketId) => {
     const card = cards.value.find((c) => c.uuid === cardId);
-    if (!card) {
-      console.warn("getSocketType: Card not found", { cardId });
+    if (!card?.data?.sockets) {
+      console.warn("getSocketType: Card or sockets not found", { cardId });
       return null;
     }
 
-    if (!card.sockets) {
-      console.warn("getSocketType: Card has no sockets property", { cardId });
-      return null;
-    }
-
-    if (card.sockets.inputs?.some((s) => s.id === socketId)) {
+    if (card.data.sockets.inputs?.some((s) => s.id === socketId)) {
       return SOCKET_TYPES.INPUT;
     }
 
-    if (card.sockets.outputs?.some((s) => s.id === socketId)) {
+    if (card.data.sockets.outputs?.some((s) => s.id === socketId)) {
       return SOCKET_TYPES.OUTPUT;
     }
 
     return null;
   };
+
 
   //   // Find nearest compatible socket
   //   const findNearestSocket = (point, sourceType) => {
@@ -151,7 +150,6 @@ export const createSocketConnections = (props) => {
 
     allSockets.forEach((socket) => {
       const socketType = socket.dataset.type;
-      // Check compatible types
       if (
         (sourceType === "output" && socketType !== "input") ||
         (sourceType === "input" && socketType !== "output")
@@ -181,6 +179,7 @@ export const createSocketConnections = (props) => {
 
     return nearest;
   };
+
 
   // Connection style and state management
   const getConnectionStyle = (connection) => {
@@ -224,8 +223,9 @@ export const createSocketConnections = (props) => {
 
     const sourceCard = cards.value.find((c) => c.uuid === sourceCardId);
     const targetCard = cards.value.find((c) => c.uuid === targetCardId);
-    if (!sourceCard || !targetCard) {
-      console.warn("Connection validation failed: Cards not found");
+    
+    if (!sourceCard?.data?.sockets || !targetCard?.data?.sockets) {
+      console.warn("Connection validation failed: Cards or sockets not found");
       return false;
     }
 
@@ -241,40 +241,42 @@ export const createSocketConnections = (props) => {
           conn.targetSocketId === targetSocketId
       )
     ) {
-      console.warn(
-        "Connection validation failed: Target input already connected"
-      );
+      console.warn("Connection validation failed: Target input already connected");
       return false;
     }
 
     return true;
   };
 
-
   // In socketConnections.js
   const createConnection = (connectionData, event, eventType = "mouse") => {
-
-    // Calculate fresh points using DOM (the method that works during updates)
+    // console.log("Creating connection with data:", connectionData);
+  
     const freshPoints = calculateConnectionPoints({
       sourceCardId: connectionData.sourceCardId,
       sourceSocketId: connectionData.sourceSocketId,
       targetCardId: connectionData.targetCardId,
       targetSocketId: connectionData.targetSocketId,
     });
-
-    // Always use the DOM-calculated points instead of the passed-in points
+  
+    // console.log("Calculated fresh points:", freshPoints);
+  
     const newConnection = {
       id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       sourceCardId: connectionData.sourceCardId,
       sourceSocketId: connectionData.sourceSocketId,
       targetCardId: connectionData.targetCardId,
       targetSocketId: connectionData.targetSocketId,
-      sourcePoint: freshPoints.sourcePoint, // Use fresh points
-      targetPoint: freshPoints.targetPoint, // Use fresh points
+      sourcePoint: freshPoints.sourcePoint,
+      targetPoint: freshPoints.targetPoint,
       isActive: false,
     };
-
+  
+    // console.log("New connection object:", newConnection);
+    
     connections.value.push(newConnection);
+    // console.log("Connections after push:", connections.value);
+    
     onConnectionCreated?.(newConnection);
     return newConnection.id;
   };
@@ -291,6 +293,23 @@ export const createSocketConnections = (props) => {
 
     return true;
   };
+
+  const removeConnectionBySourceTarget = (details) => {
+    const { sourceCardId, sourceSocketId, targetCardId, targetSocketId } = details;
+    
+    const connectionIndex = connections.value.findIndex(conn => 
+      conn.sourceCardId === sourceCardId &&
+      conn.sourceSocketId === sourceSocketId &&
+      conn.targetCardId === targetCardId &&
+      conn.targetSocketId === targetSocketId
+    );
+  
+    if (connectionIndex === -1) return false;
+  
+    const connection = connections.value[connectionIndex];
+    return removeConnection(connection.id);
+  };
+
 
   const getSocketValue = (cardId, socketId) => {
     const socket = findSocket(cardId, socketId);
@@ -314,68 +333,124 @@ export const createSocketConnections = (props) => {
     propagateValue(cardId, socketId, value);
   };
 
+
+  
   const handleConnectionDragStart = ({ startPoint, socket, cardId, type }) => {
-    if (!startPoint) return null;
-
-    const scaledPoint = getScaledPoint(startPoint);
-    if (!scaledPoint) return null;
-
-    const newConnection = {
-      startPoint: scaledPoint,
-      currentPoint: scaledPoint,
-      sourceSocket: socket,
-      sourceCardId: cardId,
-      sourceType: type,
-      snappedSocket: null,
-    };
-
-    // Call the callback to set activeConnection
-    onConnectionStart(newConnection);
-
-    return newConnection;
-  };
-
-  const handleConnectionDrag = ({ currentPoint, activeConnection }) => {
-    if (!activeConnection || !currentPoint) return null;
-
-    const scaledPoint = getScaledPoint(currentPoint);
-    if (!scaledPoint) return null;
-
-    const nearest = findNearestSocket(scaledPoint, activeConnection.sourceType);
-
-    return {
-      ...activeConnection,
-      currentPoint:
-        nearest && nearest.distance < SNAP_RADIUS
-          ? nearest.center
-          : scaledPoint,
-      snappedSocket: nearest && nearest.distance < SNAP_RADIUS ? nearest : null,
-    };
-  };
-  const handleConnectionDragEnd = (activeConnection, event) => {
-    if (!activeConnection?.snappedSocket) return null;
-
-    const { cardId: targetCardId, socketId: targetSocketId } =
-      activeConnection.snappedSocket;
-
-    if (
-      validateConnection(
-        activeConnection.sourceCardId,
-        activeConnection.sourceSocket.id,
-        targetCardId,
-        targetSocketId
-      )
-    ) {
-      return createConnection(activeConnection, event);
-    }
-
+  if (!startPoint || !socket || !cardId) {
+    // console.log("Missing required drag start data:", { startPoint, socket, cardId, type });
     return null;
+  }
+
+  const scaledPoint = getScaledPoint(startPoint);
+  if (!scaledPoint) return null;
+
+  // Create complete initial connection state
+  const newConnection = {
+    startPoint: scaledPoint,
+    currentPoint: scaledPoint,
+    sourceSocket: socket,
+    sourceCardId: cardId,
+    sourceType: type,
+    snappedSocket: null,
+    // Add explicit source details
+    sourceDetails: {
+      cardId: cardId,
+      socketId: socket.id,
+      type: type
+    },
+    targetDetails: null
   };
+
+  // console.log("Starting new connection:", newConnection);
+  // Call the callback to set activeConnection
+  onConnectionStart(newConnection);
+
+  return newConnection;
+};
+
+const handleConnectionDrag = ({currentPoint}) => {
+
+  if (!activeConnection?.value?.sourceDetails || !currentPoint) {
+    // console.log("Missing required drag data:", { activeConnection:activeConnection.value, currentPoint });
+    return null;
+  }
+
+  // console.log("currentPount", currentPoint)
+  const scaledPoint = getScaledPoint(currentPoint);
+  if (!scaledPoint) return null;
+  // console.log("scaledPoint", scaledPoint)
+
+  const nearest = findNearestSocket(scaledPoint, activeConnection.value.sourceDetails.type);
+  // console.log("nearest", nearest)
+  // If we found a valid snap target
+  if (nearest && nearest.distance < SNAP_RADIUS) {
+    // console.log("Found snap target:", nearest);
+    return {
+      ...activeConnection.value,
+      currentPoint: nearest.center,
+      snappedSocket: nearest,
+      targetDetails: {
+        cardId: nearest.cardId,
+        socketId: nearest.socketId,
+        type: nearest.type
+      }
+    };
+  }
+
+  
+
+  // Return updated state without snap
+  return {
+    ...activeConnection.value,
+    currentPoint: scaledPoint,
+    snappedSocket: null,
+    targetDetails: null
+  };
+};
+
+const handleConnectionDragEnd = (event) => {
+
+  // console.log('handleDragEnd', event)
+  // // console.log("End", event)
+  // // console.log("DragEnd full state:", activeConnection);
+
+  // if (!activeConnection.value?.sourceDetails) {
+  //   console.log("No source details in dragEnd");
+  //   return null;
+  // }
+
+  // if (!activeConnection.value?.targetDetails) {
+  //   console.log("No target details in dragEnd");
+  //   return null;
+  // }
+
+  // const { sourceDetails, targetDetails } = activeConnection.value;
+
+  // if (validateConnection(
+  //   sourceDetails.cardId,
+  //   sourceDetails.socketId,
+  //   targetDetails.cardId,
+  //   targetDetails.socketId
+  // )) {
+  //   const connectionData = {
+  //     sourceCardId: sourceDetails.cardId,
+  //     sourceSocketId: sourceDetails.socketId,
+  //     targetCardId: targetDetails.cardId,
+  //     targetSocketId: targetDetails.socketId
+  //   };
+
+  //   console.log("Creating connection with data:", connectionData);
+  //   return createConnection(connectionData, event);
+  // }
+
+  // return null;
+};
+
 
   const handleConnectionClick = (event, connectionId) => {
 
     selectedConnectionId.value = connectionId;
-    console.log("handleConnectionClick",     selectedConnectionId.value )
+    // console.log("handleConnectionClick",     selectedConnectionId.value )
     event.preventDefault();
     event.stopPropagation();
     selectedCardIds.value.clear();
@@ -383,6 +458,8 @@ export const createSocketConnections = (props) => {
   };
 
   // Value propagation
+
+  // Update socket value propagation for new structure
   const propagateValue = (
     sourceCardId,
     sourceSocketId,
@@ -405,7 +482,6 @@ export const createSocketConnections = (props) => {
         targetSocket.momentUpdated = Date.now();
 
         activateConnection(conn.id);
-
         propagateValue(conn.targetCardId, conn.targetSocketId, value, visited);
 
         onValuePropagated?.({
@@ -419,6 +495,7 @@ export const createSocketConnections = (props) => {
       }
     });
   };
+
 
   // Connection visualization
   // Enhance drawSpline with debugging
@@ -456,11 +533,9 @@ export const createSocketConnections = (props) => {
 
   // socketConnections.js drawSpline implementation
   const drawSpline = (source, target) => {
-    // Convert from Proxy objects and ensure numbers
     source = Vue.toRaw(source);
     target = Vue.toRaw(target);
 
-    // Add defensive checks for NaN and undefined
     const sx = Number(source?.x);
     const sy = Number(source?.y);
     const tx = Number(target?.x);
@@ -471,7 +546,6 @@ export const createSocketConnections = (props) => {
       return "";
     }
 
-    // Add offset for SVG coordinates
     const offsetX = sx + 4000;
     const offsetY = sy + 4000;
     const offsetTX = tx + 4000;
@@ -480,13 +554,11 @@ export const createSocketConnections = (props) => {
     const dx = offsetTX - offsetX;
     const dy = offsetTY - offsetY;
 
-    // Control points for smooth curve
     const cx1 = offsetX + dx * 0.4;
     const cy1 = offsetY;
     const cx2 = offsetTX - dx * 0.4;
     const cy2 = offsetTY;
 
-    // Generate path with validated coordinates
     return `M ${offsetX},${offsetY} C ${cx1},${cy1} ${cx2},${cy2} ${offsetTX},${offsetTY}`;
   };
 
@@ -509,32 +581,74 @@ export const createSocketConnections = (props) => {
   };
 
   // Card cleanup
-  const cleanupCardConnections = (cardId) => {
-    const cardConnections = connections.value.filter(
-      (conn) => conn.sourceCardId === cardId || conn.targetCardId === cardId
-    );
+// In socketConnections.js
+const cleanupCardConnections = (cardId) => {
+  // First, find all connections that reference this card
+  const connectionsToRemove = connections.value.filter(conn =>
+    conn.sourceCardId === cardId || conn.targetCardId === cardId
+  );
 
-    cardConnections.forEach((conn) => removeConnection(conn.id));
-    return cardConnections.length > 0;
-  };
+  // Remove each connection
+  connectionsToRemove.forEach(conn => {
+    const index = connections.value.findIndex(c => c.id === conn.id);
+    if (index !== -1) {
+      connections.value.splice(index, 1);
+      onConnectionRemoved?.(conn);
+    }
+  });
+};
 
+// Add this new function
+const cleanupSocketConnections = (socketId) => {
+  if (!socketId) return;
+  
+  // Find all connections that use this socket
+  const connectionsToRemove = connections.value.filter(conn =>
+    conn.sourceSocketId === socketId || conn.targetSocketId === socketId
+  );
+
+  // Remove each connection
+  connectionsToRemove.forEach(conn => {
+    const index = connections.value.findIndex(c => c.id === conn.id);
+    if (index !== -1) {
+      connections.value.splice(index, 1);
+      onConnectionRemoved?.(conn);
+    }
+  });
+};
+
+
+  
   const updateCanvasConnections = (newConnections) => {
     if (activeCanvas.value) {
       activeCanvas.value.connections = newConnections;
       activeCanvas.value.momentUpdated = Date.now();
     }
   };
-
-const updateConnections = async (cardId) => {
-    // First wait for Vue to update
+  const updateConnections = async (cardId) => {
     await Vue.nextTick();
     
-    // Then wait for browser to paint
     await new Promise(resolve => requestAnimationFrame(() => {
-        // And one more frame to be really sure DOM is ready
         requestAnimationFrame(() => {
-            // Now get fresh connection points from the actual DOM positions
-            const updatedConnections = connections.value.map(conn => {
+            // Filter out connections where sockets no longer exist
+            const validConnections = connections.value.filter(conn => {
+                if (conn.sourceCardId === cardId || conn.targetCardId === cardId) {
+                    // Try to calculate points - this will return null if sockets don't exist
+                    const points = calculateConnectionPoints({
+                        sourceCardId: conn.sourceCardId,
+                        sourceSocketId: conn.sourceSocketId,
+                        targetCardId: conn.targetCardId,
+                        targetSocketId: conn.targetSocketId
+                    });
+
+                    // If points is null, the sockets don't exist anymore, so filter out this connection
+                    return points !== null;
+                }
+                return true; // Keep connections not related to this card
+            });
+
+            // Now update the points for remaining valid connections
+            const updatedConnections = validConnections.map(conn => {
                 if (conn.sourceCardId === cardId || conn.targetCardId === cardId) {
                     const points = calculateConnectionPoints({
                         sourceCardId: conn.sourceCardId,
@@ -543,24 +657,23 @@ const updateConnections = async (cardId) => {
                         targetSocketId: conn.targetSocketId
                     });
 
-                    if (points) {
-                        return {
-                            ...conn,
-                            sourcePoint: points.sourcePoint,
-                            targetPoint: points.targetPoint
-                        };
-                    }
+                    // We know points exists because we filtered above
+                    return {
+                        ...conn,
+                        sourcePoint: points.sourcePoint,
+                        targetPoint: points.targetPoint
+                    };
                 }
                 return conn;
             });
 
-            // Update the connections with new positions
+            // Update connections with only the valid ones
             connections.value = [...updatedConnections];
             resolve();
         });
     }));
 };
-
+   // Update card sockets with new structure
   const updateCardSockets = (cardId, { inputs, outputs }) => {
     const card = cards.value.find((c) => c.uuid === cardId);
     if (!card) {
@@ -568,17 +681,16 @@ const updateConnections = async (cardId) => {
       return;
     }
 
-    // Constants for socket positioning
-    const CARD_WIDTH = 300;
+    const CARD_WIDTH = card.ui.width || 300;
     const SOCKET_SPACING = 30;
     const SOCKET_MARGIN_TOP = 40;
 
-    // Initialize socket arrays with positions
-    card.sockets = {
+    // Update sockets in card.data
+    card.data.sockets = {
       inputs: inputs.map((input, index) => ({
         ...input,
         type: "input",
-        x: 0, // left edge
+        x: 0,
         y: SOCKET_MARGIN_TOP + index * SOCKET_SPACING,
         value: null,
         momentUpdated: Date.now(),
@@ -586,7 +698,7 @@ const updateConnections = async (cardId) => {
       outputs: outputs.map((output, index) => ({
         ...output,
         type: "output",
-        x: CARD_WIDTH, // right edge
+        x: CARD_WIDTH,
         y: SOCKET_MARGIN_TOP + index * SOCKET_SPACING,
         value: null,
         momentUpdated: Date.now(),
@@ -594,18 +706,18 @@ const updateConnections = async (cardId) => {
     };
 
     // Force reactivity update on cards
-
     cards.value = [...cards.value];
     updateConnections(cardId);
   };
-
   return {
     // Core functions
     createConnection,
     removeConnection,
+    removeConnectionBySourceTarget,
     propagateValue,
     activateConnection,
     cleanupCardConnections,
+    cleanupSocketConnections,
     findNearestSocket,
     getSocketValue,
     handleConnectionDragStart,
