@@ -1,6 +1,7 @@
 // fileFormatting.js
-import { MarkdownConverter, DEFAULT_STYLES as DOCX_STYLES } from './formatDocxFromMarkdown.js';
-import { convertToPdf, DEFAULT_STYLES as PDF_STYLES } from './formatPdfFromMarkdown.js';
+import { UnifiedMarkdownRenderer, COMMON_STYLES } from './docx/unifiedMarkdownRenderer.js';
+// import { EnhancedPDFRenderer, PDF_STYLES } from './_exploratory/enhancedPDFRenderer.js';
+import { convertToPdf, DEFAULT_STYLES as PDF_STYLES } from './pdf/formatPdfFromMarkdown.js';
 
 const FORMATS = {
   markdown: { extension: 'md', mime: 'text/markdown' },
@@ -19,29 +20,21 @@ const FORMATS = {
  * Process input content to ensure consistent format
  */
 const processContent = (content) => {
-  // Handle null/undefined
   if (content == null) return '';
-
-  // Handle objects and arrays
-  if (typeof content === 'object') {
-      // If it has a content property, use that
-      if (content.content !== undefined) {
-          return processContent(content.content);
-      }
-      // Otherwise stringify the object nicely
-      return JSON.stringify(content, null, 2);
-  }
-
-  // Sanitize content
-  let processed = String(content);
   
-  // Fix unclosed code blocks
+  if (typeof content === 'object') {
+    if (content.content !== undefined) {
+      return processContent(content.content);
+    }
+    return JSON.stringify(content, null, 2);
+  }
+  
+  let processed = String(content);
   const unclosedBlocks = (processed.match(/```/g) || []).length;
   if (unclosedBlocks % 2 !== 0) {
-      processed += '\n```';
+    processed += '\n```';
   }
   
-  // Normalize table structures
   processed = processed.replace(/\|[^\n|]+\|[^\n]*\n(?!\s*\|)/g, match => match + '\n');
   
   return processed;
@@ -86,33 +79,54 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
 
       case 'docx': {
         try {
-            // Create new converter instance with merged styles
-            const converter = new MarkdownConverter({
-                ...DOCX_STYLES,
-                ...options
-            });
-            
-            // Convert markdown to docx document
-            const doc = converter.convertMarkdown(processedContent);
-            
-            // Convert to blob using docx.Packer
-            const blob = await docx.Packer.toBlob(doc);
-            
-            return {
-                content: blob,
-                extension: 'docx',
-                mimeType: FORMATS.docx.mime
-            };
+          const renderer = new UnifiedMarkdownRenderer({
+            ...COMMON_STYLES,
+            ...options
+          });
+          
+          const doc = await renderer.toDocx(processedContent);
+          const blob = await docx.Packer.toBlob(doc);
+          
+          return {
+            content: blob,
+            extension: 'docx',
+            mimeType: FORMATS.docx.mime
+          };
         } catch (error) {
-            console.error('DOCX conversion error:', error);
-            // Fallback to plain text if conversion fails
-            return {
-                content: processedContent,
-                extension: 'txt',
-                mimeType: FORMATS.txt.mime
-            };
+          console.error('DOCX conversion error:', error);
+          return {
+            content: processedContent,
+            extension: 'txt',
+            mimeType: FORMATS.txt.mime
+          };
         }
       }
+
+      //For the Experimental version
+      // case 'pdf': {
+      //   try {
+      //     const pdfRenderer = new EnhancedPDFRenderer({
+      //       ...PDF_STYLES,
+      //       ...options
+      //     });
+          
+      //     const doc = await pdfRenderer.renderToPDF(processedContent, baseFilename);
+      //     const buffer = doc.output('arraybuffer');
+          
+      //     return {
+      //       content: buffer,
+      //       extension: 'pdf',
+      //       mimeType: FORMATS.pdf.mime
+      //     };
+      //   } catch (error) {
+      //     console.error('PDF conversion error:', error);
+      //     return {
+      //       content: `Conversion Error: ${error.message}\n\nOriginal Content:\n${processedContent}`,
+      //       extension: 'txt',
+      //       mimeType: FORMATS.txt.mime
+      //     };
+      //   }
+      // }
 
       case 'pdf': {
         const pdf = new jspdf.jsPDF();
@@ -127,6 +141,8 @@ const createFormattedFile = async (content, outputType, baseFilename, options = 
           mimeType: FORMATS.pdf.mime
         };
       }
+
+
     }
   } catch (error) {
     console.error('Error creating formatted file:', error);
