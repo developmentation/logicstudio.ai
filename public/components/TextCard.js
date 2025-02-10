@@ -103,8 +103,9 @@ export default {
         >
           <div class="space-y-1">
             <TextEditor
+              ref="textEditor"
               v-model="localCardData.data.content"
-              :height =  "localCardData.ui.height - 180"
+              :height="localCardData.ui.height - 180"
               placeholder="Enter text with break points..."
               :existing-breaks="localCardData.data.sockets.outputs"
               @break-update="handleBreakUpdate"
@@ -180,6 +181,9 @@ export default {
       })
     );
 
+    // Add ref for TextEditor component
+    const textEditor = Vue.ref(null);
+
     // Auto-sync ref and pattern matching refs
     const autoSync = Vue.ref(true);
     const currentSegments = Vue.ref([]);
@@ -190,8 +194,6 @@ export default {
     const isValidRegex = (pattern) => {
       try {
         new RegExp(pattern);
-        // Additional check to ensure it's actually a regex pattern
-        // Look for common regex features like \d, \w, [], (), *, +, etc.
         return /[\[\]\(\)\{\}\^\$\*\+\?\\\|\.]/.test(pattern);
       } catch (e) {
         return false;
@@ -214,7 +216,6 @@ export default {
         switch (type) {
           case "modified":
             if (content.old.value !== content.new.value && autoSync.value) {
-              // Reset outputs first
               localCardData.value.data.sockets.outputs = [{
                 ...localCardData.value.data.sockets.outputs[0] || createSocket({
                   type: 'output',
@@ -223,8 +224,6 @@ export default {
                 }),
                 value: ""
               }];
-
-              // Then sync from input
               syncFromInput();
             }
             break;
@@ -241,17 +240,19 @@ export default {
       }
     });
 
-          // Add breaks based on pattern
+    // Add breaks based on pattern
     const addBreaksFromPattern = () => {
       console.log("Adding breaks for pattern:", breakPattern.value);
       if (!breakPattern.value) return;
 
-      const editor = document.querySelector('.text-editor');
-      if (!editor) {
+      const editorComponent = textEditor.value;
+      if (!editorComponent || !editorComponent.editor) {
         console.error("Editor element not found");
         return;
       }
 
+      const editor = editorComponent.editor;
+      
       // Get the pure text content without HTML
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = editor.innerHTML;
@@ -404,7 +405,6 @@ export default {
 
       return null;
     };
-    
 
     // Set up watchers
     const watchers = setupCardDataWatchers({
@@ -528,6 +528,7 @@ export default {
       syncFromInput,
       clearContent,
       addBreaksFromPattern,
+      textEditor,
     };
   },
 };
