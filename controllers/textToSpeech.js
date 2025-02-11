@@ -31,7 +31,7 @@ const generateAudio = async (req, res) => {
     // Create and collect audio stream
     const chunks = [];
     const stream = await PlayHT.stream(text, { 
-      voiceEngine: 'Play3.0-mini'
+      voiceEngine: 'PlayDialog'
     });
 
     return new Promise((resolve, reject) => {
