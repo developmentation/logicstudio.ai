@@ -36,6 +36,7 @@ export const createCardRegistry = (props) => {
     API: "api",
     CHAT: "chat",
     TRANSCRIBE: "transcribe",
+    TEXTTOSPEECH: "textToSpeech",
     PDF: "pdf",
     TOOL: "tool",
   };
@@ -408,7 +409,30 @@ export const createCardRegistry = (props) => {
           outputs: []
         }
       }
+    },
+
+
+    [CARD_TYPES.TEXTTOSPEECH]: {
+      uuid: null,
+      type: CARD_TYPES.TEXTTOSPEECH,
+      ui: {
+        name: "Text to Speech",
+        description: "Text to Speech Node",
+        display: "default",
+        x: 0,
+        y: 0,
+        width: 300,
+        height: 350,
+        zIndex: Z_INDEX_LAYERS.DEFAULT,
+      },
+      data: {
+        sockets: {
+          inputs: [],
+          outputs: []
+        }
+      }
     }
+
   };
   // In cardRegistry.js
  

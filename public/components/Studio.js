@@ -17,6 +17,7 @@ import GitHubCard from "./GitHubCard.js";
 import ApiCard from "./ApiCard.js";
 import PDFCard from "./PDFCard.js";
 import TranscribeCard from "./TranscribeCard.js";
+import TextToSpeechCard from "./TextToSpeechCard.js";
 import CanvasToolbar from "./CanvasToolbar.js";
 import CanvasSessionToolbar from "./CanvasSessionToolbar.js";
 import CanvasTemplatesToolbar from "./CanvasTemplatesToolbar.js";
@@ -42,6 +43,7 @@ export default {
     ApiCard,
     PDFCard,
     TranscribeCard,
+    TextToSpeechCard,
     CanvasToolbar,
     CanvasSessionToolbar,
     CanvasTemplatesToolbar,
@@ -389,10 +391,12 @@ export default {
           return "GitHubCard";
         case "api":
           return "ApiCard";
-          case "pdf":
+        case "pdf":
             return "PDFCard";
-          case "transcribe":
+        case "transcribe":
           return "TranscribeCard";
+        case "textToSpeech":
+          return "TextToSpeechCard";
         case "template":
           return "TemplateCard";
       }
