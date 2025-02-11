@@ -1,6 +1,7 @@
 import { useConfigs } from "./composables/useConfigs.js";
 import { useModels } from "./composables/useModels.js";
 import { useRealTime } from "./composables/useRealTime.js";
+import { useTextToSpeech } from "./composables/useTextToSpeech.js";
 import router from "../router/index.js";
 
 export default {
@@ -94,6 +95,7 @@ export default {
         const { fetchServerModels } = useModels();
         const { getConfigs } = useConfigs();
         const { socketIoConnection } = useRealTime();
+        const { loadVoices } = useTextToSpeech();
 
         const fileInput = Vue.ref(null);
         const menuOpen = Vue.ref(false);
@@ -112,9 +114,10 @@ export default {
         }
 
         Vue.onMounted(async ()=>{
-           await getConfigs();
-           await fetchServerModels();
-           await socketIoConnection();
+            await loadVoices();
+            await getConfigs();
+            await fetchServerModels();
+            await socketIoConnection();
         });
 
         function handleFileUpload(event) {

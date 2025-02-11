@@ -1,10 +1,27 @@
 // composables/useSpeechToText.js
 
+
+let ttsVoices = Vue.ref(null)
+
 export const useTextToSpeech = () => {
-  const generateAudio = async (text, userId = null, apiKey = null) => {
+
+    
+  const loadVoices = async (templateNames = ['Starter Template']) => {
+    try {
+            ttsVoices.value = await fetch(new URL(`../assets/voices.json`, import.meta.url)).then(res => res.ok ? res.json() : null)
+            console.log("Loaded AI Voices")
+    } 
+    catch (error) {
+      console.warn('Error loading voices:', error);
+      canvasTemplates.value = [];
+    }
+  };
+
+  const generateAudio = async (text, path, userId = null, apiKey = null) => {
     try {
       const response = await axios.post('/api/textToSpeech', {
         text,
+        path,
         userId,
         apiKey
       }, {
@@ -24,6 +41,8 @@ export const useTextToSpeech = () => {
   };
 
   return {
+    ttsVoices,
+    loadVoices,
     generateAudio
   };
 };
