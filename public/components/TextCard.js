@@ -143,6 +143,15 @@ export default {
               />
               Auto-sync from input
             </label>
+              <button
+                @click="removeHtmlTags"
+                @mousedown.stop
+                class="px-2 py-1 text-xs bg-yellow-500 hover:bg-yellow-600 text-white rounded"
+              >
+                Strip HTML
+              </button>
+
+
             <button
               @click="clearContent"
               @mousedown.stop
@@ -405,7 +414,78 @@ export default {
 
       return null;
     };
-
+   
+    const removeHtmlTags = () => {
+      const editorComponent = textEditor.value;
+      if (!editorComponent || !editorComponent.editor) return;
+      
+      // Create a document to parse the HTML while preserving whitespace
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(localCardData.value.data.content, 'text/html');
+      
+      // First handle block elements
+      const blockElements = doc.querySelectorAll('div, p, br, h1, h2, h3, h4, h5, h6, li, tr, pre');
+      blockElements.forEach(el => {
+        // For BR tags, just convert to newline
+        if (el.tagName.toLowerCase() === 'br') {
+          el.replaceWith(document.createTextNode('\n'));
+          return;
+        }
+        
+        // For PRE tags, preserve exact whitespace
+        if (el.tagName.toLowerCase() === 'pre') {
+          const text = el.textContent;
+          el.replaceWith(document.createTextNode(text + '\n'));
+          return;
+        }
+        
+        // For other block elements, add newlines if there's content
+        if (el.textContent.trim()) {
+          // Check if previous sibling already ends with newline
+          const prevSibling = el.previousSibling;
+          if (!prevSibling || !prevSibling.textContent.endsWith('\n')) {
+            el.before(document.createTextNode('\n'));
+          }
+          // Add newline after if there's a next element
+          if (el.nextSibling) {
+            el.after(document.createTextNode('\n'));
+          }
+        }
+      });
+      
+      // Get the text content while preserving processed whitespace
+      let content = doc.body.textContent;
+      
+      // Clean up whitespace without removing intended formatting
+      content = content
+        // Replace multiple spaces with single space
+        .replace(/[ \t]+/g, ' ')
+        // Preserve multiple newlines but limit to max 2
+        .replace(/\n{3,}/g, '\n\n')
+        // Remove space before newline
+        .replace(/[ \t]+\n/g, '\n')
+        // Remove space after newline
+        .replace(/\n[ \t]+/g, '\n')
+        // Trim any whitespace at start/end
+        .trim();
+    
+      // Update the model with preserved whitespace
+      localCardData.value.data.content = content;
+      localCardData.value.data.contentHtml = content;
+      
+      // Reset output sockets but maintain whitespace
+      localCardData.value.data.sockets.outputs = [{
+        ...localCardData.value.data.sockets.outputs[0] || createSocket({
+          type: 'output',
+          name: 'Start',
+          index: 0
+        }),
+        value: content
+      }];
+      
+      // Force updates
+      handleCardUpdate();
+    };
     // Set up watchers
     const watchers = setupCardDataWatchers({
       props,
@@ -529,6 +609,8 @@ export default {
       clearContent,
       addBreaksFromPattern,
       textEditor,
+      removeHtmlTags,
+
     };
   },
 };
