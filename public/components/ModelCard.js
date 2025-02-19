@@ -208,7 +208,8 @@ export default {
       'Anthropic',
       'Groq',
       'Mistral',
-      'AzureAI'
+      'AzureAI',
+      "xAI"
     ];
 
     // Card update handler

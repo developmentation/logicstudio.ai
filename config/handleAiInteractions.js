@@ -38,7 +38,12 @@ const createClient = (provider, credentials) => {
       return new Groq({ apiKey });
     case 'gemini':
       return new GoogleGenerativeAI(apiKey);
-    default:
+    case 'xai':
+      return new OpenAI({
+        apiKey:apiKey,
+        baseURL:"https://api.x.ai/v1",
+  });
+      default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
 };
@@ -145,6 +150,9 @@ const handleProviderPrompt = async (client, provider, config) => {
     case 'gemini':
       return handleGeminiPrompt(client, config);
 
+      case 'xai': //uses same as OpenAI
+        return client.chat.completions.create(config);
+  
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
@@ -270,6 +278,12 @@ const handleProviderResponse = async (responseStream, provider, uuid, session, s
           content = part?.choices?.[0]?.delta?.content;
           messageEnded = part?.choices?.[0]?.finish_reason === "stop";
           break;
+
+        case "xai":
+          content = part?.choices?.[0]?.delta?.content;
+          messageEnded = part?.choices?.[0]?.finish_reason === "stop";
+          break;
+  
       }
 
       if (content) {
