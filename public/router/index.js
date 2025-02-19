@@ -1,5 +1,6 @@
 import Landing from "../components/Landing.js";
 import Studio from "../components/Studio.js";
+import Waterfall from "../components/waterfall/Waterfall.js";
 
 const routes = [
   {
@@ -11,6 +12,12 @@ const routes = [
     path: "/studio",
     component: Studio,
     name: "studio",
+    // requiresAuth:true,
+  },
+  {
+    path: "/waterfall",
+    component: Waterfall,
+    name: "waterfall",
     // requiresAuth:true,
   },
 ];
