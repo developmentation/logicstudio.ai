@@ -35,23 +35,37 @@ export function useModels() {
   const fetchServerModels = async () => {
     try {
       isLoading.value = true;
-      // Fetch Ollama models
+      
+      // Fetch all models first
+      const allModelsResponse = await fetch('/api/models');
+      if (allModelsResponse.ok) {
+        const allModelsData = await allModelsResponse.json();
+        serverModels.value = allModelsData.map(model => ({
+          displayName: `${model.provider}: ${model.name.en}`,
+          name: { en: model.name.en, fr: model.name.fr },
+          model: model.model,
+          provider: model.provider,
+          apiKey: model.apiKey,
+          apiEndpoint: model.apiEndpoint
+        }));
+      }
+
+      // Then fetch Ollama specifically
       const ollamaResponse = await fetch('/api/ollama/models');
       if (ollamaResponse.ok) {
         const ollamaData = await ollamaResponse.json();
         const ollamaModels = ollamaData.models?.map(model => ({
-          displayName: `Ollama: ${model.name}`,  // Add displayName for dropdown
+          displayName: `Ollama: ${model.name}`,
           name: { en: `Ollama: ${model.name}`, fr: `Ollama: ${model.name}` },
           model: model.name,
           provider: 'ollama',
           local: true,
-          apiKey: 'local'  // Add required field for validation
+          apiKey: 'local'
         })) || [];
         
-        // Update both refs
         serverModels.value = [...serverModels.value, ...ollamaModels];
-        availableModels.value = [...availableModels.value, ...ollamaModels];
       }
+      
     } catch (error) {
       console.error('Error fetching models:', error);
     } finally {
@@ -94,33 +108,31 @@ export function useModels() {
 
   // Combined Models
   const allModels = Vue.computed(() => {
-    // Get unique models by combining server models and canvas models
     const canvasModels = Array.from(modelRegistry.value.values()).flat();
     
-    // Create a Map to track unique models by model ID
     const uniqueModels = new Map();
     
-    // Add server models first (these will be overridden by canvas models if they exist)
-    serverModels.value.forEach(model => {
-      if (model && model.model) { // Add validation
-        uniqueModels.set(model.model, model);
-      }
-    });
-    
-    // Add canvas models (these will override server models with the same ID)
+    // 1. Add canvas models first (highest priority)
     canvasModels.forEach(model => {
-      if (model && model.model) { // Add validation
+      if (model?.model) {
         uniqueModels.set(model.model, model);
       }
     });
-    
-    // Add Ollama models
-    availableModels.value.forEach(model => {
-      if (model && model.model) {
+
+    // 2. Add server models (non-Ollama)
+    serverModels.value.forEach(model => {
+      if (model?.model && model.provider !== 'ollama') {
         uniqueModels.set(model.model, model);
       }
     });
-    
+
+    // 3. Add Ollama models last
+    serverModels.value.forEach(model => {
+      if (model?.model && model.provider === 'ollama') {
+        uniqueModels.set(model.model, model);
+      }
+    });
+
     return Array.from(uniqueModels.values());
   });
 
