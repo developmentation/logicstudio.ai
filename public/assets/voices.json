@@ -1,0 +1,668 @@
+[
+    {
+      "id": "d9ff78ba-d016-47f6-b0ef-dd630f59414e",
+      "name": "Ruby",
+      "language": "English (NZ)",
+      "path": "s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json"
+    },
+    {
+      "id": "74f59ea4-f07b-4d10-88d1-ca174adac3f3",
+      "name": "Pia",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/74f59ea4-f07b-4d10-88d1-ca174adac3f3/original/manifest.json"
+    },
+    {
+      "id": "f9bf96ae-19ef-491f-ae69-644448800566",
+      "name": "Adelaide",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/f9bf96ae-19ef-491f-ae69-644448800566/original/manifest.json"
+    },
+    {
+      "id": "bb759cd0-edb0-43d9-8273-f0a7c048fb11",
+      "name": "Lachlan",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/bb759cd0-edb0-43d9-8273-f0a7c048fb11/original/manifest.json"
+    },
+    {
+      "id": "f8af54e1-1534-4f68-ad8a-260cc132f820",
+      "name": "Nigel",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/f8af54e1-1534-4f68-ad8a-260cc132f820/original/manifest.json"
+    },
+    {
+      "id": "8007f637-9aec-4426-8c6a-7e713c032623",
+      "name": "Mitch",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/8007f637-9aec-4426-8c6a-7e713c032623/original/manifest.json"
+    },
+    {
+      "id": "ac9e2984-c7bb-44c8-8b6b-5c10728ad5cf",
+      "name": "Archie",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/ac9e2984-c7bb-44c8-8b6b-5c10728ad5cf/original/manifest.json"
+    },
+    {
+      "id": "f3600d9d-39ab-4494-b6ac-c6f5d122184d",
+      "name": "Teddy",
+      "language": "English (AU)",
+      "path": "s3://voice-cloning-zero-shot/f3600d9d-39ab-4494-b6ac-c6f5d122184d/original/manifest.json"
+    },
+    {
+      "id": "barry-ads",
+      "name": "Barry (Advertising)",
+      "language": "English (AU)",
+      "path": "s3://peregrine-voices/barry ads parrot saad/manifest.json"
+    },
+    {
+      "id": "barry-narrative",
+      "name": "Barry (Narrative)",
+      "language": "English (AU)",
+      "path": "s3://peregrine-voices/barry narrative parrot saad/manifest.json"
+    },
+    {
+      "id": "russell2",
+      "name": "Russell",
+      "language": "English (AU)",
+      "path": "s3://peregrine-voices/russell2_parrot_saad/manifest.json"
+    },
+    {
+      "id": "a59cb96d-bba8-4e24-81f2-e60b888a0275",
+      "name": "Charlotte (Narrative)",
+      "language": "English (CA)",
+      "path": "s3://voice-cloning-zero-shot/a59cb96d-bba8-4e24-81f2-e60b888a0275/charlottenarrativesaad/manifest.json"
+    },
+    {
+      "id": "9fc626dc-f6df-4f47-a112-39461e8066aa",
+      "name": "Olivia (Advertising)",
+      "language": "English (CA)",
+      "path": "s3://voice-cloning-zero-shot/9fc626dc-f6df-4f47-a112-39461e8066aa/oliviaadvertisingsaad/manifest.json"
+    },
+    {
+      "id": "charlotte-ads",
+      "name": "Charlotte (Advertising)",
+      "language": "English (CA)",
+      "path": "s3://peregrine-voices/charlotte ads parrot saad/manifest.json"
+    },
+    {
+      "id": "charlotte-meditation",
+      "name": "Charlotte (Meditation)",
+      "language": "English (CA)",
+      "path": "s3://peregrine-voices/charlotte meditation 2 parrot saad/manifest.json"
+    },
+    {
+      "id": "charlotte-training",
+      "name": "Charlotte (Training)",
+      "language": "English (CA)",
+      "path": "s3://peregrine-voices/charlotte_training_parrot_saad/manifest.json"
+    },
+    {
+      "id": "9b390a6b-7048-4dc4-a714-76ea2c3a6eab",
+      "name": "Olivia (Training)",
+      "language": "English (CA)",
+      "path": "s3://voice-cloning-zero-shot/9b390a6b-7048-4dc4-a714-76ea2c3a6eab/oliviatrainingsaad/manifest.json"
+    },
+    {
+      "id": "olivia-narrative",
+      "name": "Olivia (Narrative)",
+      "language": "English (CA)",
+      "path": "s3://peregrine-voices/olivia_ads3_parrot_saad/manifest.json"
+    },
+    {
+      "id": "640a6636-dc16-4911-b75a-1549daae2c71",
+      "name": "Lumi",
+      "language": "English (FI)",
+      "path": "s3://voice-cloning-zero-shot/640a6636-dc16-4911-b75a-1549daae2c71/original/manifest.json"
+    },
+    {
+      "id": "1d26f4fe-1d08-4cfe-a7c1-d28e4e913ff9",
+      "name": "Baptiste",
+      "language": "English (FR)",
+      "path": "s3://voice-cloning-zero-shot/1d26f4fe-1d08-4cfe-a7c1-d28e4e913ff9/original/manifest.json"
+    },
+    {
+      "id": "97580643-b568-4198-aaa4-3e07e4a06c47",
+      "name": "Indigo",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/97580643-b568-4198-aaa4-3e07e4a06c47/original/manifest.json"
+    },
+    {
+      "id": "34eaa933-62cb-4e32-adb8-c1723ef85097",
+      "name": "Amelia",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/34eaa933-62cb-4e32-adb8-c1723ef85097/original/manifest.json"
+    },
+    {
+      "id": "a0fa25cc-5f42-4dd0-8a78-a950dd5297cd",
+      "name": "Isabella",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/a0fa25cc-5f42-4dd0-8a78-a950dd5297cd/original/manifest.json"
+    },
+    {
+      "id": "32b943f6-87cf-4e15-8e7a-d4cb848e3689",
+      "name": "Scarlett",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/32b943f6-87cf-4e15-8e7a-d4cb848e3689/original/manifest.json"
+    },
+    {
+      "id": "820da3d2-3a3b-42e7-844d-e68db835a206",
+      "name": "Sarah",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/820da3d2-3a3b-42e7-844d-e68db835a206/sarah/manifest.json"
+    },
+    {
+      "id": "2879ab87-3775-4992-a228-7e4f551658c2",
+      "name": "Frederick",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/2879ab87-3775-4992-a228-7e4f551658c2/fredericksaad2/manifest.json"
+    },
+    {
+      "id": "509221d8-9e2d-486c-9b3c-97e52d86e63d",
+      "name": "Arthur (Advertising)",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/509221d8-9e2d-486c-9b3c-97e52d86e63d/arthuradvertisingsaad/manifest.json"
+    },
+    {
+      "id": "fd35d956-b644-4513-9cd0-7aa6931dfd43",
+      "name": "Julian",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/fd35d956-b644-4513-9cd0-7aa6931dfd43/juliansaad/manifest.json"
+    },
+    {
+      "id": "aa753d26-bc20-479f-95af-5c3c1c970d93",
+      "name": "Finley",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/aa753d26-bc20-479f-95af-5c3c1c970d93/original/manifest.json"
+    },
+    {
+      "id": "38a41ac2-f574-421c-adb9-ce1bcb6f4a84",
+      "name": "Arthur (Meditation)",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/38a41ac2-f574-421c-adb9-ce1bcb6f4a84/arthurmeditationsaad/manifest.json"
+    },
+    {
+      "id": "64ea0c61-25f7-42af-928f-83f8915692e5",
+      "name": "Frankie",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/64ea0c61-25f7-42af-928f-83f8915692e5/frankiesaad/manifest.json"
+    },
+    {
+      "id": "0326e8a4-9001-4d92-853b-3a14dd2ea38a",
+      "name": "Arthur (Narrative)",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/0326e8a4-9001-4d92-853b-3a14dd2ea38a/arthurnarrativesaad/manifest.json"
+    },
+    {
+      "id": "4bcdf603-fc5f-4040-a6dd-f8d0446bca9d",
+      "name": "Arthur (Training)",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/4bcdf603-fc5f-4040-a6dd-f8d0446bca9d/arthurtrainingsaad/manifest.json"
+    },
+    {
+      "id": "d0d2afef-93f5-43c3-85c7-e6d824da6dad",
+      "name": "Oliver (Training)",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/d0d2afef-93f5-43c3-85c7-e6d824da6dad/olivertrainingsaad/manifest.json"
+    },
+    {
+      "id": "418a94fa-2395-4487-81d8-22daf107781f",
+      "name": "George",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/418a94fa-2395-4487-81d8-22daf107781f/george/manifest.json"
+    },
+    {
+      "id": "0b5b2e4b-5103-425e-8aa0-510dd35226e2",
+      "name": "Mark",
+      "language": "English (GB)",
+      "path": "s3://voice-cloning-zero-shot/0b5b2e4b-5103-425e-8aa0-510dd35226e2/mark/manifest.json"
+    },
+    {
+      "id": "oliver-ads-gb",
+      "name": "Oliver (Advertising)",
+      "language": "English (GB)",
+      "path": "s3://peregrine-voices/oliver_ads2_parrot_saad/manifest.json"
+    },
+    {
+      "id": "oliver-narrative-gb",
+      "name": "Oliver (Narrative)",
+      "language": "English (GB)",
+      "path": "s3://peregrine-voices/oliver_narrative2_parrot_saad/manifest.json"
+    },
+    {
+      "id": "473c81b1-93ea-4662-9e63-7d65392e5f9b",
+      "name": "Madison",
+      "language": "English (IE)",
+      "path": "s3://voice-cloning-zero-shot/473c81b1-93ea-4662-9e63-7d65392e5f9b/madisonsaad/manifest.json"
+    },
+    {
+      "id": "928ed0a0-2271-4710-a7c9-1711d36b9897",
+      "name": "Niamh",
+      "language": "English (IE)",
+      "path": "s3://voice-cloning-zero-shot/928ed0a0-2271-4710-a7c9-1711d36b9897/original/manifest.json"
+    },
+    {
+      "id": "30884451-1eff-4fd8-9a24-d1ee3353b215",
+      "name": "Siobhán",
+      "language": "English (IE)",
+      "path": "s3://voice-cloning-zero-shot/30884451-1eff-4fd8-9a24-d1ee3353b215/original/manifest.json"
+    },
+    {
+      "id": "e5df2eb3-5153-40fa-9f6e-6e27bbb7a38e",
+      "name": "Navya",
+      "language": "English (IN)",
+      "path": "s3://voice-cloning-zero-shot/e5df2eb3-5153-40fa-9f6e-6e27bbb7a38e/original/manifest.json"
+    },
+    {
+      "id": "f3c22a65-87e8-441f-aea5-10a1c201e522",
+      "name": "Sumita",
+      "language": "English (IN)",
+      "path": "s3://voice-cloning-zero-shot/f3c22a65-87e8-441f-aea5-10a1c201e522/original/manifest.json"
+    },
+    {
+      "id": "44f32760-8f41-4dfb-b192-ca077fc501ea",
+      "name": "Furio",
+      "language": "English (IT)",
+      "path": "s3://voice-cloning-zero-shot/44f32760-8f41-4dfb-b192-ca077fc501ea/original/manifest.json"
+    },
+    {
+      "id": "7ced805f-611e-433c-8c43-568f48a8af4e",
+      "name": "Alessandro",
+      "language": "English (IT)",
+      "path": "s3://voice-cloning-zero-shot/7ced805f-611e-433c-8c43-568f48a8af4e/original/manifest.json"
+    },
+    {
+      "id": "fdb74aec-ede9-45f8-ad87-71cb45f01816",
+      "name": "Carmen",
+      "language": "English (MX)",
+      "path": "s3://voice-cloning-zero-shot/fdb74aec-ede9-45f8-ad87-71cb45f01816/original/manifest.json"
+    },
+    {
+      "id": "d9ff78ba-d016-47f6-b0ef-dd630f59414e-ruby",
+      "name": "Ruby",
+      "language": "English (NZ)",
+      "path": "s3://voice-cloning-zero-shot/d9ff78ba-d016-47f6-b0ef-dd630f59414e/female-cs/manifest.json"
+    },
+    {
+      "id": "f6594c50-e59b-492c-bac2-047d57f8bdd8",
+      "name": "Susan (Advertising)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f6594c50-e59b-492c-bac2-047d57f8bdd8/susanadvertisingsaad/manifest.json"
+    },
+    {
+      "id": "1afba232-fae0-4b69-9675-7f1aac69349f",
+      "name": "Delilah",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/1afba232-fae0-4b69-9675-7f1aac69349f/delilahsaad/manifest.json"
+    },
+    {
+      "id": "a5cc7dd9-069c-4fe8-9ae7-0c4bae4779c5",
+      "name": "Micah",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/a5cc7dd9-069c-4fe8-9ae7-0c4bae4779c5/micahsaad/manifest.json"
+    },
+    {
+      "id": "9a5deeda-3025-49c5-831a-ac98f86f2a37",
+      "name": "April",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/9a5deeda-3025-49c5-831a-ac98f86f2a37/aprilsaad/manifest.json"
+    },
+    {
+      "id": "d712cad5-85db-44c6-8ee0-8f4361ed537b",
+      "name": "Eleanor",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/d712cad5-85db-44c6-8ee0-8f4361ed537b/eleanorsaad2/manifest.json"
+    },
+    {
+      "id": "0c4c229f-7f99-4ed9-b904-223c701672b9",
+      "name": "Phoebe",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/0c4c229f-7f99-4ed9-b904-223c701672b9/phoebesaad/manifest.json"
+    },
+    {
+      "id": "ff414883-0e32-4a92-a688-d7875922120d",
+      "name": "Autumn",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/ff414883-0e32-4a92-a688-d7875922120d/original/manifest.json"
+    },
+    {
+      "id": "2a7ddfc5-d16a-423a-9441-5b13290998b8",
+      "name": "Nova",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/2a7ddfc5-d16a-423a-9441-5b13290998b8/novasaad/manifest.json"
+    },
+    {
+      "id": "7142f297-c55f-451d-8863-108d5101b5ed",
+      "name": "Susan (Training)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/7142f297-c55f-451d-8863-108d5101b5ed/susantrainingsaad/manifest.json"
+    },
+    {
+      "id": "80ba8839-a6e6-470c-8f68-7c1e5d3ee2ff",
+      "name": "Abigail",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/80ba8839-a6e6-470c-8f68-7c1e5d3ee2ff/abigailsaad/manifest.json"
+    },
+    {
+      "id": "0a11e4f0-1656-48c9-bc4c-affcd718c414",
+      "name": "Madelyn",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/0a11e4f0-1656-48c9-bc4c-affcd718c414/madelynsaad/manifest.json"
+    },
+    {
+      "id": "f6c4ed76-1b55-4cd9-8896-31f7535f6cdb",
+      "name": "Aaliyah",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f6c4ed76-1b55-4cd9-8896-31f7535f6cdb/original/manifest.json"
+    },
+    {
+      "id": "5b81dc4c-bf98-469d-96b4-8f09836fb500",
+      "name": "Aurora",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/5b81dc4c-bf98-469d-96b4-8f09836fb500/aurorasaad/manifest.json"
+    },
+    {
+      "id": "b709b944-9256-4578-b9d8-a1ce4d729022",
+      "name": "Eileen",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/b709b944-9256-4578-b9d8-a1ce4d729022/eileensaad/manifest.json"
+    },
+    {
+      "id": "8ceaa707-4141-46c0-a610-4a2014d7ea97",
+      "name": "Audrey",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/8ceaa707-4141-46c0-a610-4a2014d7ea97/audreysaad/manifest.json"
+    },
+    {
+      "id": "483ed913-2817-45cb-b1a2-b79d9bfb2cf8",
+      "name": "Ayla (Narrative)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/483ed913-2817-45cb-b1a2-b79d9bfb2cf8/aylanarrativesaad/manifest.json"
+    },
+    {
+      "id": "f43cc4b4-b193-4a13-a903-e6b125c3d572",
+      "name": "Luna",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f43cc4b4-b193-4a13-a903-e6b125c3d572/original/manifest.json"
+    },
+    {
+      "id": "90217770-a480-4a91-b1ea-df00f4d4c29d",
+      "name": "Samara",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/90217770-a480-4a91-b1ea-df00f4d4c29d/original/manifest.json"
+    },
+    {
+      "id": "b2f5441d-354f-4c2f-8f32-390aaaabf42d",
+      "name": "Charlotte",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/b2f5441d-354f-4c2f-8f32-390aaaabf42d/charlottesaad/manifest.json"
+    },
+    {
+      "id": "f2863f63-5334-4f65-9d30-438feb79c2ec",
+      "name": "Ariana",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f2863f63-5334-4f65-9d30-438feb79c2ec/arianasaad2/manifest.json"
+    },
+    {
+      "id": "33e6b76a-7554-48fa-9798-2e6823ab0a10",
+      "name": "Ayla (Advertising)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/33e6b76a-7554-48fa-9798-2e6823ab0a10/aylaadvertisingsaad/manifest.json"
+    },
+    {
+      "id": "3b74b785-e06e-4a53-a9c4-ebed08a70ef2",
+      "name": "Susan (Narrative)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/3b74b785-e06e-4a53-a9c4-ebed08a70ef2/susannarrativesaad/manifest.json"
+    },
+    {
+      "id": "65e66dc8-9273-43c8-889a-83e858bf2bb8",
+      "name": "Susan",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/65e66dc8-9273-43c8-889a-83e858bf2bb8/susansaad/manifest.json"
+    },
+    {
+      "id": "f741f871-63ad-4207-8278-907aec4e9e50",
+      "name": "Ayla (Meditation)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f741f871-63ad-4207-8278-907aec4e9e50/aylameditationsaad/manifest.json"
+    },
+    {
+      "id": "donna-meditation",
+      "name": "Donna (Meditation)",
+      "language": "English (US)",
+      "path": "s3://peregrine-voices/donna_meditation_saad/manifest.json"
+    },
+    {
+      "id": "donna-narrative",
+      "name": "Donna (Narrative)",
+      "language": "English (US)",
+      "path": "s3://peregrine-voices/donna_parrot_saad/manifest.json"
+    },
+    {
+      "id": "evelyn-2",
+      "name": "Evelyn",
+      "language": "English (US)",
+      "path": "s3://peregrine-voices/evelyn 2 saad parrot/manifest.json"
+    },
+    {
+      "id": "0b423fde-02e2-4bea-91ce-c932162e4428",
+      "name": "Samantha",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/0b423fde-02e2-4bea-91ce-c932162e4428/samanthasaad/manifest.json"
+    },
+    {
+      "id": "801a663f-efd0-4254-98d0-5c175514c3e8",
+      "name": "Jennifer",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/801a663f-efd0-4254-98d0-5c175514c3e8/jennifer/manifest.json"
+    },
+    {
+      "id": "melissa",
+      "name": "Melissa",
+      "language": "English (US)",
+      "path": "s3://peregrine-voices/mel21/manifest.json"
+    },
+    {
+      "id": "7c38b588-14e8-42b9-bacd-e03d1d673c3c",
+      "name": "Nicole",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/7c38b588-14e8-42b9-bacd-e03d1d673c3c/nicole/manifest.json"
+    },
+    {
+      "id": "1f44b3e7-22ea-4c2e-87d0-b4d9c8f1d47d",
+      "name": "Sophia",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/1f44b3e7-22ea-4c2e-87d0-b4d9c8f1d47d/sophia/manifest.json"
+    },
+    {
+      "id": "d82d246c-148b-457f-9668-37b789520891",
+      "name": "Adolfo",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/d82d246c-148b-457f-9668-37b789520891/adolfosaad/manifest.json"
+    },
+    {
+      "id": "3a831d1f-2183-49de-b6d8-33f16b2e9867",
+      "name": "Dylan",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/3a831d1f-2183-49de-b6d8-33f16b2e9867/dylansaad/manifest.json"
+    },
+   {
+      "id": "b41d1a8c-2c99-4403-8262-5808bc67c3e0",
+      "name": "Benton",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/b41d1a8c-2c99-4403-8262-5808bc67c3e0/bentonsaad/manifest.json"
+    },
+    {
+      "id": "9f1ee23a-9108-4538-90be-8e62efc195b6",
+      "name": "Charles",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/9f1ee23a-9108-4538-90be-8e62efc195b6/charlessaad/manifest.json"
+    },
+    {
+      "id": "a540a448-a9ca-446c-9538-d1bae6c506f1",
+      "name": "Mason",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/a540a448-a9ca-446c-9538-d1bae6c506f1/original/manifest.json"
+    },
+    {
+      "id": "d99d35e6-e625-4fa4-925a-d65172d358e1",
+      "name": "Adrian",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/d99d35e6-e625-4fa4-925a-d65172d358e1/adriansaad/manifest.json"
+    },
+    {
+      "id": "36e9c53d-ca4e-4815-b5ed-9732be3839b4",
+      "name": "Samuel",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/36e9c53d-ca4e-4815-b5ed-9732be3839b4/samuelsaad/manifest.json"
+    },
+    {
+      "id": "743575eb-efdc-4c10-b185-a5018148822f",
+      "name": "Calvin",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/743575eb-efdc-4c10-b185-a5018148822f/original/manifest.json"
+    },
+    {
+      "id": "7b97b543-7877-41b6-86ee-aa1e0b6c110e",
+      "name": "Dick",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/7b97b543-7877-41b6-86ee-aa1e0b6c110e/dicksaad/manifest.json"
+    },
+    {
+      "id": "cebaa3cf-d1d5-4625-ba20-03dcca3b379f",
+      "name": "Sarge",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/cebaa3cf-d1d5-4625-ba20-03dcca3b379f/sargesaad/manifest.json"
+    },
+    {
+      "id": "688d0200-7415-42b4-8726-e2f5693aaac8",
+      "name": "William (Narrative)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/688d0200-7415-42b4-8726-e2f5693aaac8/williamnarrativesaad/manifest.json"
+    },
+    {
+      "id": "def0cd31-1b8c-486e-82d2-050a0ea2965d",
+      "name": "Axel",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/def0cd31-1b8c-486e-82d2-050a0ea2965d/axelsaad/manifest.json"
+    },
+    {
+      "id": "9b559f3c-22e7-4b10-8158-3e11b333751e",
+      "name": "Dudley",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/9b559f3c-22e7-4b10-8158-3e11b333751e/dudleysaad/manifest.json"
+    },
+    {
+      "id": "37e5af8b-800a-4a76-8f31-4203315f8a9e",
+      "name": "Billy",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/37e5af8b-800a-4a76-8f31-4203315f8a9e/billysaad/manifest.json"
+    },
+    {
+      "id": "7447d346-20d5-4939-b43c-bdf17e757e98",
+      "name": "Clifton",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/7447d346-20d5-4939-b43c-bdf17e757e98/cliftonsaad/manifest.json"
+    },
+    {
+      "id": "dc90b58b-59a9-4e65-955d-c7620deb2d7a",
+      "name": "Richie",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/dc90b58b-59a9-4e65-955d-c7620deb2d7a/original/manifest.json"
+    },
+    {
+      "id": "e46b4027-b38d-4d24-b292-38fbca2be0ef",
+      "name": "Atlas",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/e46b4027-b38d-4d24-b292-38fbca2be0ef/original/manifest.json"
+    },
+    {
+      "id": "a72a5d4c-d729-4045-8bc8-1786043a4537",
+      "name": "Carter",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/a72a5d4c-d729-4045-8bc8-1786043a4537/cartersaad/manifest.json"
+    },
+    {
+      "id": "8ca8c44d-fb2b-4269-abca-4e6748a4a61e",
+      "name": "Arthur",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/8ca8c44d-fb2b-4269-abca-4e6748a4a61e/arthursaad/manifest.json"
+    },
+    {
+      "id": "087f79be-bb52-436a-93f3-cee27cd3b80d",
+      "name": "Hunter",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/087f79be-bb52-436a-93f3-cee27cd3b80d/huntersaad/manifest.json"
+    },
+    {
+      "id": "f669de94-fea6-4af3-a8ea-193b75bb142b",
+      "name": "Darrell",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/f669de94-fea6-4af3-a8ea-193b75bb142b/darrellsaad/manifest.json"
+    },
+    {
+      "id": "6c9c01b7-8d38-47ae-8ce5-18a360b26cf3",
+      "name": "Oliver",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/6c9c01b7-8d38-47ae-8ce5-18a360b26cf3/oliversaad/manifest.json"
+    },
+    {
+      "id": "e7e9514f-5ffc-4699-a958-3627151559d9",
+      "name": "Nolan",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/e7e9514f-5ffc-4699-a958-3627151559d9/nolansaad2/manifest.json"
+    },
+    {
+      "id": "5cd30986-f7f7-444b-ad82-d08ceb24ec5f",
+      "name": "Wilbert",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/5cd30986-f7f7-444b-ad82-d08ceb24ec5f/wilbertsaad/manifest.json"
+    },
+    {
+      "id": "32ae7ca0-634e-4fab-af74-0ec7c663e9da",
+      "name": "Leroy",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/32ae7ca0-634e-4fab-af74-0ec7c663e9da/original/manifest.json"
+    },
+    {
+      "id": "3b7df114-e269-453a-8dc2-cbbce4c48f48",
+      "name": "William (Training)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/3b7df114-e269-453a-8dc2-cbbce4c48f48/williamtrainingsaad/manifest.json"
+    },
+    {
+      "id": "92519089-3c97-4f31-8743-ab4f06047b88",
+      "name": "Larry (Narrative)",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/92519089-3c97-4f31-8743-ab4f06047b88/larrysaad/manifest.json"
+    },
+    {
+      "id": "2d5053ed-635a-499a-aa66-e85aeaf46d3e",
+      "name": "Darnell",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/2d5053ed-635a-499a-aa66-e85aeaf46d3e/darnellsaad/manifest.json"
+    },
+    {
+      "id": "261923bd-a10a-4a90-bced-0ce2b0230398",
+      "name": "Hook",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/261923bd-a10a-4a90-bced-0ce2b0230398/hooksaad/manifest.json"
+    },
+    {
+      "id": "a2852064-4b50-41a8-82f4-0ef0aae4601c",
+      "name": "Clark",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/a2852064-4b50-41a8-82f4-0ef0aae4601c/clarksaad/manifest.json"
+    },
+    {
+      "id": "4c627545-b9c0-4791-ae8e-f48f5475247c",
+      "name": "Bryan",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/4c627545-b9c0-4791-ae8e-f48f5475247c/bryansaad/manifest.json"
+    },
+    {
+      "id": "75085d4f-839d-4ca5-a3e2-e329f04a591e",
+      "name": "Larry",
+      "language": "English (US)",
+      "path": "s3://voice-cloning-zero-shot/75085d4f-839d-4ca5-a3e2-e329f04a591e/larrynarrativesaad/manifest.json"
+    }
+]

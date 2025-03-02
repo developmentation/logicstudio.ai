@@ -1,5 +1,4 @@
 // composables/useModels.js
-
 const modelRegistry = Vue.ref(new Map());  // Canvas model cards registry
 const serverModels = Vue.ref([]); // Initialize as empty array
 const lastModelConfig = Vue.ref(null);
@@ -12,18 +11,29 @@ export function useModels() {
   const isValidField = (field) => field && typeof field === 'string' && field.trim().length > 0;
 
   const isValidModel = (model) => {
-    if (!isValidField(model.displayName) || 
-        !isValidField(model.model) || 
-        !isValidField(model.provider) || 
-        !isValidField(model.apiKey)) {
-      return false;
-    }
+    // Basic required fields for both server and card models
+    if (!model || typeof model !== 'object') return false;
+    
+    // For card models, we need these additional fields
+    if (model.displayName !== undefined) {  // This indicates it's a card model
+      if (!isValidField(model.displayName) || 
+          !isValidField(model.model) || 
+          !isValidField(model.provider) || 
+          !isValidField(model.apiKey)) {
+        return false;
+      }
 
-    if (model.provider === 'AzureAI' && !isValidField(model.apiEndpoint)) {
-      return false;
+      // Special case for AzureAI
+      if (model.provider === 'AzureAI' && !isValidField(model.apiEndpoint)) {
+        return false;
+      }
+      return true;
     }
-
-    return true;
+    
+    // For server models, we only need these fields
+    return model.name?.en && 
+           isValidField(model.model) && 
+           isValidField(model.provider);
   };
 
   const areModelConfigsEqual = (prev, curr) => {
@@ -79,21 +89,22 @@ export function useModels() {
     
     const currentConfig = modelCards.map(card => ({
       cardId: card.uuid,
-      models: Vue.toRaw(card.models || [])
+      models: Vue.toRaw(card.data.models || [])
         .filter(isValidModel)
-        .map(model => ({
-          name: { 
-            en: model.displayName,
-            fr: model.displayName
-          },
-          model: model.model,
-          provider: model.provider,
-          apiKey: model.apiKey,
-          ...(model.provider === 'AzureAI' && { apiEndpoint: model.apiEndpoint })
-        }))
+        .map(model => {
+          return {
+            name: { 
+              en: model.displayName,
+              fr: model.displayName
+            },
+            model: model.model,
+            provider: model.provider,
+            apiKey: model.apiKey,
+            ...(model.provider === 'AzureAI' && { apiEndpoint: model.apiEndpoint }),
+            _fromCard: true
+          };
+        })
     }));
-
-    // Only update if configuration has changed
     if (!areModelConfigsEqual(lastModelConfig.value, currentConfig)) {
       lastModelConfig.value = currentConfig;
       modelRegistry.value = new Map(
@@ -109,24 +120,21 @@ export function useModels() {
   // Combined Models
   const allModels = Vue.computed(() => {
     const canvasModels = Array.from(modelRegistry.value.values()).flat();
-    
     const uniqueModels = new Map();
-    
-    // 1. Add canvas models first (highest priority)
+
+    // 1. Canvas models (highest priority)
     canvasModels.forEach(model => {
-      if (model?.model) {
-        uniqueModels.set(model.model, model);
-      }
+      if (model?.model) uniqueModels.set(model.model, model);
     });
 
-    // 2. Add server models (non-Ollama)
+    // 2. Non-Ollama server models
     serverModels.value.forEach(model => {
       if (model?.model && model.provider !== 'ollama') {
         uniqueModels.set(model.model, model);
       }
     });
 
-    // 3. Add Ollama models last
+    // 3. Ollama models (lowest priority)
     serverModels.value.forEach(model => {
       if (model?.model && model.provider === 'ollama') {
         uniqueModels.set(model.model, model);
@@ -197,15 +205,10 @@ export function useModels() {
   };
 
   return {
-    // Core functions
     updateModelsFromCards,
     getModelsForCard,
     fetchServerModels,
-    
-    // Computed properties
     allModels,
-    
-    // Raw refs (in case needed)
     serverModels,
     modelRegistry,
     availableModels,

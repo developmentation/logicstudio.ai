@@ -3,8 +3,8 @@ const PlayHT = require('playht');
 const generateAudio = async (req, res) => {
   try {
     // Extract text and optional credentials from request body
-    const { text, userId, apiKey } = req.body;
-
+    const { text, path, userId, apiKey } = req.body;
+    console.log({ text, path, userId, apiKey })
     if (!text) {
       return res.status(400).json({
         message: "Text is required for audio generation"
@@ -25,13 +25,13 @@ const generateAudio = async (req, res) => {
     PlayHT.init({
       userId: userProvidedCreds ? userId : process.env.PLAYHT_USER_ID,
       apiKey: userProvidedCreds ? apiKey : process.env.PLAYHT_API_KEY,
-      defaultVoiceId: 's3://peregrine-voices/oliver_narrative2_parrot_saad/manifest.json',
+      defaultVoiceId: path || 's3://peregrine-voices/oliver_narrative2_parrot_saad/manifest.json',
     });
 
     // Create and collect audio stream
     const chunks = [];
     const stream = await PlayHT.stream(text, { 
-      voiceEngine: 'Play3.0-mini'
+      voiceEngine: 'PlayDialog'
     });
 
     return new Promise((resolve, reject) => {

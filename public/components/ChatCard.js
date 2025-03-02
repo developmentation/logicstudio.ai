@@ -144,7 +144,7 @@ export default {
                       </span>
                       <i class="pi pi-copy cursor-pointer text-gray-600 hover:text-gray-400"
                         @click="copyToClipboard(message.content)"></i>
-                      <i class="pi pi-check-circle cursor-pointer"
+                      <i class="pi pi-check-circle cursor-pointer hover:text-gray-400"
                         :class="message.flagged ? 'text-green-500' : 'text-gray-600'"
                         @click="toggleFlag(index)"></i>
                       <i class="pi pi-times cursor-pointer text-gray-600 hover:text-gray-400"

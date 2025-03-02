@@ -17,7 +17,6 @@ exports.getModels = async function (req, res, next) {
             X
       */
 
-  
 
         {
           name: { en: "Gemini 2 Flash", fr: "Gemini 2 Flash" },
@@ -68,6 +67,14 @@ exports.getModels = async function (req, res, next) {
           model: "o1-mini-2024-09-12",
           provider: "openAi",
         },
+
+        {
+          name: { en: "Grok 2", fr: "Grok 2" },
+          model: "grok-2-1212",
+          provider: "xai",
+        }, 
+
+        
       ];
 
     // Send the counts as JSON response

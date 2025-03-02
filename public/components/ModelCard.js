@@ -8,6 +8,7 @@ import {
   setupSocketWatcher,
 } from "../utils/cardManagement/cardUtils.js";
 import { createSocket } from "../utils/socketManagement/socketRemapping.js";
+import { useModels } from "../composables/useModels.js";
 
 export default {
   name: "ModelCard",
@@ -17,6 +18,7 @@ export default {
     zoomLevel: { type: Number, default: 1 },
     zIndex: { type: Number, default: 1 },
     isSelected: { type: Boolean, default: false },
+    activeCards: { type: Array, default: [] },
   },
 
   template: `
@@ -191,6 +193,9 @@ export default {
       cleanup,
     } = useCardSetup(props, emit);
 
+    const { updateModelsFromCards } = useModels();
+
+
     // Initialize local card data
     const localCardData = Vue.ref(initializeCardData(props.cardData, {
       defaultName: "Model Config",
@@ -208,7 +213,8 @@ export default {
       'Anthropic',
       'Groq',
       'Mistral',
-      'AzureAI'
+      'AzureAI',
+      "xAI"
     ];
 
     // Card update handler
@@ -216,6 +222,8 @@ export default {
       if (!isProcessing.value) {
         emit("update-card", Vue.toRaw(localCardData.value));
       }
+
+      updateModelsFromCards(props.activeCards)
     };
 
     // Setup watchers for card data

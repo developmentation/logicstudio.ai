@@ -20,7 +20,8 @@ const createClient = async (provider, modelConfig) => {
         'mistral': true,
         'groq': true,
         'gemini': true,
-        'ollama': false
+        'ollama': false,
+        'xai': true
     };
 
     const envKey = process.env[`${provider.toUpperCase()}_API_KEY`];
@@ -78,6 +79,11 @@ const createClient = async (provider, modelConfig) => {
           }
         }
       };
+    case 'xai':
+      return new OpenAI({
+        apiKey: credentials,
+        baseURL: "https://api.x.ai/v1",
+      });
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
@@ -175,6 +181,9 @@ const handleProviderPrompt = async (client, provider, config) => {
         throw new Error('Invalid Ollama client configuration');
       }
       return client.completions.create(config);
+
+    case 'xai':
+      return client.chat.completions.create(config);
 
     default:
       throw new Error(`Unsupported provider: ${provider}`);
