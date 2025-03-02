@@ -78,10 +78,7 @@ exports.getModels = async function (req, res, next) {
       ];
 
     // Send the counts as JSON response
-    res.status(200).json({
-      message: "Here are the server side model and providers",
-      payload: payload,
-    });
+    return res.status(200).json(payload);
   } catch (error) {
     next(ApiError.internal("An error occurred while retrieving stats"));
   }

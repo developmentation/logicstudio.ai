@@ -189,6 +189,12 @@ export default {
               </div>
             </div>
           </div>
+
+          <!-- Ollama Status -->
+          <div v-if="ollamaStatus !== 'checking'" class="text-sm flex items-center gap-2 mt-2">
+            <i :class="'pi ' + ollamaStatusDisplay.icon"></i>
+            <span>{{ ollamaStatusDisplay.text }}</span>
+          </div>
         </div>
       </BaseCard>
     </div>
@@ -210,7 +216,7 @@ export default {
     const triggerPending = Vue.ref(false);
 
     // Composables
-    const { allModels: availableModels } = useModels();
+    const { allModels: availableModels, isOllamaAvailable, ollamaStatus } = useModels();
     const {
       wsUuid,
       sessions,
@@ -294,6 +300,19 @@ export default {
       }))
     );
 
+    // Add visual indicator for Ollama status
+    const ollamaStatusDisplay = Vue.computed(() => {
+      switch (ollamaStatus.value) {
+        case 'checking':
+          return { icon: 'pi-sync pi-spin', text: 'Checking Ollama...' };
+        case 'available':
+          return { icon: 'pi-check-circle', text: 'Ollama Available' };
+        case 'unavailable':
+          return { icon: 'pi-times-circle', text: 'Ollama Unavailable' };
+        default:
+          return { icon: 'pi-question-circle', text: 'Unknown Status' };
+      }
+    });
 
     // Card-specific functions
     const handleCardUpdate = (data) => {
@@ -662,6 +681,45 @@ export default {
       unregisterSession(websocketId.value);
     });
 
+    // Handle model selection including Ollama models
+    const handleModelSelect = (model) => {
+      if (model.provider === 'ollama' && !isOllamaAvailable.value) {
+        alert('Ollama is not available. Please ensure it is running locally.');
+        return;
+      }
+      // ... existing model selection logic ...
+    };
+
+    const generateResponse = async (prompt, systemPrompt) => {
+      try {
+        if (localCardData.value.data.model?.provider === 'ollama') {
+          // Special handling for Ollama models
+          const response = await fetch('/api/ollama/generate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: localCardData.value.data.model.model,
+              prompt: prompt,
+              systemPrompt: systemPrompt
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Ollama generation failed');
+          }
+
+          const data = await response.json();
+          return data.text;
+        }
+        // ... existing code for other providers ...
+      } catch (error) {
+        console.error('Generation error:', error);
+        return `Error: ${error.message}`;
+      }
+    };
+
     return {
       // Core setup
       localCardData,
@@ -675,12 +733,16 @@ export default {
       availableModels,
       outputSocket,
       sessionStatus,
+      ollamaStatus,
+      ollamaStatusDisplay,
 
       // Card functions
       handlePromptChange,
       handleSocketUpdate,
       handleHtmlUpdate,
       triggerAgent,
+      handleModelSelect,
+      generateResponse
     };
   },
 };

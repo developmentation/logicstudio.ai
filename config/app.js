@@ -41,8 +41,33 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add Ollama proxy route
+app.post('/api/ollama/:model', async (req, res) => {
+    try {
+        const response = await fetch(`http://localhost:11434/api/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: req.params.model,
+                prompt: req.body.prompt,
+                stream: false
+            }),
+        });
+        
+        const data = await response.json();
+        res.json({ text: data.response });
+    } catch (error) {
+        console.error('Ollama API error:', error);
+        res.status(500).json({ error: 'Failed to communicate with Ollama' });
+    }
+});
 
+const ollamaRoutes = require('../server/routes/ollama');
 
+// Add Ollama routes
+app.use('/api/ollama', ollamaRoutes);
 
 //Export the app for use on the index.js page
 module.exports = { app };
