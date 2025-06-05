@@ -1,6 +1,6 @@
 {
   "name": "logicstudio-ai",
-  "version": "0.0.56",
+  "version": "0.0.57",
   "description": "An interactive no code AI agentic builder with logic and tools",
   "main": "index.js",
   "scripts": {
@@ -33,7 +33,7 @@
     "groq-sdk": "^0.9.1",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.1",
     "openai": "^4.76.0",
     "pdfjs-dist": "^4.10.38",
     "playht": "^0.16.0",
