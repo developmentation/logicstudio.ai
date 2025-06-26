@@ -113,10 +113,22 @@ export default {
             fileInput.value.click();
         }
 
-        Vue.onMounted(async ()=>{
-            await loadVoices();
+        // Add Ollama model detection
+        const detectOllamaModels = async () => {
+            try {
+                const response = await fetch('http://localhost:11434/api/tags');
+                const data = await response.json();
+                return data.models || [];
+            } catch (error) {
+                console.warn('Ollama not detected locally:', error);
+                return [];
+            }
+        };
+
+        Vue.onMounted(async () => {
             await getConfigs();
             await fetchServerModels();
+            await detectOllamaModels(); // Keep Ollama detection
             await socketIoConnection();
         });
 
